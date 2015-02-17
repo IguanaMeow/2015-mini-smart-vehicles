@@ -29,6 +29,7 @@
 #include "ForceControlBehaviour.h"
 #include "ForceControlBehaviourBicycleModel.h"
 #include "ForceControlBehaviourSimplifiedBicycleModel.h"
+#include "LinearBicycleModelBehaviour.h"
 
 namespace egocontroller {
 
@@ -79,6 +80,8 @@ namespace egocontroller {
             ForceControlBehaviourBicycleModel* createForceControlBehaviourBicycleModel();
 
             ForceControlBehaviourSimplifiedBicycleModel* createForceControlBehaviourSimplifiedBicycleModel();
+
+            LinearBicycleModelBehaviour* createLinearBicycleModelBehaviour();
 
             virtual void setUp();
 
