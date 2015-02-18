@@ -1,4 +1,3 @@
-/home/erlach/dit029-twitter-miner/ebin/
 Group Members:
 Malcolm Kente
 Peili Ge
