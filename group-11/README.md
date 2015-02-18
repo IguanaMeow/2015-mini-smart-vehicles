@@ -2,7 +2,7 @@
 
 <b>Members</b>
 <ul>
-<li><a href="https://github.com/Jazzbaron">Josef Al-sader</a> (point of contact)</li>
+<li><a href="https://github.com/Jazzbaron">Josef Al-sader</a> <i>(point of contact)</i></li>
 <li><a href="https://github.com/johnzade">John Ghavamzadeh</a></li>
 <li><a href="https://github.com/Lubbe">Lukas Bogren</a></li>
 <li><a href="https://github.com/Harri92">Harri Preenja</a></li>
