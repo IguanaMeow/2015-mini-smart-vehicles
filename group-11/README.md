@@ -1,13 +1,13 @@
 <H1>GROUP 11 - DINERO</H1>
 
-<H2>Members</H2>
+<b>Members</b>
 <ul>
-<li>Josef Al-sader (point of contact)</li>
-<li>John Ghavamzadeh</li>
-<li>Lukas Bogren</li>
-<li>Harri Preenja</li>
-<li>Rasmus Alestig Thunborg</li>
-<li>Oscar Andersson</li>
-<li>Dennis Nielsen</li>
-<li>Allan Dabagh</li>
+<li><a href="https://github.com/johnzade">Josef Al-sader</a> (point of contact)</li>
+<li><a href="https://github.com/johnzade">John Ghavamzadeh</a></li>
+<li><a href="https://github.com/johnzade">Lukas Bogren</a></li>
+<li><a href="https://github.com/johnzade">Harri Preenja</a></li>
+<li><a href="https://github.com/johnzade">Rasmus Alestig Thunborg</a></li>
+<li><a href="https://github.com/johnzade">Oscar Andersson</a></li>
+<li><a href="https://github.com/johnzade">Dennis Nielsen</a></li>
+<li><a href="https://github.com/johnzade">Allan Dabagh</a></li>
 </ul>
