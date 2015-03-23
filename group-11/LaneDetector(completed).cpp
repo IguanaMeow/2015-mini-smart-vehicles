@@ -163,24 +163,24 @@ namespace msv {
     void LaneDetector::processImage() {
         if (m_debug) {
 
-        cv::Mat mat_img(m_image);
+        cv::Mat mat_img(m_image);  //converts the IPL image to a mat image
         int rows = mat_img.rows;
         int cols = mat_img.cols;
 
-        cv::Size s = mat_img.size();
+        cv::Size s = mat_img.size(); //gets rows and columns
         rows = s.height;
         cols = s.width;
 
-        cv::Point pt1;
+        cv::Point pt1;  //initialize the startin and ending points for each arrow
         cv::Point pt2;
         cv::Point pt3;
         cv::Point pt4;
         cv::Point pt5;
         cv::Point pt6;
 
-        pt1.x=cols/2;
+        pt1.x=cols/2;       //starting points for first arrow
         pt1.y=0;
-        pt2.x=cols/2;
+        pt2.x=cols/2;       //ending points for first arrow
         pt2.y=rows;
 
         verticalLine(mat_img, pt1, pt2);
@@ -197,12 +197,12 @@ namespace msv {
         pt6.x = 50;
         pt6.y = 350;
 
-        cv::Vec3b rightLaneColor = mat_img.at<cv::Vec3b>(pt4);
+        cv::Vec3b rightLaneColor = mat_img.at<cv::Vec3b>(pt4); //defines the color at current positions
         while(pt4.x != cols){
-            pt4.x = pt4.x +1;
-            rightLaneColor = mat_img.at<cv::Vec3b>(pt4);
+            pt4.x = pt4.x +1; //extend the arrow
+            rightLaneColor = mat_img.at<cv::Vec3b>(pt4); //checks for color at current position
             if(rightLaneColor.val[0] == 255 && rightLaneColor.val[1] == 255 && rightLaneColor.val[2] == 255){
-                break;
+                break; //color is white at current position
             }
         }
         rightArrow(mat_img, pt3, pt4);
@@ -226,7 +226,7 @@ namespace msv {
 
         if(pt4.x < 470 && pt4.x > 350){
         angle = -10.0;
-        sd.setExampleData(angle);
+        sd.setExampleData(angle);  //sends the steering data to the driver.cpp code
         }
         else if(pt5.x > 170){
         angle = +26.0;
