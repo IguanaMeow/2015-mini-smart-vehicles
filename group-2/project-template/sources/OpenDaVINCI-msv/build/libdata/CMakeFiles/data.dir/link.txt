@@ -1,0 +1,2 @@
+/usr/bin/ar cr libdata.a  CMakeFiles/data.dir/src/generated/msv/SteeringData.cpp.o CMakeFiles/data.dir/src/generated/msv/SensorBoardData.cpp.o CMakeFiles/data.dir/src/generated/msv/UserButtonData.cpp.o
+/usr/bin/ranlib libdata.a

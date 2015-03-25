@@ -1,0 +1,102 @@
+Determining if the Q_WS_WIN exist failed with the following output:
+Change Dir: /home/msv/Desktop/project-template/sources/OpenDaVINCI-msv/build/CMakeFiles/CMakeTmp
+
+Run Build Command:/usr/bin/make "cmTryCompileExec3152245866/fast"
+/usr/bin/make -f CMakeFiles/cmTryCompileExec3152245866.dir/build.make CMakeFiles/cmTryCompileExec3152245866.dir/build
+make[1]: Entering directory '/home/msv/Desktop/project-template/sources/OpenDaVINCI-msv/build/CMakeFiles/CMakeTmp'
+/usr/bin/cmake -E cmake_progress_report /home/msv/Desktop/project-template/sources/OpenDaVINCI-msv/build/CMakeFiles/CMakeTmp/CMakeFiles 1
+Building CXX object CMakeFiles/cmTryCompileExec3152245866.dir/CheckSymbolExists.cxx.o
+/usr/bin/c++    -Wno-deprecated -Wall -Werror -Wextra -Wfloat-equal -Wshadow -Wpointer-arith -Wwrite-strings -Wpacked -pipe -ansi -Wmissing-format-attribute -Wredundant-decls -Wno-error=effc++ -Weffc++  -I/usr/include/qt4    -o CMakeFiles/cmTryCompileExec3152245866.dir/CheckSymbolExists.cxx.o -c /home/msv/Desktop/project-template/sources/OpenDaVINCI-msv/build/CMakeFiles/CMakeTmp/CheckSymbolExists.cxx
+/home/msv/Desktop/project-template/sources/OpenDaVINCI-msv/build/CMakeFiles/CMakeTmp/CheckSymbolExists.cxx: In function ‘int main(int, char**)’:
+/home/msv/Desktop/project-template/sources/OpenDaVINCI-msv/build/CMakeFiles/CMakeTmp/CheckSymbolExists.cxx:8:19: error: ‘Q_WS_WIN’ was not declared in this scope
+   return ((int*)(&Q_WS_WIN))[argc];
+                   ^
+CMakeFiles/cmTryCompileExec3152245866.dir/build.make:57: recipe for target 'CMakeFiles/cmTryCompileExec3152245866.dir/CheckSymbolExists.cxx.o' failed
+make[1]: Leaving directory '/home/msv/Desktop/project-template/sources/OpenDaVINCI-msv/build/CMakeFiles/CMakeTmp'
+make[1]: *** [CMakeFiles/cmTryCompileExec3152245866.dir/CheckSymbolExists.cxx.o] Error 1
+Makefile:114: recipe for target 'cmTryCompileExec3152245866/fast' failed
+make: *** [cmTryCompileExec3152245866/fast] Error 2
+
+File /home/msv/Desktop/project-template/sources/OpenDaVINCI-msv/build/CMakeFiles/CMakeTmp/CheckSymbolExists.cxx:
+/* */
+#include <QtCore/qglobal.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef Q_WS_WIN
+  return ((int*)(&Q_WS_WIN))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+
+Determining if the Q_WS_QWS exist failed with the following output:
+Change Dir: /home/msv/Desktop/project-template/sources/OpenDaVINCI-msv/build/CMakeFiles/CMakeTmp
+
+Run Build Command:/usr/bin/make "cmTryCompileExec4236801490/fast"
+/usr/bin/make -f CMakeFiles/cmTryCompileExec4236801490.dir/build.make CMakeFiles/cmTryCompileExec4236801490.dir/build
+make[1]: Entering directory '/home/msv/Desktop/project-template/sources/OpenDaVINCI-msv/build/CMakeFiles/CMakeTmp'
+/usr/bin/cmake -E cmake_progress_report /home/msv/Desktop/project-template/sources/OpenDaVINCI-msv/build/CMakeFiles/CMakeTmp/CMakeFiles 1
+Building CXX object CMakeFiles/cmTryCompileExec4236801490.dir/CheckSymbolExists.cxx.o
+/usr/bin/c++    -Wno-deprecated -Wall -Werror -Wextra -Wfloat-equal -Wshadow -Wpointer-arith -Wwrite-strings -Wpacked -pipe -ansi -Wmissing-format-attribute -Wredundant-decls -Wno-error=effc++ -Weffc++  -I/usr/include/qt4    -o CMakeFiles/cmTryCompileExec4236801490.dir/CheckSymbolExists.cxx.o -c /home/msv/Desktop/project-template/sources/OpenDaVINCI-msv/build/CMakeFiles/CMakeTmp/CheckSymbolExists.cxx
+/home/msv/Desktop/project-template/sources/OpenDaVINCI-msv/build/CMakeFiles/CMakeTmp/CheckSymbolExists.cxx: In function ‘int main(int, char**)’:
+/home/msv/Desktop/project-template/sources/OpenDaVINCI-msv/build/CMakeFiles/CMakeTmp/CheckSymbolExists.cxx:8:19: error: ‘Q_WS_QWS’ was not declared in this scope
+   return ((int*)(&Q_WS_QWS))[argc];
+                   ^
+CMakeFiles/cmTryCompileExec4236801490.dir/build.make:57: recipe for target 'CMakeFiles/cmTryCompileExec4236801490.dir/CheckSymbolExists.cxx.o' failed
+make[1]: Leaving directory '/home/msv/Desktop/project-template/sources/OpenDaVINCI-msv/build/CMakeFiles/CMakeTmp'
+make[1]: *** [CMakeFiles/cmTryCompileExec4236801490.dir/CheckSymbolExists.cxx.o] Error 1
+Makefile:114: recipe for target 'cmTryCompileExec4236801490/fast' failed
+make: *** [cmTryCompileExec4236801490/fast] Error 2
+
+File /home/msv/Desktop/project-template/sources/OpenDaVINCI-msv/build/CMakeFiles/CMakeTmp/CheckSymbolExists.cxx:
+/* */
+#include <QtCore/qglobal.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef Q_WS_QWS
+  return ((int*)(&Q_WS_QWS))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+
+Determining if the Q_WS_MAC exist failed with the following output:
+Change Dir: /home/msv/Desktop/project-template/sources/OpenDaVINCI-msv/build/CMakeFiles/CMakeTmp
+
+Run Build Command:/usr/bin/make "cmTryCompileExec1520714415/fast"
+/usr/bin/make -f CMakeFiles/cmTryCompileExec1520714415.dir/build.make CMakeFiles/cmTryCompileExec1520714415.dir/build
+make[1]: Entering directory '/home/msv/Desktop/project-template/sources/OpenDaVINCI-msv/build/CMakeFiles/CMakeTmp'
+/usr/bin/cmake -E cmake_progress_report /home/msv/Desktop/project-template/sources/OpenDaVINCI-msv/build/CMakeFiles/CMakeTmp/CMakeFiles 1
+Building CXX object CMakeFiles/cmTryCompileExec1520714415.dir/CheckSymbolExists.cxx.o
+/usr/bin/c++    -Wno-deprecated -Wall -Werror -Wextra -Wfloat-equal -Wshadow -Wpointer-arith -Wwrite-strings -Wpacked -pipe -ansi -Wmissing-format-attribute -Wredundant-decls -Wno-error=effc++ -Weffc++  -I/usr/include/qt4    -o CMakeFiles/cmTryCompileExec1520714415.dir/CheckSymbolExists.cxx.o -c /home/msv/Desktop/project-template/sources/OpenDaVINCI-msv/build/CMakeFiles/CMakeTmp/CheckSymbolExists.cxx
+/home/msv/Desktop/project-template/sources/OpenDaVINCI-msv/build/CMakeFiles/CMakeTmp/CheckSymbolExists.cxx: In function ‘int main(int, char**)’:
+/home/msv/Desktop/project-template/sources/OpenDaVINCI-msv/build/CMakeFiles/CMakeTmp/CheckSymbolExists.cxx:8:19: error: ‘Q_WS_MAC’ was not declared in this scope
+   return ((int*)(&Q_WS_MAC))[argc];
+                   ^
+CMakeFiles/cmTryCompileExec1520714415.dir/build.make:57: recipe for target 'CMakeFiles/cmTryCompileExec1520714415.dir/CheckSymbolExists.cxx.o' failed
+make[1]: Leaving directory '/home/msv/Desktop/project-template/sources/OpenDaVINCI-msv/build/CMakeFiles/CMakeTmp'
+make[1]: *** [CMakeFiles/cmTryCompileExec1520714415.dir/CheckSymbolExists.cxx.o] Error 1
+Makefile:114: recipe for target 'cmTryCompileExec1520714415/fast' failed
+make: *** [cmTryCompileExec1520714415/fast] Error 2
+
+File /home/msv/Desktop/project-template/sources/OpenDaVINCI-msv/build/CMakeFiles/CMakeTmp/CheckSymbolExists.cxx:
+/* */
+#include <QtCore/qglobal.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef Q_WS_MAC
+  return ((int*)(&Q_WS_MAC))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+
