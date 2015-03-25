@@ -49,6 +49,14 @@ namespace msv {
              * @return Reference to this instance.
              */
             Driver& operator=(const Driver &/*obj*/);
+			enum SENSOR_ID {
+				IR_FrontRight,
+				IR_Rear,
+				IR_RearRight,
+				US_FrontCenter,
+				US_FrontRight,
+				US_RearRight
+			};
 
         public:
             /**
