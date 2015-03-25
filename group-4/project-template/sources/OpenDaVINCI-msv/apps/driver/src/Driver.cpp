@@ -37,7 +37,7 @@ namespace msv {
         using namespace core::data;
         using namespace core::data::control;
         using namespace core::data::environment;
-	
+
         Driver::Driver(const int32_t &argc, char **argv) :
 	        ConferenceClientModule(argc, argv, "Driver") {
         }
@@ -45,85 +45,60 @@ namespace msv {
         Driver::~Driver() {}
 
         void Driver::setUp() {
-                //VehicleControl vc;
-		//vc.setSpeed(0.0);
 	        // This method will be call automatically _before_ running body().
         }
 
         void Driver::tearDown() {
-		
 	        // This method will be call automatically _after_ return from body().
         }
 
         // This method will do the main data processing job.
         ModuleState::MODULE_EXITCODE Driver::body() {
-		VehicleControl vc;
-		int speed = 2;
-		double back = Constants::PI + (Constants::PI/2);
+
 	        while (getModuleState() == ModuleState::RUNNING) {
                 // In the following, you find example for the various data sources that are available:
 
                 // 1. Get most recent vehicle data:
                 Container containerVehicleData = getKeyValueDataStore().get(Container::VEHICLEDATA);
                 VehicleData vd = containerVehicleData.getData<VehicleData> ();
-                //cerr << "Most recent vehicle data: '" << vd.toString() << "'" << endl;
-		cerr << vd.getHeading() << endl;
+                cerr << "Most recent vehicle data: '" << vd.toString() << "'" << endl;
+
                 // 2. Get most recent sensor board data:
-                //Container containerSensorBoardData = getKeyValueDataStore().get(Container::USER_DATA_0);
-                //SensorBoardData sbd = containerSensorBoardData.getData<SensorBoardData> ();
-                //cerr << "Most recent sensor board data: '" << sbd.toString() << "'" << endl;
+                Container containerSensorBoardData = getKeyValueDataStore().get(Container::USER_DATA_0);
+                SensorBoardData sbd = containerSensorBoardData.getData<SensorBoardData> ();
+                cerr << "Most recent sensor board data: '" << sbd.toString() << "'" << endl;
 
                 // 3. Get most recent user button data:
-                //Container containerUserButtonData = getKeyValueDataStore().get(Container::USER_BUTTON);
-                //UserButtonData ubd = containerUserButtonData.getData<UserButtonData> ();
-                //cerr << "Most recent user button data: '" << ubd.toString() << "'" << endl;
+                Container containerUserButtonData = getKeyValueDataStore().get(Container::USER_BUTTON);
+                UserButtonData ubd = containerUserButtonData.getData<UserButtonData> ();
+                cerr << "Most recent user button data: '" << ubd.toString() << "'" << endl;
 
                 // 4. Get most recent steering data as fill from lanedetector for example:
-                //Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_1);
-                //SteeringData sd = containerSteeringData.getData<SteeringData> ();
-                //cerr << "Most recent steering data: '" << sd.toString() << "'" << endl;
+                Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_1);
+                SteeringData sd = containerSteeringData.getData<SteeringData> ();
+                cerr << "Most recent steering data: '" << sd.toString() << "'" << endl;
 
 
 
                 // Design your control algorithm here depending on the input data from above.
-		Point3 position = vd.getPosition();
-                double desiredSteeringWheelAngle = 0;
-		if(position.getY() > 15 && vd.getHeading() >= Constants::PI && vd.getHeading() <= 1.2 * Constants::PI)
-		{
-			// backing
-			cerr << "WALLA" << endl;
-			speed = -1;
-			desiredSteeringWheelAngle = 25;
-		}
-		else if(position.getY() > 15 && vd.getHeading() <= back)
-		{
-			speed = 1;
-			desiredSteeringWheelAngle = -26;
-		}
-		else if(position.getY() < 0)
-		{
-			vc.setBrakeLights(true);
-			speed = 0;
-		}
-		else
-		{
-			speed = 2;
-			desiredSteeringWheelAngle = 0;
-		}
+
+
 
                 // Create vehicle control data.
-                //VehicleControl vc;
+                VehicleControl vc;
 
                 // With setSpeed you can set a desired speed for the vehicle in the range of -2.0 (backwards) .. 0 (stop) .. +2.0 (forwards)
-                vc.setSpeed(speed);
+                vc.setSpeed(2);
 
                 // With setSteeringWheelAngle, you can steer in the range of -26 (left) .. 0 (straight) .. +25 (right)
+                double desiredSteeringWheelAngle =
+                    sd.getExampleData() * 0.015;
                 vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
 
                 // You can also turn on or off various lights:
-                //vc.setBrakeLights(false);
-                //vc.setLeftFlashingLights(false);
-                //vc.setRightFlashingLights(false);
+                vc.setBrakeLights(false);
+                vc.setLeftFlashingLights(false);
+                vc.setRightFlashingLights(false);
 
                 // Create container for finally sending the data.
                 Container c(Container::VEHICLECONTROL, vc);

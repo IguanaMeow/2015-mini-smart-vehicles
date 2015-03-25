@@ -20,6 +20,7 @@
 #include <iostream>
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
+#include <opencv2/imgproc/imgproc.hpp>
 
 #include "core/macros.h"
 #include "core/base/KeyValueConfiguration.h"
@@ -41,6 +42,7 @@ namespace msv {
     using namespace core::data;
     using namespace core::data::image;
     using namespace tools::player;
+    using namespace cv;
 
     LaneDetector::LaneDetector(const int32_t &argc, char **argv) : ConferenceClientModule(argc, argv, "lanedetector"),
         m_hasAttachedToSharedImageMemory(false),
@@ -114,30 +116,96 @@ namespace msv {
 	    return retVal;
     }
 
-    // You should start your work in this method.
     void LaneDetector::processImage() {
         // Example: Show the image.
         if (m_debug) {
             if (m_image != NULL) {
-                cvShowImage("WindowShowImage", m_image);
+                //cvShowImage("WindowShowImage", m_image);
                 cvWaitKey(10);
             }
         }
 
-        //TODO: Start here.
 
+        Mat src(m_image);
+        Mat dst, cdst;
+        Canny(src, dst, 50, 200, 3);
+        cvtColor(dst, cdst, CV_GRAY2BGR);
+        cdst.setTo(Scalar::all(0));
 
-        // 1. Do something with the image m_image here, for example: find lane marking features, optimize quality, ...
+        vector<Vec4i> lines;
+        HoughLinesP(dst, lines, 1, CV_PI/180, 10, 15, 15);
 
+        // Remove lines on upper half of screen
+        for(size_t i = lines.size(); i > 0; i--)
+        {
+            Vec4i l = lines[i-1];
+            if(l[1] < src.rows/2 && l[3] < src.rows/2)
+            {
+                lines.erase(lines.begin() + i - 1);
+            }
+        }
+        // Draw lines
+        for(size_t i = 0; i < lines.size(); i++)
+        {
+            Vec4i l = lines[i];
+            line(cdst, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0, 0, 255), 1, CV_AA);
+        }
+        
+        // Draw center line
+        int center = src.cols / 2;
+        line(cdst, Point(center, 0), Point(center, src.rows), Scalar(255,0,0), 1, CV_AA);
+        int total = 0;
+        for(int i = 1; i < src.rows / (10 / (3.0 / 10.0)); i++)
+        {
+            int lx = -1;
+            int rx = 10000;
+            int y = src.rows - (i * 10);
+            for(size_t j = 0; j < lines.size(); j++)
+            {
+                Vec4i l = lines[j];
 
+                if((l[1] < y && l[3] > y) || (l[1] > y && l[3] < y))
+                {
+                    float ytotal = l[1] - l[3];
+                    float ypart = l[1] - y;
+                    float percent = ypart / ytotal;
+
+                    int x = (l[2] - l[0]) * percent + l[0];
+
+                    if(x < center)
+                    {
+                        if(x > lx)
+                        {
+                            lx = x;
+                        }
+                    }
+                    else
+                    {
+                        if(x < rx)
+                        {
+                            rx = x;
+                        }
+                    }
+                }
+            }
+            line(cdst, Point(lx, y), Point(src.cols/2, y), Scalar(0, 255, 255), 1, CV_AA);
+            line(cdst, Point(rx, y), Point(src.cols/2, y), Scalar(0, 255, 0), 1, CV_AA);
+            if(lx != -1 && rx != 10000)
+            {
+                int t = (lx - src.cols/2) + (rx - src.cols/2);
+                total += (t * (i * 0.15 + 1));
+            }
+        }
+        
+        imshow("asdf", cdst);
 
         // 2. Calculate desired steering commands from your image features to be processed by driver.
-
+        printf("Total: %i\n", total);
 
 
         // Here, you see an example of how to send the data structure SteeringData to the ContainerConference. This data structure will be received by all running components. In our example, it will be processed by Driver. To change this data structure, have a look at Data.odvd in the root folder of this source.
         SteeringData sd;
-        sd.setExampleData(1234.56);
+        sd.setExampleData(total);
 
         // Create container for finally sending the data.
         Container c(Container::USER_DATA_1, sd);
