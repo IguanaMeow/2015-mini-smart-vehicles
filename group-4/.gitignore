@@ -28,6 +28,9 @@
 *.app
 
 # Other stuff
-tags
+*tags
 *.cmake
-MakeFile
+*MakeFile*
+
+*/build*
+
