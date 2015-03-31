@@ -25,7 +25,10 @@
 #include "core/macros.h"
 #include "core/base/KeyValueConfiguration.h"
 #include "core/data/Container.h"
+#include "core/data/Constants.h"
 #include "core/data/image/SharedImage.h"
+#include "core/data/control/VehicleControl.h"
+#include "core/data/environment/VehicleData.h"
 #include "core/io/ContainerConference.h"
 #include "core/wrapper/SharedMemoryFactory.h"
 
@@ -41,6 +44,7 @@ namespace msv {
     using namespace core::base;
     using namespace core::data;
     using namespace core::data::image;
+    using namespace core::data::control;
     using namespace tools::player;
     using namespace cv;
 
@@ -117,23 +121,43 @@ namespace msv {
     }
 
     void LaneDetector::processImage() {
-        // Example: Show the image.
         if (m_debug) {
             if (m_image != NULL) {
-                //cvShowImage("WindowShowImage", m_image);
                 cvWaitKey(10);
             }
         }
 
+        // CONFIGURATION
+        // Portion of the screen used for lane detection
+        const float portion = 0.35;
+        // Amount of lines checked
+        const int rows = 25;
+        // Total value to turning degrees ratio
+        const float ratio = 0.0025;
+        // Increased weight of later lines (1 + weight * line#)
+        const float weight = 0.03;
+        // Max turn degrees per tick
+        const float maxturn = 1.75;
 
         Mat src(m_image);
         Mat dst, cdst;
+        const int center = src.cols / 2;
+        const int rowdist = (src.rows * portion) / rows;
+        const int lnull = -1;
+        const int rnull = src.cols + 1;
+        int lcount = 0;
+        int total = 0;
+        int left[rows];
+        int right[rows];
+
+        // Edge detection
         Canny(src, dst, 50, 200, 3);
         cvtColor(dst, cdst, CV_GRAY2BGR);
         cdst.setTo(Scalar::all(0));
 
+        // Line detection
         vector<Vec4i> lines;
-        HoughLinesP(dst, lines, 1, CV_PI/180, 10, 15, 15);
+        HoughLinesP(dst, lines, 1, CV_PI/180, 8, 10, 10);
 
         // Remove lines on upper half of screen
         for(size_t i = lines.size(); i > 0; i--)
@@ -144,6 +168,7 @@ namespace msv {
                 lines.erase(lines.begin() + i - 1);
             }
         }
+
         // Draw lines
         for(size_t i = 0; i < lines.size(); i++)
         {
@@ -152,14 +177,14 @@ namespace msv {
         }
         
         // Draw center line
-        int center = src.cols / 2;
         line(cdst, Point(center, 0), Point(center, src.rows), Scalar(255,0,0), 1, CV_AA);
-        int total = 0;
-        for(int i = 1; i < src.rows / (10 / (3.0 / 10.0)); i++)
+
+        // Calculate distance to lines
+        for(int i = 0; i < rows; i++)
         {
-            int lx = -1;
-            int rx = 10000;
-            int y = src.rows - (i * 10);
+            int lx = lnull;
+            int rx = rnull;
+            int y = src.rows - ((i + 1) * rowdist);
             for(size_t j = 0; j < lines.size(); j++)
             {
                 Vec4i l = lines[j];
@@ -188,28 +213,121 @@ namespace msv {
                     }
                 }
             }
-            line(cdst, Point(lx, y), Point(src.cols/2, y), Scalar(0, 255, 255), 1, CV_AA);
-            line(cdst, Point(rx, y), Point(src.cols/2, y), Scalar(0, 255, 0), 1, CV_AA);
-            if(lx != -1 && rx != 10000)
+            left[i] = lx;
+            right[i] = rx;
+            if(lx != lnull)
             {
-                int t = (lx - src.cols/2) + (rx - src.cols/2);
-                total += (t * (i * 0.15 + 1));
+                lcount++;
             }
         }
-        
-        imshow("asdf", cdst);
 
-        // 2. Calculate desired steering commands from your image features to be processed by driver.
-        printf("Total: %i\n", total);
+        // Predict lines in front
+        for(int i = 1; i < rows; i++)
+        {
+            if(left[i] == lnull && left[i - 1] != lnull)
+            {
+                int j = i;
+                while(++j < rows && left[j] == lnull);
+                if(j != rows)
+                {
+                    left[i] = left[i - 1] + (left[j] - left[i - 1]) / (j - (i - 1));
+                }
+                else
+                {
+                    left[i] = left[i - 1] + (left[i - 1] - left[i - 2]);
+                }
+            }
+            if(right[i] == rnull && right[i - 1] != rnull)
+            {
+                int j = i;
+                while(++j < rows && right[j] == rnull);
+                if(j != rows)
+                {
+                    right[i] = right[i - 1] + (right[j] - right[i - 1]) / (j - (i - 1));
+                }
+                else
+                {
+                    right[i] = right[i - 1] + (right[i - 1] - right[i - 2]);
+                }
+            }
+        }
 
+        // Predict lines backwards
+        for(int i = rows - 2; i >= 0; i--)
+        {
+            if(left[i] == lnull && left[i + 1] != lnull)
+            {
+                int j = i;
+                while(--j < rows && left[j] == lnull);
+                if(j != -1)
+                {
+                    left[i] = left[i + 1] + (left[j] - left[i + 1]) / (j - (i + 1));
+                }
+                else
+                {
+                    left[i] = left[i + 1] + (left[i + 1] - left[i + 2]);
+                }
+            }
+            if(right[i] == rnull && right[i + 1] != rnull)
+            {
+                int j = i;
+                while(--j < rows && right[j] == rnull);
+                if(j != -1)
+                {
+                    right[i] = right[i + 1] + (right[j] - right[i + 1]) / (j - (i + 1));
+                }
+                else
+                {
+                    right[i] = right[i + 1] + (right[i + 1] - right[i + 2]);
+                }
+            }
+        }
 
-        // Here, you see an example of how to send the data structure SteeringData to the ContainerConference. This data structure will be received by all running components. In our example, it will be processed by Driver. To change this data structure, have a look at Data.odvd in the root folder of this source.
+        // Calculate sum of distances
+        for(int i = 0; i < rows; i++)
+        {
+            int y = src.rows - ((i + 1) * rowdist);
+            if(lcount > 3)
+            {
+                /*if(i == 0 ||
+                    (left[i] - left[i - 1] > -100 &&
+                    right[i] - right[i - 1] < 100))*/
+                {
+                    line(cdst, Point(left[i], y), Point(center, y), Scalar(0, 255, 255), 1, CV_AA);
+                    line(cdst, Point(right[i], y), Point(center, y), Scalar(0, 255, 0), 1, CV_AA);
+                    total += (-left[i] + center - (right[i] - center)) * (i * weight + 1);
+                }
+                /*else
+                {
+                    printf("%f\n", (float)left[i - 1] / (float)left[i]);
+                    break;
+                }*/
+            }
+        }
+
+        // Show image
+        imshow("Lane Detection", cdst);
+
+        // Retrieve previous steeringdata
+        Container vehicleControlData = getKeyValueDataStore().get(Container::VEHICLECONTROL);
+        VehicleControl vc = vehicleControlData.getData<VehicleControl>();
+
+        // Calculate new angle
+        double prevAngle = vc.getSteeringWheelAngle() * Constants::RAD2DEG;
+        double diff = (total * -ratio) - prevAngle;
+        diff = fmin(maxturn, diff);
+        diff = fmax(-maxturn, diff);
+        double newAngle = prevAngle + diff;
+
+        // Create SteeringData
         SteeringData sd;
-        sd.setExampleData(total);
+        sd.setExampleData(newAngle);
 
-        // Create container for finally sending the data.
+        printf("Total: %i, %f, Heading: %f\n", total, prevAngle, diff);
+
+        // Create container for sending the data
         Container c(Container::USER_DATA_1, sd);
-        // Send container.
+        // Send container
         getConference().send(c);
     }
 

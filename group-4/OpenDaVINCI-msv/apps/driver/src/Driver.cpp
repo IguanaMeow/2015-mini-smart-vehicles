@@ -79,21 +79,16 @@ namespace msv {
                 cerr << "Most recent steering data: '" << sd.toString() << "'" << endl;
 
 
-
                 // Design your control algorithm here depending on the input data from above.
-
-
 
                 // Create vehicle control data.
                 VehicleControl vc;
 
                 // With setSpeed you can set a desired speed for the vehicle in the range of -2.0 (backwards) .. 0 (stop) .. +2.0 (forwards)
-                vc.setSpeed(2);
+                vc.setSpeed(5);
 
                 // With setSteeringWheelAngle, you can steer in the range of -26 (left) .. 0 (straight) .. +25 (right)
-                double desiredSteeringWheelAngle =
-                    sd.getExampleData() * 0.015;
-                vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
+                vc.setSteeringWheelAngle(sd.getExampleData() * Constants::DEG2RAD);
 
                 // You can also turn on or off various lights:
                 vc.setBrakeLights(false);
