@@ -131,13 +131,13 @@ namespace msv {
         // Portion of the screen used for lane detection
         const float portion = 0.35;
         // Amount of lines checked
-        const int rows = 25;
+        const int rows = 20;
         // Total value to turning degrees ratio
-        const float ratio = 0.0025;
+        const float ratio = 0.0006;
         // Increased weight of later lines (1 + weight * line#)
-        const float weight = 0.03;
+        const float weight = 0.5;
         // Max turn degrees per tick
-        const float maxturn = 1.75;
+        const float maxturn = 2.5;
 
         Mat src(m_image);
         Mat dst, cdst;
