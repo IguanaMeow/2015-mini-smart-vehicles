@@ -38,6 +38,14 @@ namespace msv {
         using namespace core::data::control;
         using namespace core::data::environment;
 
+        const int MIN_PARKING_SPACE = 5;
+        double start;
+        double end;
+        int parkingState = 0;
+        double gaplength;
+        double TotalParkingSpace;
+        int state;
+        int count=0;
         Driver::Driver(const int32_t &argc, char **argv) :
 	        ConferenceClientModule(argc, argv, "Driver") {
         }
@@ -86,13 +94,85 @@ namespace msv {
 
                 // Create vehicle control data.
                 VehicleControl vc;
-
+                TimeStamp ts;
+                
                 // With setSpeed you can set a desired speed for the vehicle in the range of -2.0 (backwards) .. 0 (stop) .. +2.0 (forwards)
-                vc.setSpeed(0.4);
+               
+                
+                // With setSteeringWheelAngle, you can steer in the range of -26 (left) .. 0 (straight) .. +25 (right)
+                double desiredSteeringWheelAngle = sd.getExampleData(); // 4 degree but SteeringWheelAngle expects the angle in radians!
+               
+                if(sd.getIntersectionFound()<1.0 && state==0){
+                        
+                vc.setSpeed(4.0);
+                vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
+
+
+                }else{
+                        state=1;
+        }
+        if(state==1){
+            
+                cout<<"state 1"<<endl;
+                vc.setSpeed(0.0);
+                vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
+                count++;
+                if(count > 100){
+                        state=0;
+                        sd.setIntersectionFound(0.0);
+                        count=0;
+                }
+        }
+         
+                // Get distance of sensor 0 IFFr
+                /*double infraredFrontRight = sbd.getValueForKey_MapOfDistances(0);
+
+                double infraredRearRight = sbd.getValueForKey_MapOfDistances(2);
+                std::cout << "Sensor infrared front right"<< infraredRearRight  << std::endl;
+
+                if(infraredFrontRight>0){
+                        start = vd.getAbsTraveledPath();
+                }
+                std::cout << "Parking start"<< start << std::endl;
+
+                if(infraredFrontRight<0){
+                        end = vd.getAbsTraveledPath();
+                }
+                std::cout << "Parking end"<< end << std::endl;
+
+                gaplength = end - start;
+                std::cout << "Parking distance"<< gaplength << std::endl;
+
+                //Check if have a min space to park and save Total Parking Space
+                if(gaplength > MIN_PARKING_SPACE){
+                        parkingState = 1;
+        
+                        if(gaplength >0){
+                                TotalParkingSpace = gaplength;
+                        }
+
+
+                }
+                std::cout << "Total Parking length"<< TotalParkingSpace << std::endl;
+
+                //Stop the car when rear right infrared sensor is in line with object.
+                if(parkingState==1 && infraredRearRight > 0){
+                        vc.setSpeed(0.0);
+                }
+
+
+                
+        
+
+
+                
+                
+                */
+
 
                 // With setSteeringWheelAngle, you can steer in the range of -26 (left) .. 0 (straight) .. +25 (right)
-                double desiredSteeringWheelAngle = 4; // 4 degree but SteeringWheelAngle expects the angle in radians!
-                vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
+                //double desiredSteeringWheelAngle = 4; // 4 degree but SteeringWheelAngle expects the angle in radians!
+                //vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
 
                 // You can also turn on or off various lights:
                 vc.setBrakeLights(false);
