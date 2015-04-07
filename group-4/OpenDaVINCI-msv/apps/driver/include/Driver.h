@@ -21,10 +21,16 @@
 #define DRIVER_H_
 
 #include "core/base/ConferenceClientModule.h"
+#include "core/data/environment/Point3.h"
+ #include "core/data/environment/VehicleData.h"
+#include "core/data/control/VehicleControl.h"
+
 
 namespace msv {
 
     using namespace std;
+    using namespace core::data::environment;
+    using namespace core::data::control;
 
     /**
      * This class is a skeleton to send driving commands to Hesperia-light's vehicle driving dynamics simulation.
@@ -49,14 +55,14 @@ namespace msv {
              * @return Reference to this instance.
              */
             Driver& operator=(const Driver &/*obj*/);
-			enum SENSOR_ID {
-				IR_FrontRight,
-				IR_Rear,
-				IR_RearRight,
-				US_FrontCenter,
-				US_FrontRight,
-				US_RearRight
-			};
+            enum SENSOR_ID {
+                IR_FrontRight,
+                IR_Rear,
+                IR_RearRight,
+                US_FrontCenter,
+                US_FrontRight,
+                US_RearRight
+            };
 
         public:
             /**
@@ -71,10 +77,36 @@ namespace msv {
 
             core::base::ModuleState::MODULE_EXITCODE body();
 
+            
+
         private:
+
             virtual void setUp();
 
             virtual void tearDown();
+// find suitable gap
+            bool find_gapStart(bool* is_measure,double* oldValue,double* newValue);
+            bool find_gapEnd(bool* is_measure,double* oldValue,double* newValue);
+
+            void recording(double, double);
+            void startMeasure(Point3);
+            void finishMeasure(Point3);
+            void stopforParking();
+            void defaultDriving();
+// start parking
+
+            void pre_parking();
+            bool is_readyParking();
+            void tureWheelToRight();
+            void tureWheelToLeft();
+
+
+/*
+            virtual bool is_space(double oldValue, double newValue);
+            
+            virtual void findGapEnd();
+            virtual void defaultDrive();
+*/
     };
 
 } // msv
