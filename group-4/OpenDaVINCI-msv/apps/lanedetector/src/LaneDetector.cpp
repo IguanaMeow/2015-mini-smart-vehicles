@@ -321,7 +321,7 @@ namespace msv {
 
         // Create SteeringData
         SteeringData sd;
-        sd.setExampleData(newAngle);
+        sd.setWheelAngle(newAngle);
 
         printf("Total: %i, %f, Heading: %f\n", total, prevAngle, diff);
 

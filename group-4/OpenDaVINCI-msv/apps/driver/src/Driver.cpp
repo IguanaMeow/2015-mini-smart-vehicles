@@ -224,9 +224,9 @@ namespace msv {
             //cerr << "Most recent user button data: '" << ubd.toString() << "'" << endl;
 
             // 4. Get most recent steering data as fill from lanedetector for example:
-            //Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_1);
-            //SteeringData sd = containerSteeringData.getData<SteeringData> ();
-            //cerr << "Most recent steering data: '" << sd.toString() << "'" << endl;
+            Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_1);
+            SteeringData sd = containerSteeringData.getData<SteeringData> ();
+            cerr << "Most recent steering data: '" << sd.toString() << "'" << endl;
 
             // Design your control algorithm here depending on the input data from above.
             Point3 position = vd.getPosition();
@@ -280,23 +280,19 @@ namespace msv {
                 if (headingAngle < 91 && boo_parkingReady){
                     stopforParking();
                 }
-
-
             }
-
-
-
-     
 
 
             // Create vehicle control data.
             //VehicleControl vc;
 
             // With setSpeed you can set a desired speed for the vehicle in the range of -2.0 (backwards) .. 0 (stop) .. +2.0 (forwards)
-            vc.setSpeed(speed);
+            vc.setSpeed(10);
+            //vc.setSpeed(speed);
 
             // With setSteeringWheelAngle, you can steer in the range of -26 (left) .. 0 (straight) .. +25 (right)
-            vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
+            vc.setSteeringWheelAngle(sd.getWheelAngle() * Constants::DEG2RAD);
+            //vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
 
             // You can also turn on or off various lights:
             //vc.setBrakeLights(false);
