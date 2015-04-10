@@ -38,8 +38,13 @@
 #include "LaneDetector.h"
 #include "Lines.h"
 
+/* Measures the distance to full-white lines */
 double measureDistance(int yPos, int dir, IplImage* image);
+
+/* Measures the angle between delta X and delta Y */
 double measureAngle(int yPos1, int xPos1, int yPos2, int xPos2);
+
+/* Scans for two valid lines in a vector of lines */
 std::vector<Lines> validateLines(std::vector<Lines> lines);
 
 
@@ -158,36 +163,56 @@ namespace msv {
       SteeringData sd;
       sd.setSpeedData(2);
 
+      // Following upper right lines
       if(rightLine1.getXPos() > 270 && rightLine2.getXPos() > 270 && leftLine1.getXPos() > 270 && leftLine2.getXPos() > 270)
       {
         std::cout << "state 1" << std::endl;
-       if (rightLine3.getXPos() < rightLine3.getCritical() - 2) {
-            sd.setHeadingData(-measureAngle(m_image->height - 255, rightLine4.getXPos(), m_image->height - 245, rightLine3.getXPos()));
-          } else if (rightLine3.getXPos() > rightLine3.getCritical() + 2) {
-            sd.setHeadingData(measureAngle(m_image->height - 255, rightLine4.getXPos(), m_image->height - 245, rightLine3.getXPos()));
-          } else {
-            sd.setHeadingData(0.0);
-          }
-      }else if (rightLine1.getXPos() > 270 && rightLine2.getXPos() > 270)
+        // Steer to the left
+        if (rightLine3.getXPos() < rightLine3.getCritical() - 2) {
+          sd.setHeadingData(-measureAngle(m_image->height - 255, rightLine4.getXPos(), m_image->height - 245, rightLine3.getXPos()));
+        } 
+        // Steer to the right
+        else if (rightLine3.getXPos() > rightLine3.getCritical() + 2) {
+          sd.setHeadingData(measureAngle(m_image->height - 255, rightLine4.getXPos(), m_image->height - 245, rightLine3.getXPos()));
+        } 
+        // Steer straight
+        else {
+          sd.setHeadingData(0.0);
+        }
+      }
+      // Follow left lines
+      else if (rightLine1.getXPos() > 270 && rightLine2.getXPos() > 270)
       {
         std::cout << "state 2" << std::endl;
+        // Get two valid lines to base steering on
         vector<Lines> valid = validateLines(leftList);
+        // Steer to the right
         if (valid.begin()->getXPos() < valid.begin()->getCritical() - 2) {
-            sd.setHeadingData(-measureAngle(m_image->height - valid.end()->getYPos(), valid.end()->getXPos(), m_image->height - valid.begin()->getYPos(), valid.begin()->getXPos()));
-          } else if (valid.begin()->getXPos() > valid.begin()->getCritical() + 2) {
-            sd.setHeadingData(measureAngle(m_image->height - valid.end()->getYPos(), valid.end()->getXPos(), m_image->height - valid.begin()->getYPos(), valid.begin()->getXPos()));
-          } else {
-            sd.setHeadingData(0.0);
-          }
-         
-      }else
+          sd.setHeadingData(-measureAngle(m_image->height - valid.end()->getYPos(), valid.end()->getXPos(), m_image->height - valid.begin()->getYPos(), valid.begin()->getXPos()));
+        } 
+        // Steer to the left
+        else if (valid.begin()->getXPos() > valid.begin()->getCritical() + 2) {
+          sd.setHeadingData(measureAngle(m_image->height - valid.end()->getYPos(), valid.end()->getXPos(), m_image->height - valid.begin()->getYPos(), valid.begin()->getXPos()));
+        } 
+        // Steer straight
+        else {
+           sd.setHeadingData(0.0);
+        }   
+      }
+      // Follow the lower right lines
+      else
       {
         std::cout << "state 3" << std::endl;
+        // Steer to the left
         if (rightLine1.getXPos() < rightLine1.getCritical() - 2) {
             sd.setHeadingData(-measureAngle(m_image->height - 70, rightLine2.getXPos(), m_image->height - 50, rightLine1.getXPos()));
-          } else if (rightLine1.getXPos() > rightLine1.getCritical() + 2) {
+        } 
+        // Steer to the right
+        else if (rightLine1.getXPos() > rightLine1.getCritical() + 2) {
             sd.setHeadingData(measureAngle(m_image->height - 70, rightLine2.getXPos(), m_image->height - 50, rightLine1.getXPos()));
-          } else {
+        } 
+        // Steer straight
+        else {
             sd.setHeadingData(0.0);
           }
       }
@@ -269,17 +294,18 @@ namespace msv {
 
 } // msv
 
-
-// Takes a vector of the lines, create an iterator which iterates through the vector and checks if the x possition is valid. If it is it will add it to the new vector. Repeat until there are no more lines in the vector, or if j is greater or equal to 2. Meaning we have two valid lines.
 std::vector<Lines> validateLines(std::vector<Lines> lines)
 {
   std::vector<Lines> line;
   int j = 0;
 
+  // Iterates through the vector of lines and stops when two valid lines have been found.
   for(std::vector<Lines>::iterator it = lines.begin(); it != lines.end() && j < 2; it++ )
   {
+    // As long as the lines X-position isn't extremely out of bounds...
     if(it->getXPos() < 270)
     {
+      // ...add it to the vector.
       line.push_back(*it);
       j++;
     }
@@ -305,11 +331,11 @@ double measureDistance(int yPos, int dir, IplImage* image) {
   int x = image->width;
   int y = image->height; 
   int step = image->widthStep;
-  //3: R, G, B
   int channel = image->nChannels;
   //pointer to aligned data
   uchar* data = (uchar*)image->imageData;
   
+  // OpenCV variable declarations and instantiations
   cv::Mat newImage = cv::cvarrToMat(image);
   cv::Point ptMiddle;
   cv::Point ptRight;
@@ -320,11 +346,12 @@ double measureDistance(int yPos, int dir, IplImage* image) {
   ptMiddle.y = y-yPos;
   ptRight.y = y-yPos;
   ptLeft.y = y-yPos;
-  //the argument yPos is xPos for ptDown
+  // The argument "yPos" is the xPos for ptDown
   ptDown.x = yPos;
   ptDown.y = y;
   ptUp.x = yPos;
   
+  // Scans for full-white line to the right
   if (dir == 1){
     for(i = x/2; i<x; i++){
       int r = data[(y-yPos)*step + i*channel + 0];
@@ -335,14 +362,12 @@ double measureDistance(int yPos, int dir, IplImage* image) {
         ptRight.x = i;
         break;
       }
-      
       distance++;
-      
-      //std::cout << distance << std::endl;
     }
     line(newImage, ptMiddle, ptRight, cvScalar(127,255,0), 3, 8);
-
-  } else if (dir==0){
+  }
+  // Scans for full-white line to the left 
+  else if (dir==0){
     for(i = x/2; i>0; i--){
       int r = data[(y-yPos)*step + i*channel + 0];
       int g = data[(y-yPos)*step + i*channel + 1];
@@ -353,11 +378,11 @@ double measureDistance(int yPos, int dir, IplImage* image) {
         break;
       }
       distance++;
-      //std::cout << i << " cake " << std::endl;
-      //std::cout << distance << std::endl;
     }
     line(newImage, ptMiddle, ptLeft, cvScalar(139,0,139), 3, 8);
-  }else {
+  }
+  // Scans for upper full-white line
+  else {
   	for(i = 0; i< y-1; i++){
       int r = data[step*(y-1)+ yPos*channel + 0 -i*step];
       int g = data[step*(y-1)+ yPos*channel + 1 -i*step];
@@ -368,12 +393,9 @@ double measureDistance(int yPos, int dir, IplImage* image) {
         break;
       }
       distance++;
-      //std::cout << i << " cake " << std::endl;
-      //std::cout << distance << std::endl;
     }
     
     line(newImage, ptDown, ptUp, cvScalar(0,133,0), 1, 8);
-	
-}
+  }
   return distance;
 }
