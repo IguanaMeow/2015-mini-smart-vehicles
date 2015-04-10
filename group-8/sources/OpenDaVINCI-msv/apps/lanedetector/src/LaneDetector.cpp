@@ -49,11 +49,25 @@ namespace msv {
     using namespace core::data::image;
     using namespace tools::player;
 
+    
+
     LaneDetector::LaneDetector(const int32_t &argc, char **argv) : ConferenceClientModule(argc, argv, "lanedetector"),
         m_hasAttachedToSharedImageMemory(false),
         m_sharedImageMemory(),
         m_image(NULL),
-        m_debug(false) {}
+        m_debug(false),
+        rightLine1(0, 50, 250),
+        rightLine2(0, 70, 0),
+        rightLine3(0, 245, 63),
+        rightLine4(0, 255, 0),
+
+        leftLine1(0, 90, 214),
+        leftLine2(0, 115, 190),
+        leftLine3(0, 140, 167),
+        leftLine4(0, 165, 144),
+        
+        upline1(270, 0, 100),
+        upline2(320, 0, 100) {}
 
     LaneDetector::~LaneDetector() {}
 
@@ -122,15 +136,7 @@ namespace msv {
     }
 
     void LaneDetector::processImage() {
-      Lines rightLine1(0, 50, 250);
-      Lines rightLine2(0, 70, 0);
-      Lines rightLine3(0, 245, 63);
-      Lines rightLine4(0, 255, 0);
-
-      Lines leftLine1(0, 90, 214);
-      Lines leftLine2(0, 115, 190);
-      Lines leftLine3(0, 140, 167);
-      Lines leftLine4(0, 165, 144);
+      
 
 
       upline1.setYPos(measureDistance(100, 2, m_image));
@@ -178,7 +184,7 @@ namespace msv {
       {
         std::cout << "state 2" << std::endl;
         // Get two valid lines to base steering on
-        vector<Lines> valid = validateLines(leftList);
+        vector<Lines> valid = validateLines(&leftList);
         // Steer to the right
         if (valid.begin()->getXPos() < valid.begin()->getCritical() - 2) {
           sd.setHeadingData(-measureAngle(m_image->height - valid.end()->getYPos(), valid.end()->getXPos(), m_image->height - valid.begin()->getYPos(), valid.begin()->getXPos()));
@@ -284,9 +290,7 @@ namespace msv {
 
       return ModuleState::OKAY;
     }
-
-} // msv
-
+    
 std::vector<Lines> LaneDetector::validateLines(std::vector<Lines>* lines)
 {
   std::vector<Lines> line;
@@ -376,7 +380,7 @@ double LaneDetector::measureDistance(int yPos, int dir, IplImage* image) {
   }
   // Scans for upper full-white line
   else {
-  	for(i = 0; i< y-1; i++){
+    for(i = 0; i< y-1; i++){
       int r = data[step*(y-1)+ yPos*channel + 0 -i*step];
       int g = data[step*(y-1)+ yPos*channel + 1 -i*step];
       int b = data[step*(y-1)+ yPos*channel + 2 -i*step];
@@ -392,3 +396,5 @@ double LaneDetector::measureDistance(int yPos, int dir, IplImage* image) {
   }
   return distance;
 }
+
+} // msv

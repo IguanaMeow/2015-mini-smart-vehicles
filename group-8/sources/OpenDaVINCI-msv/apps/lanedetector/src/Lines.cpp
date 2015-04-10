@@ -1,11 +1,10 @@
 #include "Lines.h"
 
-Lines::Lines(double x, double y, double crit)
-{
-	xPos = x;
-	yPos = y;
-	critical = crit;
-}
+Lines::Lines(double x, double y, double crit) :
+	xPos(x),
+	yPos(y),
+	critical(crit) {}
+	
 
 double Lines::getXPos()
 {
