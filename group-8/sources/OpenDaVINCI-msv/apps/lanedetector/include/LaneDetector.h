@@ -83,19 +83,36 @@ namespace msv {
 	        IplImage *m_image;
             bool m_debug;
 
-	        virtual void setUp();
-
-	        virtual void tearDown();
-
-            void processImage();
+			/* Scans for two valid lines in a vector of lines */
+			std::vector<Lines> validateLines(std::vector<Lines>* lines);
+            
             /* Measures the distance to full-white lines */
 			double measureDistance(int yPos, int dir, IplImage* image);
 
 			/* Measures the angle between delta X and delta Y */
 			double measureAngle(int yPos1, int xPos1, int yPos2, int xPos2);
 
-			/* Scans for two valid lines in a vector of lines */
-			std::vector<Lines> validateLines(std::vector<Lines>* lines);
+
+
+	        virtual void setUp();
+
+	        virtual void tearDown();
+
+            void processImage();
+            
+			Lines rightLine1;
+        	Lines rightLine2;
+        	Lines rightLine3;
+        	Lines rightLine4;
+
+        	Lines leftLine1;
+        	Lines leftLine2;
+        	Lines leftLine3;
+        	Lines leftLine4;
+        	Lines upline1;
+        	Lines upline2;
+
+
 	};
 
 } // msv
