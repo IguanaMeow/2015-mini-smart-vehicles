@@ -88,7 +88,15 @@ namespace msv {
 	        virtual void tearDown();
 
             void processImage();
-    };
+            /* Measures the distance to full-white lines */
+			double measureDistance(int yPos, int dir, IplImage* image);
+
+			/* Measures the angle between delta X and delta Y */
+			double measureAngle(int yPos1, int xPos1, int yPos2, int xPos2);
+
+			/* Scans for two valid lines in a vector of lines */
+			std::vector<Lines> validateLines(std::vector<Lines>* lines);
+	};
 
 } // msv
 

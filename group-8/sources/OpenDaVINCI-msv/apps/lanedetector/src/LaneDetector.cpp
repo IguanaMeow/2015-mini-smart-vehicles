@@ -38,14 +38,7 @@
 #include "LaneDetector.h"
 #include "Lines.h"
 
-/* Measures the distance to full-white lines */
-double measureDistance(int yPos, int dir, IplImage* image);
 
-/* Measures the angle between delta X and delta Y */
-double measureAngle(int yPos1, int xPos1, int yPos2, int xPos2);
-
-/* Scans for two valid lines in a vector of lines */
-std::vector<Lines> validateLines(std::vector<Lines> lines);
 
 
 namespace msv {
@@ -294,13 +287,13 @@ namespace msv {
 
 } // msv
 
-std::vector<Lines> validateLines(std::vector<Lines> lines)
+std::vector<Lines> LaneDetector::validateLines(std::vector<Lines>* lines)
 {
   std::vector<Lines> line;
   int j = 0;
 
   // Iterates through the vector of lines and stops when two valid lines have been found.
-  for(std::vector<Lines>::iterator it = lines.begin(); it != lines.end() && j < 2; it++ )
+  for(std::vector<Lines>::iterator it = lines->begin(); it != lines->end() && j < 2; it++ )
   {
     // As long as the lines X-position isn't extremely out of bounds...
     if(it->getXPos() < 270)
@@ -314,7 +307,7 @@ std::vector<Lines> validateLines(std::vector<Lines> lines)
 
 }
 
-double measureAngle(int yPos1, int xPos1, int yPos2, int xPos2) {
+double LaneDetector::measureAngle(int yPos1, int xPos1, int yPos2, int xPos2) {
   double deltaY = yPos2 - yPos1;
   double deltaX = xPos2 - xPos1;
 
@@ -325,7 +318,7 @@ double measureAngle(int yPos1, int xPos1, int yPos2, int xPos2) {
   return angle;
 }
 
-double measureDistance(int yPos, int dir, IplImage* image) {
+double LaneDetector::measureDistance(int yPos, int dir, IplImage* image) {
   
   int i = 0, distance = 0;
   int x = image->width;
