@@ -86,9 +86,9 @@ You may need to create symlinks to your pandaboard files so do the following:
 
 ```mkdir /usr/lib/arm-linux-gnueabihf/```
 
-```ln -s /opt/PandaBoard/lib/arm-linux-gnueabihf/ /lib/arm-linux-gnueabihf/```
+```ln -s /opt/PandaBoard-SD/lib/arm-linux-gnueabihf/ /lib/arm-linux-gnueabihf/```
 
-```ln -s /opt/PandaBoard/usr/lib/arm-linux-gnueabihf/ /usr/lib/arm-linux-gnueabihf/```
+```ln -s /opt/PandaBoard-SD/usr/lib/arm-linux-gnueabihf/ /usr/lib/arm-linux-gnueabihf/```
 
 After you `make install`, make sure you are able to connect to the odroid (sd card is back in and you know you can ssh to it)
 
