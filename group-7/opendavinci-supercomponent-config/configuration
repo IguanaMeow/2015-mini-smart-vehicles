@@ -193,4 +193,3 @@ Vehicle.LinearBicycleModel.Kthrottle=40.0
 Vehicle.LinearBicycleModel.tauBrake=1.0
 Vehicle.LinearBicycleModel.KstaticBrake=100.0
 Vehicle.LinearBicycleModel.KdynamicBrake=60.0
-

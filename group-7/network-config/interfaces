@@ -18,9 +18,9 @@ iface GU inet static
 	gateway 172.16.0.1
 
 iface CRF inet static
-	address 192.168.0.7
+	address 172.168.1.7
 	netmask 255.255.255.0
-	gateway 192.168.0.1
+	gateway 172.168.1.1
 
 
 #auto eth0
@@ -30,4 +30,4 @@ iface CRF inet static
 #	netmask 255.255.255.0
 #	gateway 192.168.196.1
 
-#dns-nameservers 8.8.8.8
+dns-nameservers 8.8.8.8
