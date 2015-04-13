@@ -152,9 +152,9 @@ namespace msv {
         //draws the lines
         /*
                 matImg = the img
-        Rightpoint = startpoint
-        RightpointEnd, = endpoint
-        cv::Scalar(CV_RGB(255,0,0);)= color of the line (Red ,Green ,Blue)
+        centerRight = startpoint
+        Right, = endpoint
+        cv::Scalar(255,0,0)= color of the line (Red ,Green ,Blue)
         1,// Linethickness
         8
         */
