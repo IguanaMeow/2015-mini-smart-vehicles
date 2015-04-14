@@ -112,6 +112,8 @@ namespace msv {
         	Lines upline1;
         	Lines upline2;
 
+        	int state;
+        	int counter;
 
 	};
 

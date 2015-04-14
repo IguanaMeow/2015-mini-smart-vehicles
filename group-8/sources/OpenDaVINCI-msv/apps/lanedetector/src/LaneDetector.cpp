@@ -66,8 +66,10 @@ namespace msv {
         leftLine3(0, 140, 167),
         leftLine4(0, 165, 144),
         
-        upline1(300, 0, 200),
-        upline2(340, 0, 200) {}
+        upline1(300, 0, 120),
+        upline2(340, 0, 120),
+        state(1),
+        counter(0) {}
 
     LaneDetector::~LaneDetector() {}
 
@@ -137,8 +139,6 @@ namespace msv {
 
     void LaneDetector::processImage() {
       
-
-
       upline1.setYPos(measureDistance(300, 2, m_image));
       upline2.setYPos(measureDistance(340, 2, m_image));
 
@@ -160,16 +160,15 @@ namespace msv {
       leftList.push_back(leftLine4);
 
       SteeringData sd;
-      sd.setSpeedData(2);
+      //sd.setSpeedData(2);
 
-      if((upline1.getYPos()-upline2.getYPos()<10 || upline2.getYPos()-upline1.getYPos()<10)&& upline1.getYPos()<upline1.getCritical()){
-      	sd.setSpeedData(0);
-      }
-
-      // Following upper right lines
-      if(rightLine1.getXPos() > 270 && rightLine2.getXPos() > 270 && leftLine1.getXPos() > 270 && leftLine2.getXPos() > 270)
+      switch (state) {
+        case 1: // Lanedetection state
+          std::cout << "state 1" << std::endl;
+          sd.setSpeedData(2);
+          // Following upper right lines
+          if(rightLine1.getXPos() > 270 && rightLine2.getXPos() > 270 && leftLine1.getXPos() > 270 && leftLine2.getXPos() > 270)
       {
-        std::cout << "state 1" << std::endl;
         // Steer to the left
         if (rightLine3.getXPos() < rightLine3.getCritical() - 2) {
           sd.setHeadingData(-measureAngle(m_image->height - 255, rightLine4.getXPos(), m_image->height - 245, rightLine3.getXPos()));
@@ -186,7 +185,6 @@ namespace msv {
       // Follow left lines
       else if (rightLine1.getXPos() > 270 && rightLine2.getXPos() > 270)
       {
-        std::cout << "state 2" << std::endl;
         // Get two valid lines to base steering on
         vector<Lines> valid = validateLines(&leftList);
         // Steer to the right
@@ -205,7 +203,6 @@ namespace msv {
       // Follow the lower right lines
       else
       {
-        std::cout << "state 3" << std::endl;
         // Steer to the left
         if (rightLine1.getXPos() < rightLine1.getCritical() - 2) {
             sd.setHeadingData(-measureAngle(m_image->height - 70, rightLine2.getXPos(), m_image->height - 50, rightLine1.getXPos()));
@@ -218,7 +215,34 @@ namespace msv {
         else {
             sd.setHeadingData(0.0);
           }
+        if((abs(upline1.getYPos()-upline2.getYPos())<2)&& upline1.getYPos()<upline1.getCritical()){
+          state = 2;
+        }
+
       }
+      break;
+      case 2:
+        std::cout << "state 2" << std::endl;
+        sd.setSpeedData(0);
+        counter++;
+        if (counter > 50) {
+          counter = 0;
+          state = 3;
+        }
+        std::cout << counter << std::endl;
+        break;
+      case 3:
+        std::cout << "state 3" << std::endl;
+        sd.setSpeedData(2);
+        if (upline1.getYPos()>upline1.getCritical()){
+          state = 1;
+        }
+        break;
+      } //switch end
+
+      
+
+      
       
       
       
@@ -319,9 +343,7 @@ double LaneDetector::measureAngle(int yPos1, int xPos1, int yPos2, int xPos2) {
   double deltaY = yPos2 - yPos1;
   double deltaX = xPos2 - xPos1;
 
-  double angle = atan2(deltaY, deltaX)/4;
-
-  std::cout << "angle " << angle << std::endl; 
+  double angle = atan2(deltaY, deltaX)/2;
 
   return angle;
 }
