@@ -111,21 +111,42 @@ namespace msv {
     // This method will do the main data processing job.
     ModuleState::MODULE_EXITCODE Proxy::body() {
         uint32_t captureCounter = 0;
+        clock_t start;
+        double cumduration;
+        double duration;
+        double oldduration = 0.0;
+        double smoothduration;
+        start = clock();
+
         while (getModuleState() == ModuleState::RUNNING) {
             // Capture frame.
             if (m_camera != NULL) {
+                
                 core::data::image::SharedImage si = m_camera->capture();
 
                 Container c(Container::SHARED_IMAGE, si);
                 distribute(c);
                 captureCounter++;
+                cumduration = ( clock() - start ) / (double) CLOCKS_PER_SEC;
+                duration = cumduration - oldduration;
+                oldduration = cumduration;
+
+                smoothduration = (smoothduration * 0.9) + ((1/duration) * 0.1);
+
+                cout<<"process time = : "<< duration <<" secs." << endl;
+                cout<<"frame rate = : "<< 1/duration <<" /sec." << endl;
+                cout<<"smoothed frame rate = : "<< smoothduration <<" /sec." << endl;
+
+
             }
 
             // TODO: Here, you need to implement the data links to the embedded system
             // to read data from IR/US.
         }
-
+        cumduration = ( clock() - start ) / (double) CLOCKS_PER_SEC;
         cout << "Proxy: Captured " << captureCounter << " frames." << endl;
+        cout << "Proxy: Captured " << captureCounter/cumduration << " frames per sec." << endl;
+        
 
         return ModuleState::OKAY;
     }

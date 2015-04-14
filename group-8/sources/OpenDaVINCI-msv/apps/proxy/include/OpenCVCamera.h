@@ -76,6 +76,9 @@ namespace msv {
         private:
             CvCapture *m_capture;
             IplImage *m_image;
+            IplImage *out;
+            IplImage *merge_image;
+            IplImage *gray_out;
     };
 
 } // msv
