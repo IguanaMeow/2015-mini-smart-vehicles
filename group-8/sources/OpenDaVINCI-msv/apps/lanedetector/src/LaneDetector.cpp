@@ -66,8 +66,8 @@ namespace msv {
         leftLine3(0, 140, 167),
         leftLine4(0, 165, 144),
         
-        upline1(270, 0, 100),
-        upline2(320, 0, 100) {}
+        upline1(300, 0, 200),
+        upline2(340, 0, 200) {}
 
     LaneDetector::~LaneDetector() {}
 
@@ -139,8 +139,8 @@ namespace msv {
       
 
 
-      upline1.setYPos(measureDistance(100, 2, m_image));
-      upline2.setYPos(measureDistance(150, 2, m_image));
+      upline1.setYPos(measureDistance(300, 2, m_image));
+      upline2.setYPos(measureDistance(340, 2, m_image));
 
       rightLine1.setXPos(measureDistance(50, 1, m_image));
       rightLine2.setXPos(measureDistance(70, 1, m_image));
@@ -161,6 +161,10 @@ namespace msv {
 
       SteeringData sd;
       sd.setSpeedData(2);
+
+      if((upline1.getYPos()-upline2.getYPos()<10 || upline2.getYPos()-upline1.getYPos()<10)&& upline1.getYPos()<upline1.getCritical()){
+      	sd.setSpeedData(0);
+      }
 
       // Following upper right lines
       if(rightLine1.getXPos() > 270 && rightLine2.getXPos() > 270 && leftLine1.getXPos() > 270 && leftLine2.getXPos() > 270)
@@ -315,7 +319,7 @@ double LaneDetector::measureAngle(int yPos1, int xPos1, int yPos2, int xPos2) {
   double deltaY = yPos2 - yPos1;
   double deltaX = xPos2 - xPos1;
 
-  double angle = atan2(deltaY, deltaX) * (180 / msv::Constants::PI) / 4;
+  double angle = atan2(deltaY, deltaX)/4;
 
   std::cout << "angle " << angle << std::endl; 
 
