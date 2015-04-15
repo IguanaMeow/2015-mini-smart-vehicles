@@ -78,6 +78,8 @@ namespace msv {
                 SteeringData sd = containerSteeringData.getData<SteeringData> ();
                 cerr << "Most recent steering data: '" << sd.toString() << "'" << endl;
 
+                Container containerSpeedData = getKeyValueDataStore().get(Container::USER_DATA_2);
+                SpeedData spd = containerSpeedData.getData<SpeedData>();
 
 
                 // Design your control algorithm here depending on the input data from above.
@@ -86,8 +88,7 @@ namespace msv {
 
                 // Create vehicle control data.
                 VehicleControl vc;
-                    Container containerSpeedData = getKeyValueDataStore().get(Container::USER_DATA_2);
-                    SpeedData spd = containerSpeedData.getData<SpeedData>();
+
 
                     double speed = spd.getSpeedData();
                 // With setSpeed you can set a desired speed for the vehicle in the range of -2.0 (backwards) .. 0 (stop) .. +2.0 (forwards)
@@ -97,8 +98,9 @@ namespace msv {
                 //double desiredSteeringWheelAngle = 4; // 4 degree but SteeringWheelAngle expects the angle in radians!
                     double steerAngle = sd.getExampleData();
                 //vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
-                    vc.setSteeringWheelAngle(steerAngle * Constants::DEG2RAD);
+                    vc.setSteeringWheelAngle(steerAngle);
 
+                    // * Constants::DEG2RAD
                 // You can also turn on or off various lights:
                 vc.setBrakeLights(false);
                 vc.setLeftFlashingLights(false);

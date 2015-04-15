@@ -20,6 +20,9 @@
 #include <iostream>
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
+#include <unistd.h>
+#include <math.h>
+#include "core/data/Constants.h"
 
 #include "core/macros.h"
 #include "core/base/KeyValueConfiguration.h"
@@ -114,106 +117,266 @@ namespace msv {
 	    return retVal;
     }
 
-    // You should start your work in this method.
+	/***Phuong***/
+	int count(int x, int gap, IplImage *m_image, int ctrl){
+		int move = m_image->widthStep;
+		int w = m_image->width, h = m_image->height;
+
+		while(((m_image->imageData) + move * (h- gap+2)) [(w/2+x)*3]==0 && x < w/2){
+			if (ctrl == -1) x --;
+			else x ++;
+		}
+		if (x > w/2){ x = w/2; }
+		else if (x < -w/2) { x = -w/2;}
+
+		//cout << "x:"<< x<<endl;
+		return x;
+
+	}
+
+	bool straightLine (int *x_pos, int *y_pos){
+		int i;
+		double angle[3];
+
+		for (i = 1; i < 4; i++){
+			angle[i-1] = atan2((y_pos[0] - y_pos[i]), (x_pos[0]-x_pos[i]));
+		}
+
+		for (i = 1; i < 3; i++){
+			if (fabs(angle[0] - angle[i]) > 0.011){
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/***Pimmie***/
+	//compare array left and right to w/2
+	int compare_left_right(int *arr1, int w){
+
+		int i;
+		int check = 0, count = 0;
+
+		for(i=0; i<4; i++){
+			if(w/2 == abs(arr1[i]))count = count+1;
+
+			if(w/2 > abs(arr1[i]))count = count -1;
+		}
+
+
+		if(count==4)check = 1;
+		if(count==(-4))check = 2;
+		if(count<4&&count!=(-4))check =3;
+
+		return check;
+
+	}
+
+		/***Phuong***/
     void LaneDetector::processImage() {
 
 		//Gray scale picture
-    	IplImage *im_gray = cvCreateImage(cvGetSize(m_image),IPL_DEPTH_8U,1);
-		cvCvtColor(m_image,im_gray,CV_RGB2GRAY);
+		//IplImage *im_gray = cvCreateImage(cvGetSize(m_image),IPL_DEPTH_8U,1);
+		//cvCvtColor(m_image,im_gray,CV_RGB2GRAY);
+		//cvThreshold(im_gray, im_gray, 0, 127, CV_THRESH_BINARY );
+
+		//IplImage *out_image = cvCreateImage(cvGetSize(m_image),8,3);
+		//cvCvtColor(im_gray, out_image, CV_GRAY2RGB);
 
 		IplImage *out_image = cvCreateImage(cvGetSize(m_image),8,3);
-		cvCvtColor(im_gray, out_image, CV_GRAY2RGB);
+		cvThreshold(m_image, out_image, 127, 255, CV_THRESH_BINARY );
+
 
 		//initiate values
-		int w = m_image->width;
-		int h = m_image->height;
-		int gap = 65;
-		int move = m_image->widthStep;
-		int right = 0;
-		int left = 0;
-		int right_gap = 238;
+		int w = m_image->width, h = m_image->height;
+		int gap[4] = {60, 90, 115, 135};
+		//The gap distance gets smaller, 3d drawing kind of thing :v
+
+		int right[4];
+		int left[4];
+		int y_pos[4] = {h -gap[0], h-gap[1], h-gap[2], h-gap[3]};
+
 		CvPoint middle_bottom = cvPoint (w/2, h);
 		CvPoint middle_top = cvPoint(w/2,0);
+
 		CvScalar red = CV_RGB(255,0,0);
 		CvScalar blue = CV_RGB(0,0,255);
 		CvScalar green = CV_RGB(0,255,0);
-		CvPoint left_end;
-		CvPoint right_end;
-		CvPoint start_horz = cvPoint(w/2, h-gap);
+
+		CvPoint left_end_1, left_end_2, left_end_3, left_end_4;
+		CvPoint right_end_1, right_end_2, right_end_3, right_end_4;
+
+		CvPoint start_horz_1 = cvPoint(w/2, y_pos[0]);
+		CvPoint start_horz_2 = cvPoint(w/2, y_pos[1]);
+		CvPoint start_horz_3 = cvPoint(w/2, y_pos[2]);
+		CvPoint start_horz_4 = cvPoint(w/2, y_pos[3]);
 
 		//Get left and right distance
-		while(((m_image->imageData) + move * (h- gap+2)) [(w/2+right)*3]==0 && right < w/2 ){ right ++;}
-		right_end = cvPoint(w/2+right, h-gap);
+		left[0] = count(0, gap[0], out_image, -1);
+		left_end_1 = cvPoint(w/2+left[0], y_pos[0]);
+		left[1] = count(0, gap[1], out_image, -1);
+		left_end_2 = cvPoint(w/2+left[1], y_pos[1]);
+		left[2] = count(0, gap[2], out_image, -1);
+		left_end_3 = cvPoint(w/2+left[2], y_pos[2]);
+		left[3] = count(0, gap[3], out_image, -1);
+		left_end_4 = cvPoint(w/2+left[3], y_pos[3]);
 
+		right[0] = count (0, gap[0], out_image, 1);
+		right_end_1 = cvPoint(w/2+right[0], y_pos[0]);
+		right[1] = count (0, gap[1], out_image, 1);
+		right_end_2 = cvPoint(w/2+right[1], y_pos[1]);
+		right[2] = count (0, gap[2], out_image, 1);
+		right_end_3 = cvPoint(w/2+right[2], y_pos[2]);
+		right[3] = count (0, gap[3], out_image, 1);
+		right_end_4 = cvPoint(w/2+right[3], y_pos[3]);
 
-		//cout << "right:"<< right<<endl;
-
-		
-		//while(((m_image->imageData) + move * (h- gap+2)) [(w/2+left)*3]==0 && left < w/2 ){ left --;}
-		left =right - 476;
-		left_end = cvPoint(w/2+left, h-gap);
 
 		//Draw lines
         if (m_debug) {
-            if (m_image != NULL && im_gray!= NULL){
+            if (m_image != NULL){
 
-				cvLine(out_image, start_horz, right_end, green, 3, 8);
-				cvLine(out_image, start_horz, left_end, blue, 3, 8);
-				cvLine(out_image, middle_bottom, middle_top, red, 3, 8);
+				cvLine(out_image, start_horz_1, right_end_1, green, 2, 8);
+				cvLine(out_image, start_horz_1, left_end_1, blue, 2, 8);
+
+				cvLine(out_image, start_horz_2, right_end_2, green, 2, 8);
+				cvLine(out_image, start_horz_2, left_end_2, blue, 2, 8);
+
+				cvLine(out_image, start_horz_3, right_end_3, green, 2, 8);
+				cvLine(out_image, start_horz_3, left_end_3, blue, 2, 8);
+
+				cvLine(out_image, start_horz_4, right_end_4, green, 2, 8);
+				cvLine(out_image, start_horz_4, left_end_4, blue, 2, 8);
+
+				cvLine(out_image, middle_bottom, middle_top, red, 2, 8);
 
                 cvShowImage("WindowShowImage", out_image);
                 cvWaitKey(10);
 
-
             }
         }
+
+		cout<<"Right: "<<right[0]<<" "<<right[1]<<" "<<right[2]<<" "<<right[3]<<endl;
+		cout<<"gap: "<<y_pos[0]<<" "<<y_pos[1]<<" "<<y_pos[2]<<" "<<y_pos[3]<<endl;
 
 
 		SteeringData sd;
 		SpeedData spd;
-		int i = 0;
+		DistanceData dd;
+		//double steeringLight = 11 * Constants::DEG2RAD ;
+		//double steeringSteep = 12 * Constants::DEG2RAD ;
 
-		if (right == w/2){
-			//stop
-			spd.setSpeedData(0);
-
-			//intersection handling
-			//TODO
-
-			//Continue straight for now
-			while (i<100) i++;
+		if (compare_left_right(left, w) == 1 && compare_left_right(right,w) == 1 ){
+			//if no line detected, go straight
 			sd.setExampleData(0);
 			spd.setSpeedData(1);
+			cout<<"Mode: 1"<<endl;
+		} else if ((compare_left_right(left, w) != 1 && compare_left_right(right, w) == 1)){
+			//if no line just do what it did before
+			Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_1);
+			SteeringData sd_old = containerSteeringData.getData<SteeringData> ();
+			double steer = sd_old.getExampleData();
 
-//		} else if (right == w/2) {
-//			//Go straight in the middle of intersection
-//			sd.setExampleData(0);
-//			spd.setSpeedData(1);
+			Container containerSpeedData = getKeyValueDataStore().get(Container::USER_DATA_2);
+			SpeedData spd_old = containerSpeedData.getData<SpeedData> ();
+			double speed = spd_old.getSpeedData();
+
+			sd.setExampleData(steer);
+			spd.setSpeedData(speed);
+			cout<<"Mode: 2"<<endl;
+
+
 		} else {
 
-			//Steer the car
-			int diff = right-right_gap;
+//			Container containerDistanceData = getKeyValueDataStore().get(Container::USER_DATA_3);
+//			DistanceData dd_old = containerDistanceData.getData<DistanceData>();
+//			int dist = dd_old.getDistanceData();
 
-			if (diff < -10) {
-				sd.setExampleData(-10);
-				spd.setSpeedData(0.4);
-			} else if (diff >10){
-				sd.setExampleData(10);
-				spd.setSpeedData(0.4);
-			} else {
-				sd.setExampleData(0);
-				spd.setSpeedData(1);
-			}
+			int dist = 215;
+//
+//			double tangent_right = atan2(y_pos[0] - y_pos[1], right[0] - right[1]);
+//			double tangent_left = atan2(y_pos[0] - y_pos[1], left[0] - left[1]);
+//
+//			if (straightLine(right, y_pos) == true && fabs(tangent_right - 0.814)<0.01){
+//
+//				dd.setDistanceData(abs(right[3]));
+//				cout<<"Distance: "<<right[3]<<endl;
+//				sd.setExampleData(0);
+//				spd.setSpeedData(2);
+//				cout<<"Mode: 3"<<endl;
+//			} else if (straightLine(left, y_pos) == true && fabs(tangent_left + 0.814)<0.01){
+//				dd.setDistanceData(left[3]);
+//				cout<<"Distance: "<<left[3]<<endl;
+//				sd.setExampleData(0);
+//				spd.setSpeedData(2);
+//				cout<<"Mode: 4"<<endl;
+//			} else {
+
+				//if (compare_left_right(right, w) == 2){
+//				cout<<"Distance: "<<right[3]<<endl;
+//					double tangent = atan2(y_pos[0] - y_pos[1], right[0] - right[1]);
+//					cout<<tangent<<endl;
+					double steeringAngle = 10* Constants::DEG2RAD;
+//
+//					if(fabs(tangent) > 0.6){
+//						steeringAngle = steeringLight;
+//					} else {
+//						steeringAngle = steeringSteep;
+//					}
+
+					if (abs(right[1]) > dist+2){
+						sd.setExampleData(steeringAngle);
+						spd.setSpeedData(0.5);
+						cout<<"Mode: 5"<<endl;
+					} else if (abs(right[1]) < dist-2){
+						sd.setExampleData(-steeringAngle);
+						spd.setSpeedData(0.5);
+						cout<<"Mode: 6"<<endl;
+					} else {
+						sd.setExampleData(0);
+						spd.setSpeedData(2);
+						cout<<"Mode: 7"<<endl;
+					}
+//				} else {
+//
+//					double tangent = atan2(y_pos[0] - y_pos[1], left[0] - left[1]);
+//					cout<<tangent<<endl;
+//					double steeringAngle;
+//
+//					if(fabs(tangent) > 0.6){
+//						steeringAngle = steeringLight;
+//					} else {
+//						steeringAngle = steeringSteep;
+//					}
+//
+//					if (abs(left[3]) > dist){
+//						sd.setExampleData(steeringAngle);
+//						spd.setSpeedData(1);
+//						cout<<"Mode: 8"<<endl;
+//					} else if (abs(left[3]) < dist){
+//						sd.setExampleData(-steeringAngle);
+//						spd.setSpeedData(1);
+//						cout<<"Mode: 9"<<endl;
+//					} else {
+//						sd.setExampleData(0);
+//						spd.setSpeedData(1);
+//						cout<<"Mode: 10"<<endl;
+//					}
+//				}
+//
+//			}
 		}
-
 
 		//Send message
 		Container c(Container::USER_DATA_1, sd);
 		Container c_1(Container::USER_DATA_2, spd);
+		Container c_2(Container::USER_DATA_3, dd);
 		getConference().send(c);
 		getConference().send(c_1);
+		getConference().send(c_2);
 
     }
+
 
     // This method will do the main data processing job.
     // Therefore, it tries to open the real camera first. If that fails, the virtual camera images from camgen are used.
