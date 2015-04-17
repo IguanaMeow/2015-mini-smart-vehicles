@@ -14,10 +14,10 @@ IF("${PANDABOARD}" STREQUAL "YES")
     SET (CMAKE_CXX_FLAGS "-pipe -ansi -D PANDABOARD=1")
 
     INCLUDE_DIRECTORIES (/opt/PandaBoard-SD/usr/include)
-    LINK_DIRECTORIES (/opt/PandaBoard/lib /opt/PandaBoard-SD/usr/lib /opt/PandaBoard-SD/usr/lib/arm-linux-gnueabi /opt/PandaBoard-SD/usr/lib/lapack /opt/PandaBoard-SD/usr/lib/libblas)
+    LINK_DIRECTORIES (/opt/PandaBoard/lib /opt/PandaBoard-SD/usr/lib /opt/PandaBoard-SD/usr/lib/arm-linux-gnueabihf /opt/PandaBoard-SD/usr/lib/lapack /opt/PandaBoard-SD/usr/lib/libblas)
 
     SET (LIBS ${LIBS} glib-2.0)
-    SET (CMAKE_EXE_LINKER_FLAGS "-Wl,-rpath-link=/opt/PandaBoard-SD/lib:/opt/PandaBoard-SD/usr/lib:/opt/PandaBoard-SD/lib/arm-linux-gnueabi:/opt/PandaBoard-SD/usr/lib/arm-linux-gnueabi")
+    SET (CMAKE_EXE_LINKER_FLAGS "-Wl,-rpath-link=/opt/PandaBoard-SD/lib:/opt/PandaBoard-SD/usr/lib:/opt/PandaBoard-SD/lib/arm-linux-gnueabihf:/opt/PandaBoard-SD/usr/lib/arm-linux-gnueabihf")
 ENDIF("${PANDABOARD}" STREQUAL "YES")
 
 # Include directories from core.
