@@ -7,8 +7,8 @@ SET(PANDABOARD YES)
 SET(PANDABOARD-ROOT /opt/PandaBoard-SD)
 
 # Specify the cross compiler.
-SET(CMAKE_C_COMPILER   /usr/bin/arm-linux-gnueabihf-gcc)
-SET(CMAKE_CXX_COMPILER /usr/bin/arm-linux-gnueabihf-g++)
+SET(CMAKE_C_COMPILER   /usr/bin/arm-linux-gnueabihf-gcc-4.8)
+SET(CMAKE_CXX_COMPILER /usr/bin/arm-linux-gnueabihf-g++-4.8)
 
 # Specify the location of the target environment.
 SET(CMAKE_FIND_ROOT_PATH /opt/PandaBoard-SD)
