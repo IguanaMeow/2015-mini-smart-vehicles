@@ -127,18 +127,21 @@ namespace msv {
             }
         }
 
-        // CONFIGURATION
+        /////////////////////
+        //  CONFIGURATION  //
+        /////////////////////
         // Portion of the screen used for lane detection
         const float portion = 0.35;
-        // Amount of lines checked
+        // Amount of rows calculated
         const int rows = 20;
         // Total value to turning degrees ratio
         const float ratio = 0.0006;
-        // Increased weight of later lines (1 + weight * line#)
+        // Increased weight of each row (1 + weight * row#)
         const float weight = 0.5;
-        // Max turn degrees per tick
+        // Max turn degrees per update
         const float maxturn = 2.5;
 
+        // Variable declarations
         Mat src(m_image);
         Mat dst, cdst;
         const int center = src.cols / 2;
@@ -169,15 +172,18 @@ namespace msv {
             }
         }
 
-        // Draw lines
-        for(size_t i = 0; i < lines.size(); i++)
+        if (m_debug)
         {
-            Vec4i l = lines[i];
-            line(cdst, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0, 0, 255), 1, CV_AA);
+            // Draw lines
+            for(size_t i = 0; i < lines.size(); i++)
+            {
+                Vec4i l = lines[i];
+                line(cdst, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0, 0, 255), 1, CV_AA);
+            }
+
+            // Draw center line
+            line(cdst, Point(center, 0), Point(center, src.rows), Scalar(255,0,0), 1, CV_AA);
         }
-        
-        // Draw center line
-        line(cdst, Point(center, 0), Point(center, src.rows), Scalar(255,0,0), 1, CV_AA);
 
         // Calculate distance to lines
         for(int i = 0; i < rows; i++)
@@ -221,7 +227,7 @@ namespace msv {
             }
         }
 
-        // Predict lines in front
+        // Predict rows forwards
         for(int i = 1; i < rows; i++)
         {
             if(left[i] == lnull && left[i - 1] != lnull)
@@ -252,7 +258,7 @@ namespace msv {
             }
         }
 
-        // Predict lines backwards
+        // Predict rows backwards
         for(int i = rows - 2; i >= 0; i--)
         {
             if(left[i] == lnull && left[i + 1] != lnull)
@@ -286,27 +292,16 @@ namespace msv {
         // Calculate sum of distances
         for(int i = 0; i < rows; i++)
         {
-            int y = src.rows - ((i + 1) * rowdist);
-            if(lcount > 3)
+            const int y = src.rows - ((i + 1) * rowdist);
+            int value = (-left[i] + center - (right[i] - center)) * (i * weight + 1);
+            total += value;
+
+            if (m_debug)
             {
-                /*if(i == 0 ||
-                    (left[i] - left[i - 1] > -100 &&
-                    right[i] - right[i - 1] < 100))*/
-                {
-                    line(cdst, Point(left[i], y), Point(center, y), Scalar(0, 255, 255), 1, CV_AA);
-                    line(cdst, Point(right[i], y), Point(center, y), Scalar(0, 255, 0), 1, CV_AA);
-                    total += (-left[i] + center - (right[i] - center)) * (i * weight + 1);
-                }
-                /*else
-                {
-                    printf("%f\n", (float)left[i - 1] / (float)left[i]);
-                    break;
-                }*/
+                line(cdst, Point(left[i], y), Point(center, y), Scalar(0, 255, 255), 1, CV_AA);
+                line(cdst, Point(right[i], y), Point(center, y), Scalar(0, 255, 0), 1, CV_AA);
             }
         }
-
-        // Show image
-        imshow("Lane Detection", cdst);
 
         // Retrieve previous steeringdata
         Container vehicleControlData = getKeyValueDataStore().get(Container::VEHICLECONTROL);
@@ -323,7 +318,13 @@ namespace msv {
         SteeringData sd;
         sd.setWheelAngle(newAngle);
 
-        printf("Total: %i, %f, Heading: %f\n", total, prevAngle, diff);
+        // Show image
+        if (m_debug)
+        {
+            imshow("Canny", dst);
+            imshow("Lane Detection", cdst);
+            printf("Total: %i, %f, Heading: %f\n", total, prevAngle, diff);
+        }
 
         // Create container for sending the data
         Container c(Container::USER_DATA_1, sd);
