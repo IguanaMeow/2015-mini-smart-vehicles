@@ -92,7 +92,7 @@ namespace msv {
 			/* Measures the angle between delta X and delta Y */
 			double measureAngle(int yPos1, int xPos1, int yPos2, int xPos2);
 
-
+			double adjustAngle(int yPos1, int xPos1, int yPos2, int xPos2);
 
 	        virtual void setUp();
 
@@ -114,6 +114,10 @@ namespace msv {
 
         	int state;
         	int counter;
+
+        	double inputAngle1;
+        	double inputAngle2;
+        	double inputAngle3;
 
 	};
 
