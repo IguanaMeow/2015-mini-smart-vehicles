@@ -49,7 +49,7 @@ namespace msv {
     using namespace core::data::image;
     using namespace tools::player;
     using namespace cv;
-int threshold_value = 50;
+int threshold_value = 170;
 int threshold_type = 0;
 int const max_value = 255;
 int const max_type = 4;
@@ -59,7 +59,7 @@ SteeringData sd;
 double difference;
 double value;
 double intersectionFound=0;
-
+int numOfInt=0;
     //int dynamicYaxis = 1; // to move lines on the y axis
 
     LaneDetector::LaneDetector(const int32_t &argc, char **argv) : ConferenceClientModule(argc, argv, "lanedetector"),
@@ -128,7 +128,7 @@ double intersectionFound=0;
                 m_sharedImageMemory->unlock();
 
                 // Mirror the image.
-                cvFlip(m_image, 0, -1);
+               // cvFlip(m_image, 0, -1);
 
                 retVal = true;
             }
@@ -248,12 +248,14 @@ void drawLine(Mat atom_image, int line1line, int count, int &line1leftLineLength
             }
         }
   
-       Mat src,dst,color_dst,atom_image;
+       Mat src,dst,color_dst,atom_image,edge;
        src=m_image;
        //atom_image=src;
        cvtColor( src, color_dst, COLOR_RGB2GRAY );
-      threshold( color_dst, dst, threshold_value, max_BINARY_value,threshold_type );
-      cvtColor( dst, atom_image, COLOR_GRAY2RGB );
+     Canny( color_dst, dst, 50, 150, 3);
+     dst.convertTo(edge, CV_8U);
+     // threshold( color_dst, dst, threshold_value, max_BINARY_value,threshold_type );
+      cvtColor( edge, atom_image, COLOR_GRAY2RGB );
 
    
    
@@ -340,6 +342,10 @@ void drawLine(Mat atom_image, int line1line, int count, int &line1leftLineLength
     int line1rightLineLength = 0;
     drawLine(atom_image, line1line, count, line1leftLineLength, line1rightLineLength);
 
+    if(numOfInt==2){
+        numOfInt=0;
+        intersectionFound=0;
+    }
 
 //--------------------------------------------------------------------------------------------------------
    
@@ -429,9 +435,9 @@ void drawLine(Mat atom_image, int line1line, int count, int &line1leftLineLength
    /*if(vp2rightLength>250)
        vp2rightLength=175;*/
     //Angles of line1 lines
-    double vp2LAngle = atan(vp2leftLength/250) * 180.0 / CV_PI;
+    double vp2LAngle = atan(vp2leftLength/300) * 180.0 / CV_PI; //was 250 but adjust for turn 
     //cout<<"L Angle is " << vp2LAngle << endl;
-    double vp2RAngle = atan(vp2rightLength/250) * 180.0 / CV_PI;
+    double vp2RAngle = atan(vp2rightLength/300) * 180.0 / CV_PI;
     //cout<<"R Angle is " << vp2RAngle << endl;
     //cout << "difference is " << vp2RAngle-vp2LAngle << endl;
     imshow( "atom_window", atom_image );
@@ -441,8 +447,11 @@ void drawLine(Mat atom_image, int line1line, int count, int &line1leftLineLength
     
 
   if((vp2rightLength>300 || vp2rightLength <0) && intersectionFound<1){
-      
-            value=(value-(tangent/10.0)); //min4.5
+               
+               
+             
+            
+            value=(value-(tangent/6.0)); //was 7//
           
            difference=value;
 }
@@ -471,6 +480,7 @@ void drawLine(Mat atom_image, int line1line, int count, int &line1leftLineLength
         sd.setIntersectionFound(1.0);
         state=0;
         intersectionFound=1;
+        numOfInt++;
     }
      
     
