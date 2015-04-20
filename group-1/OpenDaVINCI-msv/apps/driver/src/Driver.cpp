@@ -104,7 +104,7 @@ namespace msv {
                
                 if(sd.getIntersectionFound()<1.0 && state==0){
                         
-                vc.setSpeed(4.0);
+                vc.setSpeed(5.0);
                 vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
 
 
@@ -120,6 +120,7 @@ namespace msv {
                 if(count > 100){
                         state=0;
                         sd.setIntersectionFound(0.0);
+                        sd.setPassedIntersection(1.0);
                         count=0;
                 }
         }
@@ -188,4 +189,3 @@ namespace msv {
 	        return ModuleState::OKAY;
         }
 } // msv
-
