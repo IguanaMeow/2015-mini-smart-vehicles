@@ -17,15 +17,8 @@ ENDIF()
 # Special target to simplify the rsync command.
 IF("${PANDABOARD}" STREQUAL "YES")
 ADD_CUSTOM_TARGET(push2meili-1
-#    COMMAND rsync -ave ssh /opt/msv-ARM/ meili@192.168.0.100:/opt/msv/
-    COMMAND rsync -ave ssh /opt/msv-ARM/ meili@192.168.0.100:/opt/msv/bin/msv
-    DEPENDS cc-data sensorboard lanedetector driver proxy
-)
-
-ADD_CUSTOM_TARGET(push2meili-2
-#    COMMAND rsync -ave ssh /opt/msv-ARM/ meili@192.168.0.101:/opt/msv/
-    COMMAND rsync -ave ssh /opt/msv-ARM/ meili@192.168.0.101:/opt/msv/bin/msv
-    DEPENDS cc-data sensorboard lanedetector driver proxy
+    COMMAND rsync -ave ssh --rsync-path='sudo rsync' /opt/msv-ARM/ odroid@192.168.1.137:/opt/msv/
+    DEPENDS lanedetector driver proxy
 )
 ENDIF("${PANDABOARD}" STREQUAL "YES")
 
