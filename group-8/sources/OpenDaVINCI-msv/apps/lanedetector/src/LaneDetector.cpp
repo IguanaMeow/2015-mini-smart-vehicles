@@ -69,7 +69,11 @@ namespace msv {
         upline1(300, 0, 120),
         upline2(340, 0, 120),
         state(1),
-        counter(0) {}
+        counter(0),
+        inputAngle1(0.0),
+        inputAngle2(0.0),
+        inputAngle3(0.0)
+         {}
 
     LaneDetector::~LaneDetector() {}
 
@@ -169,13 +173,22 @@ namespace msv {
           // Following upper right lines
           if(rightLine1.getXPos() > 270 && rightLine2.getXPos() > 270 && leftLine1.getXPos() > 270 && leftLine2.getXPos() > 270)
       {
+      	std::cout << "angle1 "<< inputAngle1 <<std::endl;
+      std::cout << "angle1 "<< inputAngle1 <<std::endl;
+      std::cout << "angle2 "<< inputAngle2 <<std::endl;
+      std::cout << "angle2 "<< inputAngle2 <<std::endl;
+      std::cout << "angle3 "<< inputAngle3 <<std::endl;
+      std::cout << "angle3 "<< inputAngle3 <<std::endl;
         // Steer to the left
         if (rightLine3.getXPos() < rightLine3.getCritical() - 2) {
-          sd.setHeadingData(-measureAngle(m_image->height - 255, rightLine4.getXPos(), m_image->height - 245, rightLine3.getXPos()));
+          sd.setHeadingData(-adjustAngle(m_image->height - 255, rightLine4.getXPos(), m_image->height - 245, rightLine3.getXPos()));
+          std::cout << -adjustAngle(m_image->height - 255, rightLine4.getXPos(), m_image->height - 245, rightLine3.getXPos())<< std::endl;
         } 
         // Steer to the right
         else if (rightLine3.getXPos() > rightLine3.getCritical() + 2) {
-          sd.setHeadingData(measureAngle(m_image->height - 255, rightLine4.getXPos(), m_image->height - 245, rightLine3.getXPos()));
+          sd.setHeadingData(adjustAngle(m_image->height - 255, rightLine4.getXPos(), m_image->height - 245, rightLine3.getXPos()));
+          std::cout << adjustAngle(m_image->height - 255, rightLine4.getXPos(), m_image->height - 245, rightLine3.getXPos())<< std::endl;
+
         } 
         // Steer straight
         else {
@@ -185,15 +198,23 @@ namespace msv {
       // Follow left lines
       else if (rightLine1.getXPos() > 270 && rightLine2.getXPos() > 270)
       {
+      	std::cout << "angle1 "<< inputAngle1 <<std::endl;
+      std::cout << "angle1 "<< inputAngle1 <<std::endl;
+      std::cout << "angle2 "<< inputAngle2 <<std::endl;
+      std::cout << "angle2 "<< inputAngle2 <<std::endl;
+      std::cout << "angle3 "<< inputAngle3 <<std::endl;
+      std::cout << "angle3 "<< inputAngle3 <<std::endl;
         // Get two valid lines to base steering on
         vector<Lines> valid = validateLines(&leftList);
         // Steer to the right
         if (valid.begin()->getXPos() < valid.begin()->getCritical() - 2) {
           sd.setHeadingData(-measureAngle(m_image->height - valid.end()->getYPos(), valid.end()->getXPos(), m_image->height - valid.begin()->getYPos(), valid.begin()->getXPos()));
+          std::cout<<-measureAngle(m_image->height - valid.end()->getYPos(), valid.end()->getXPos(), m_image->height - valid.begin()->getYPos(), valid.begin()->getXPos())<< std::endl;
         } 
         // Steer to the left
         else if (valid.begin()->getXPos() > valid.begin()->getCritical() + 2) {
           sd.setHeadingData(measureAngle(m_image->height - valid.end()->getYPos(), valid.end()->getXPos(), m_image->height - valid.begin()->getYPos(), valid.begin()->getXPos()));
+          std::cout<<measureAngle(m_image->height - valid.end()->getYPos(), valid.end()->getXPos(), m_image->height - valid.begin()->getYPos(), valid.begin()->getXPos())<<std::endl;
         } 
         // Steer straight
         else {
@@ -203,13 +224,21 @@ namespace msv {
       // Follow the lower right lines
       else
       {
+      	std::cout << "angle1 "<< inputAngle1 <<std::endl;
+      std::cout << "angle1 "<< inputAngle1 <<std::endl;
+      std::cout << "angle2 "<< inputAngle2 <<std::endl;
+      std::cout << "angle2 "<< inputAngle2 <<std::endl;
+      std::cout << "angle3 "<< inputAngle3 <<std::endl;
+      std::cout << "angle3 "<< inputAngle3 <<std::endl;
         // Steer to the left
         if (rightLine1.getXPos() < rightLine1.getCritical() - 2) {
-            sd.setHeadingData(-measureAngle(m_image->height - 70, rightLine2.getXPos(), m_image->height - 50, rightLine1.getXPos()));
+            sd.setHeadingData(-adjustAngle(m_image->height - 70, rightLine2.getXPos(), m_image->height - 50, rightLine1.getXPos()));
+            std::cout<<-adjustAngle(m_image->height - 70, rightLine2.getXPos(), m_image->height - 50, rightLine1.getXPos())<<std::endl;
         } 
         // Steer to the right
         else if (rightLine1.getXPos() > rightLine1.getCritical() + 2) {
-            sd.setHeadingData(measureAngle(m_image->height - 70, rightLine2.getXPos(), m_image->height - 50, rightLine1.getXPos()));
+            sd.setHeadingData(adjustAngle(m_image->height - 70, rightLine2.getXPos(), m_image->height - 50, rightLine1.getXPos()));
+            std::cout<<adjustAngle(m_image->height - 70, rightLine2.getXPos(), m_image->height - 50, rightLine1.getXPos())<<std::endl;
         } 
         // Steer straight
         else {
@@ -240,12 +269,6 @@ namespace msv {
         break;
       } //switch end
 
-      
-
-      
-      
-      
-      
       // Shows the image.
       if (m_debug) {
           if (m_image != NULL) {
@@ -254,6 +277,7 @@ namespace msv {
           }
       }
         
+      
         // Here, you see an example of how to send the data structure SteeringData to the ContainerConference. This data structure will be received by all running components. In our example, it will be processed by Driver. To change this data structure, have a look at Data.odvd in the root folder of this source.
         
         //sd.setExampleData(1234.56);
@@ -346,6 +370,22 @@ double LaneDetector::measureAngle(int yPos1, int xPos1, int yPos2, int xPos2) {
   double angle = atan2(deltaY, deltaX)/2;
 
   return angle;
+}
+
+double LaneDetector::adjustAngle(int yPos1, int xPos1, int yPos2, int xPos2){
+	inputAngle1 = inputAngle2;
+	inputAngle2 = inputAngle3;
+	inputAngle3 = measureAngle(yPos1, xPos1, yPos2, xPos2);
+	if((inputAngle3-inputAngle2)<0.00005 && (inputAngle2-inputAngle1)<0.00005){
+		return 0.1*inputAngle3;
+	}
+	else if ((inputAngle3 - inputAngle2) < (inputAngle2 - inputAngle1)){
+		return 0.3*inputAngle3;
+	}else if ((inputAngle3 - inputAngle2)> (inputAngle2 - inputAngle1)){
+		return 3*inputAngle3;
+	}else {
+		return inputAngle3;
+	}
 }
 
 double LaneDetector::measureDistance(int yPos, int dir, IplImage* image) {
