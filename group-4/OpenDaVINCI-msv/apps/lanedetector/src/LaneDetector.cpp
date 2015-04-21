@@ -130,28 +130,44 @@ namespace msv {
         /////////////////////
         //  CONFIGURATION  //
         /////////////////////
-        // Portion of the screen used for lane detection
-        const float portion = 0.35;
-        // Amount of rows calculated
-        const int rows = 20;
+        // Portion of the image cropped away
+        const float crop = 0.5;
+        // Total value exponent
+        const float exp = 1.05;
         // Total value to turning degrees ratio
-        const float ratio = 0.0006;
+        const float ratio = 0.06;
         // Increased weight of each row (1 + weight * row#)
-        const float weight = 0.5;
+        const float weight = 0.25;
         // Max turn degrees per update
-        const float maxturn = 2.5;
+        const float maxturn = 4;
+        // Minimum row length
+        const int minLength = 10;
+
+        // Create Mat from image
+        Mat src(m_image);
+
+        // Crop upper half of the image
+        src = src(Rect(0, src.rows * crop, src.cols, src.rows * (1 - crop)));
+
+        // Retrieve previous angle
+        Container vehicleControlData = getKeyValueDataStore().get(Container::VEHICLECONTROL);
+        VehicleControl vc = vehicleControlData.getData<VehicleControl>();
+        const double prevAngle = vc.getSteeringWheelAngle() * Constants::RAD2DEG;
 
         // Variable declarations
-        Mat src(m_image);
         Mat dst, cdst;
+        const int rows = 32 - (abs(prevAngle * 0.6) > 6 ? 6 : floor(abs(prevAngle * 0.6)));
         const int center = src.cols / 2;
-        const int rowdist = (src.rows * portion) / rows;
+        const int rowdist = src.rows * 0.025;
         const int lnull = -1;
         const int rnull = src.cols + 1;
         int lcount = 0;
         int total = 0;
         int left[rows];
         int right[rows];
+        int prevl = lnull;
+        int prevr = rnull;
+        float totalWeight = 0;
 
         // Edge detection
         Canny(src, dst, 50, 200, 3);
@@ -161,16 +177,6 @@ namespace msv {
         // Line detection
         vector<Vec4i> lines;
         HoughLinesP(dst, lines, 1, CV_PI/180, 8, 10, 10);
-
-        // Remove lines on upper half of screen
-        for(size_t i = lines.size(); i > 0; i--)
-        {
-            Vec4i l = lines[i-1];
-            if(l[1] < src.rows/2 && l[3] < src.rows/2)
-            {
-                lines.erase(lines.begin() + i - 1);
-            }
-        }
 
         if (m_debug)
         {
@@ -205,14 +211,14 @@ namespace msv {
 
                     if(x < center)
                     {
-                        if(x > lx)
+                        if(x > lx && x < center - minLength && (prevl == lnull || (prevl - src.cols * 0.2 < x && prevl + src.cols * 0.2 > x)))
                         {
                             lx = x;
                         }
                     }
                     else
                     {
-                        if(x < rx)
+                        if(x < rx && x > center + minLength && (prevr == rnull || (prevr + src.cols * 0.1 > x && prevr - src.cols * 0.1 < x)))
                         {
                             rx = x;
                         }
@@ -224,6 +230,11 @@ namespace msv {
             if(lx != lnull)
             {
                 lcount++;
+                prevl = lx;
+            }
+            if(rx != rnull)
+            {
+                prevr = rx;
             }
         }
 
@@ -292,27 +303,40 @@ namespace msv {
         // Calculate sum of distances
         for(int i = 0; i < rows; i++)
         {
-            const int y = src.rows - ((i + 1) * rowdist);
-            int value = (-left[i] + center - (right[i] - center)) * (i * weight + 1);
-            total += value;
-
-            if (m_debug)
+            if(lcount > 3)
             {
-                line(cdst, Point(left[i], y), Point(center, y), Scalar(0, 255, 255), 1, CV_AA);
-                line(cdst, Point(right[i], y), Point(center, y), Scalar(0, 255, 0), 1, CV_AA);
+                if(right[i] < center + minLength || left[i] > center - minLength)
+                    continue;
+
+                const int y = src.rows - ((i + 1) * rowdist);
+                int value = (-left[i] + center - (right[i] - center)) * (i * weight + 1);
+                total += value;
+                totalWeight += (i * weight + 1);
+
+                if (m_debug)
+                {
+                    line(cdst, Point(left[i], y), Point(center, y), Scalar(0, 255, 255), 1, CV_AA);
+                    line(cdst, Point(right[i], y), Point(center, y), Scalar(0, 255, 0), 1, CV_AA);
+                }
             }
         }
 
-        // Retrieve previous steeringdata
-        Container vehicleControlData = getKeyValueDataStore().get(Container::VEHICLECONTROL);
-        VehicleControl vc = vehicleControlData.getData<VehicleControl>();
+        if(totalWeight > 0)
+        {
+            total /= totalWeight;
+            //printf("Bef: %i\n", total);
+            const int sign = (total < 0) ? -1 : 1;
+            total *= sign;
+            total = pow(total, exp);
+            total *= sign;
+            //printf("Aft: %i\n", total);
+        }
 
         // Calculate new angle
-        double prevAngle = vc.getSteeringWheelAngle() * Constants::RAD2DEG;
         double diff = (total * -ratio) - prevAngle;
         diff = fmin(maxturn, diff);
         diff = fmax(-maxturn, diff);
-        double newAngle = prevAngle + diff;
+        const double newAngle = prevAngle + diff;
 
         // Create SteeringData
         SteeringData sd;
@@ -323,7 +347,7 @@ namespace msv {
         {
             imshow("Canny", dst);
             imshow("Lane Detection", cdst);
-            printf("Total: %i, %f, Heading: %f\n", total, prevAngle, diff);
+            printf("Total: %i, Angle: %f, Diff: %f\n", total, prevAngle, diff);
         }
 
         // Create container for sending the data
