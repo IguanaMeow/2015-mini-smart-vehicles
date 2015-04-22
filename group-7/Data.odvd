@@ -25,8 +25,12 @@ message msv.SpeedData {
     double speedData;
 }
 
-message msv.DistanceData {
-    double distanceData;
+message msv.LongDistanceData {
+    double longDistanceData;
+}
+
+message msv.ShortDistanceData {
+    double shortDistanceData;
 }
 
 message msv.UserButtonData {

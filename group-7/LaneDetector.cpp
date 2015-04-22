@@ -161,8 +161,8 @@ namespace msv {
 		int check = 0, count = 0;
 
 		for(i=0; i<4; i++){
+			if (arr1[i] == 0) return 4;
 			if(w/2 == abs(arr1[i]))count = count+1;
-
 			if(w/2 > abs(arr1[i]))count = count -1;
 		}
 
@@ -236,24 +236,44 @@ namespace msv {
 
 		SteeringData sd;
 		SpeedData spd;
-		DistanceData dd;
+		LongDistanceData ldd;
+		ShortDistanceData sdd;
+
+		int dist[2];
 		//double steeringLight = 8.6 * Constants::DEG2RAD ;
-		double steeringSteep = 9.05 * Constants::DEG2RAD ;
+		//double steeringSteep = 9.05 * Constants::DEG2RAD ;
 
 		Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_1);
 		SteeringData sd_old = containerSteeringData.getData<SteeringData> ();
 		double steer = sd_old.getExampleData();
 
-		Container containerDistanceData = getKeyValueDataStore().get(Container::USER_DATA_3);
-		DistanceData dd_old = containerDistanceData.getData<DistanceData>();
-		int dist = dd_old.getDistanceData();
+		Container containerLongDistanceData = getKeyValueDataStore().get(Container::USER_DATA_3);
+		LongDistanceData ldd_old = containerLongDistanceData.getData<LongDistanceData>();
+		dist[0] = ldd_old.getLongDistanceData();
 
-		if (checkLane(left, w) == 1 && checkLane(right,w) == 1 ){
+
+		Container containerShortDistanceData = getKeyValueDataStore().get(Container::USER_DATA_4);
+		ShortDistanceData sdd_old = containerShortDistanceData.getData<ShortDistanceData>();
+		dist[1] = sdd_old.getShortDistanceData();
+
+//		if((checkLane(right,w) == 4 || checkLane(left,w) == 4) && abs(steer) < 0.05 ){
+//
+//			sd.setExampleData(0);
+//			spd.setSpeedData(1);
+//			ldd.setLongDistanceData(dist[0]);
+//			sdd.setShortDistanceData(dist[1]);
+//
+//			cout<<"Mode: 0"<<endl;
+//
+//		} else
+
+		if (checkLane(left, w) == 1 && checkLane(right,w) == 1){
 			//if no line detected, go straight
 
 			sd.setExampleData(0);
 			spd.setSpeedData(1);
-			dd.setDistanceData(dist);
+			ldd.setLongDistanceData(dist[0]);
+			sdd.setShortDistanceData(dist[1]);
 
 			cout<<"Mode: 1"<<endl;
 
@@ -267,15 +287,17 @@ namespace msv {
 
 			sd.setExampleData(steer);
 			spd.setSpeedData(speed);
-			dd.setDistanceData(dist);
+			ldd.setLongDistanceData(dist[0]);
+			sdd.setShortDistanceData(dist[1]);
 			cout<<"Mode: 2"<<endl;
 
 
 		} else if((checkLane(left,w) == 3 && checkLane(right,w) == 3)){
 
 			cout << "Old Steering Data " << steer<< endl;
-			cout << "Old distant  " << dist<< endl;
-			dd.setDistanceData(dist);
+			cout << "Old distant  " << dist[0]<<" "<<dist[1]<< endl;
+			ldd.setLongDistanceData(dist[0]);
+			sdd.setShortDistanceData(dist[1]);
 			sd.setExampleData(abs(steer));
 			spd.setSpeedData(2);
 			cout<<"Mode: 8"<<endl;
@@ -283,104 +305,86 @@ namespace msv {
 
 		} else {
 			cout << "Old Steering Data " << steer<< endl;
-			cout << "Old distant  " << dist<< endl;
+			cout << "Old distant  " << dist[0]<<" "<<dist[1]<< endl;
 
 			//int dist = 215;
 
 			if (checkLane(right, w) != 1 && straightLine(right, y_pos) == true) {
 
-				if (((right[0] < dist+2 && right[0] > dist -2) || dist == 0)
+				if (((right[3] < dist[1]+2 && right[3] > dist[1] -2) || dist[0] == 0)
 						&& abs(steer) < 0.001){
 
 					//cout << "Distance: " << right[0] << endl;
 					sd.setExampleData(0);
 					spd.setSpeedData(2);
-					dd.setDistanceData(right[0]);
+					ldd.setLongDistanceData(right[0]);
+					sdd.setShortDistanceData(right[3]);
 					cout << "Mode: 3" << endl;
 
 				} else {
 
-//					if (right[0] > dist +2){
-//						sd.setExampleData((right[0] - dist) / 30 * Constants::DEG2RAD);
-//						//sd.setExampleData(-abs(steer/1.01));
-//					} else if (right[0] < dist -2){
-						//sd.setExampleData(abs(steer/1.01));
-						sd.setExampleData((right[0] - dist) / 30 * Constants::DEG2RAD);
-//					} else if (right[0] > dist +10 && right[0] < dist +30){
-//						sd.setExampleData(abs(steer/2));
-//					} else if (right[0] < dist -10 && right[0] > dist -30) {
-//						sd.setExampleData(-abs(steer/2));
-//					} else {
-//						sd.setExampleData(-(steer/2));
-//					}
+
+					sd.setExampleData((right[3] - dist[1]) / 30.5 * Constants::DEG2RAD);
 
 					spd.setSpeedData(2);
-					dd.setDistanceData(dist);
+					ldd.setLongDistanceData(dist[0]);
+					sdd.setShortDistanceData(dist[1]);
 					cout << "Mode: 9" << endl;
 
 				}
 
 			} else if (checkLane(left, w) != 1 && straightLine(left, y_pos) == true) {
 
-				if (((left[0] < dist+2 && left[0] > dist -2) || dist == 0)
+				if (((left[3] < dist[1]+2 && left[3] > dist[1] -2) || dist[0] == 0)
 					&& abs(steer) < 0.001){
 
 					//cout << "Distance: " << right[0] << endl;
 					sd.setExampleData(0);
 					spd.setSpeedData(2);
-					dd.setDistanceData(left[0]);
+					ldd.setLongDistanceData(right[0]);
+					sdd.setShortDistanceData(right[3]);
 					cout << "Mode: 4" << endl;
 
 				} else {
 
-					sd.setExampleData((dist - left[0])/27 * Constants::DEG2RAD);
+					sd.setExampleData((dist[1] - left[3])/30.5 * Constants::DEG2RAD);
 					spd.setSpeedData(2);
-					dd.setDistanceData(dist);
+					ldd.setLongDistanceData(dist[0]);
+					sdd.setShortDistanceData(dist[1]);
 					cout << "Mode: 5" << endl;
 
 				}
 
 			} else {
 
-				double tangent = atan2(y_pos[0] - y_pos[1], right[0] - right[1]);
+				double tangent = atan2(y_pos[1] - y_pos[2], right[1] - right[2]);
 				cout << tangent << endl;
 				double steeringAngle;
 
-//				if (fabs(tangent) > 0.66) {
-//					steeringAngle = steeringLight;
-//				} else {
-					steeringAngle = steeringSteep;
-//				}
 
-				if(right[0] == dist){
+				steeringAngle = 9.055 * Constants::DEG2RAD;
+				//steeringAngle = tangent/4;
+
+
+				if(right[0] == dist[0]){
 					sd.setExampleData(0);
 					spd.setSpeedData(2);
 					cout << "Mode: 8" << endl;
 				}
 				else if (abs(tangent) < 0) {
 					sd.setExampleData(steeringAngle);
-					//cout << "Diff: "<<right[0] - dist<<endl;
-					//cout << "Distance: " << right[0] << endl;
 					spd.setSpeedData(2);
 					cout << "Mode: 7" << endl;
-//				} else if (tangent  0) {
-//					sd.setExampleData((right[0] - dist)/15 * Constants::DEG2RAD);
-//					//cout << "Distance: " << right[0] << endl;
-//					spd.setSpeedData(2);
-//					cout << "Mode: 6" << endl;
+
 				} else {
-					//cout << "Diff: "<<right[0] - dist<<endl;
-					sd.setExampleData(- steeringAngle);
+					sd.setExampleData(-steeringAngle);
 					spd.setSpeedData(2);
 					cout << "Mode: 6" << endl;
 				}
-//				else {
-//					sd.setExampleData((right[0] - dist)/15 * Constants::DEG2RAD);
-//					spd.setSpeedData(2);
-//					cout << "Mode: 7" << endl;
-//				}
 
-				dd.setDistanceData(dist);
+
+				ldd.setLongDistanceData(dist[0]);
+				sdd.setShortDistanceData(dist[1]);
 
 			}
 		}
@@ -388,10 +392,13 @@ namespace msv {
 		//Send message
 		Container c(Container::USER_DATA_1, sd);
 		Container c_1(Container::USER_DATA_2, spd);
-		Container c_2(Container::USER_DATA_3, dd);
+		Container c_2(Container::USER_DATA_3, ldd);
+		Container c_3(Container::USER_DATA_4, sdd);
+
 		getConference().send(c);
 		getConference().send(c_1);
 		getConference().send(c_2);
+		getConference().send(c_3);
 
     }
 
