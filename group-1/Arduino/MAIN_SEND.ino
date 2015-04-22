@@ -1,5 +1,4 @@
 
-
 #include <Wire.h>
 
 #define srfAddress1 0x70                           // Address of the SRF08
