@@ -42,7 +42,7 @@ void loop() {
   
   Serial.println();
   //delay(50);
-  
+  startSonars();
   int sonarFront = getRange(FRONT_SONAR);                      // Calls a function to get the range data 
   Serial.print("Front sonar distance: ");
   Serial.print(sonarFront);
@@ -71,15 +71,20 @@ int IR_Distance(int IR_sensor){
   return(-1);
 }
 
-int getRange(unsigned char srfAddress){                                   // This function gets a ranging from the SRF08
-  int range = 0; 
- 
-  Wire.beginTransmission(srfAddress);             // Start communicating with SRF08
+void startSonars()
+{
+  Wire.beginTransmission(0x00);             // Start communicating with SRF08
   Wire.write((byte)cmdByte);                             // Send Command Byte
   Wire.write(0x51);                                // Send 0x51 to start a ranging in cm
   Wire.endTransmission();
  
-  delay(100);                                     // Wait for ranging to be complete
+  delay(80);
+}
+
+int getRange(unsigned char srfAddress){                                   // This function gets a ranging from the SRF08
+  int range = 0; 
+ 
+                                     // Wait for ranging to be complete
  
   Wire.beginTransmission(srfAddress);             // start communicating with SRFmodule
   Wire.write(rangeByte);                           // Call the register for start of ranging data
