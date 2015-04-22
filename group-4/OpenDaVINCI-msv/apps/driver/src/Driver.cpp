@@ -427,17 +427,16 @@ namespace msv {
 
             /* ---------------------   paralle parking area END--------------------- */
  
-
             // Create vehicle control data.
             //VehicleControl vc;
 
             // With setSpeed you can set a desired speed for the vehicle in the range of -2.0 (backwards) .. 0 (stop) .. +2.0 (forwards)
-            vc.setSpeed(10);
-            //vc.setSpeed(speed);
+            //vc.setSpeed(10);
+            vc.setSpeed(speed);
 
             // With setSteeringWheelAngle, you can steer in the range of -26 (left) .. 0 (straight) .. +25 (right)
-            vc.setSteeringWheelAngle(sd.getWheelAngle() * Constants::DEG2RAD);
-            //vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
+            //vc.setSteeringWheelAngle(sd.getWheelAngle() * Constants::DEG2RAD);
+            vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
 
             // You can also turn on or off various lights:
             //vc.setBrakeLights(false);
