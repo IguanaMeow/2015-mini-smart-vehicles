@@ -24,6 +24,8 @@
 #include "core/base/KeyValueConfiguration.h"
 #include "core/data/Container.h"
 #include "core/data/TimeStamp.h"
+#include "core/data/environment/VehicleData.h"
+#include <serial/serial.h>
 
 #include "OpenCVCamera.h"
 
@@ -37,10 +39,20 @@ namespace msv {
     using namespace core::base;
     using namespace core::data;
     using namespace tools::recorder;
+    using namespace serial;
+    //VehicleData
+    //using namespace core::data::environment;
+
+    const int INSERIAL = 16;
 
     Proxy::Proxy(const int32_t &argc, char **argv) :
 	    ConferenceClientModule(argc, argv, "proxy"),
         m_recorder(NULL),
+        this_serial(NULL),
+        endByte(0xFF),
+        startByte(0xAA),
+        incomingSer(),
+        oldIncomingSer(),
         m_camera(NULL)
     {}
 
@@ -88,6 +100,18 @@ namespace msv {
         if (m_camera == NULL) {
             cerr << "No valid camera type defined." << endl;
         }
+
+        //Establish serial port connection
+
+        uint32_t baud = 9600;
+        string port = "/dev/ttyS0" 
+        // posible commands for getting serial port
+        // CommandLineParser cmdParser;
+        // cmdParser.addCommandLineArgument("id");
+        Serial this_serial(port, baud, serial::Timeout::simpleTimeout(2000));
+        if(!this_serial.isOpen()){
+            cerr << "SerialPort is not open" << endl;
+        }
     }
 
     void Proxy::tearDown() {
@@ -108,15 +132,94 @@ namespace msv {
         getConference().send(c);
     }
 
+    int Proxy::getSerial() {
+
+        uint8_t current = 0;
+        uint8_t tempincoming[INSERIAL];
+        uint8_t check = 0;
+        uint8_t success = 0;
+
+        while (this_serial.read(&current,1) && current != endByte);
+        success = this_serial.read(&tempincoming,INSERIAL);
+        for(int i = 0; i > (INSERIAL- 1); i++)
+            check ^= tempincoming[i];
+        }
+        if(success){
+            if(tempincoming[0] == startByte && tempincoming[INSERIAL - 2] == endByte && check == 0){
+                incomingSer = tempincoming;
+            }
+            return 1;
+        }else{
+            return 0;
+        }
+    }
+
+    // void Proxy::sendSerial() {
+    // }
+
+    void Proxy::distSerial() {
+        VehicleData vd;
+        SensorBoardData sbd;
+
+        //Hardcodetest
+        // uint16_t speed = 100;
+        // uint16_t steering = 100;
+        // uint16_t usFront = 100;
+        // uint16_t usFrontRight = 100;
+        // uint16_t irFrontRight = 100;
+        // uint16_t irMiddleRight = 100;
+        // uint16_t irBack = 100;
+
+        uint16_t speed = ((uint16_t)incomingSer[2] << 8) | incomingSer[1];
+        uint16_t steering = ((uint16_t)incomingSer[3] << 8) | incomingSer[4];
+        uint16_t irFrontRight = ((uint16_t)incomingSer[5] << 8) | incomingSer[6];
+        uint16_t irMiddleRight = ((uint16_t)incomingSer[7] << 8) | incomingSer[8];
+        uint16_t irBack = ((uint16_t)incomingSer[9] << 8) | incomingSer[10];
+        uint16_t usFront = ((uint16_t)incomingSer[11] << 8) | incomingSer[12];
+        uint16_t usFrontRight = ((uint16_t)incomingSer[13] << 8) | incomingSer[14];
+
+
+        // vd.setSpeed((double)speed);
+        // vd.setSteering((double)steering);
+        sbd.putTo_MapOfDistances(0, (double)irFrontRight);
+        sbd.putTo_MapOfDistances(1, (double)irBack);
+        sbd.putTo_MapOfDistances(2, (double)irMiddleRight);
+        sbd.putTo_MapOfDistances(3, (double)usFront);
+        sbd.putTo_MapOfDistances(4, (double)usFrontRight);
+
+
+
+        // cerr << "Speed: " << vd.getSpeed(); << endl;
+        // cerr << "Steering: " << vd.getHeading(); << endl;
+
+        cerr << "Sensor 0 IR Front-Right: " << sbd.getValueForKey_MapOfDistances(0) << endl;
+        cerr << " Sensor 1 IR Back: " << sbd.getValueForKey_MapOfDistances(1) << endl;
+        cerr << " Sensor 2 IR Middle-Right: " << sbd.getValueForKey_MapOfDistances(2) << endl;
+        cerr << " Sensor 3 US Front-Center: " << sbd.getValueForKey_MapOfDistances(3) << endl;
+        cerr << " Sensor 4 US Front-Right: " << sbd.getValueForKey_MapOfDistances(4) << endl;
+
+        // Container contVD(Container::VEHICLEDATA, vd);
+        // distribute(contVD);
+        Container contSBD(Container::USER_DATA_0, sbd);
+        distribute(contSBD);
+    }
+
     // This method will do the main data processing job.
     ModuleState::MODULE_EXITCODE Proxy::body() {
+
+        //Serial connection check
+        int connection = 1;
+        this_serial.flushInput();
+
         uint32_t captureCounter = 0;
+        //Framerate
         clock_t start;
         double cumduration;
         double duration;
         double oldduration = 0.0;
         double smoothduration;
         start = clock();
+
 
         while (getModuleState() == ModuleState::RUNNING) {
             // Capture frame.
@@ -142,6 +245,17 @@ namespace msv {
 
             // TODO: Here, you need to implement the data links to the embedded system
             // to read data from IR/US.
+            //Serial
+            connection = getSerial();
+            distSerial();
+
+
+            if(connection){
+                this_serial.flushInput();
+            }else{
+                cout << "Proxy timed out on serial connection " << endl;
+                break;
+            }
         }
         cumduration = ( clock() - start ) / (double) CLOCKS_PER_SEC;
         cout << "Proxy: Captured " << captureCounter << " frames." << endl;
