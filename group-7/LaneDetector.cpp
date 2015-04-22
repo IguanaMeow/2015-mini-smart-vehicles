@@ -20,6 +20,8 @@
 #include <iostream>
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
+//#include "opencv2/imgcodecs.h"
+#include "opencv2/imgproc/imgproc.hpp"
 #include <unistd.h>
 #include <math.h>
 #include "core/data/Constants.h"
@@ -179,8 +181,19 @@ namespace msv {
     void LaneDetector::processImage() {
 
 
+		IplImage *img_gray = cvCreateImage(cvGetSize(m_image),IPL_DEPTH_8U,1);
+		IplImage *canny_image = cvCreateImage(cvGetSize(m_image),IPL_DEPTH_8U,1);
 		IplImage *out_image = cvCreateImage(cvGetSize(m_image),8,3);
-		cvThreshold(m_image, out_image, 127, 255, CV_THRESH_BINARY );
+//		cvThreshold(m_image, out_image, 127, 255, CV_THRESH_BINARY );
+
+			//IplImage *img_gray, *out_image;
+			cvCvtColor(m_image,img_gray, CV_RGB2GRAY);
+			cvCanny(img_gray, canny_image, 10, 100, 3 );
+			cvCvtColor(canny_image, out_image, CV_GRAY2RGB);
+
+			cvReleaseImage(&img_gray);
+			cvReleaseImage(&canny_image);
+
 
 
 		//initiate values
@@ -240,8 +253,6 @@ namespace msv {
 		ShortDistanceData sdd;
 
 		int dist[2];
-		//double steeringLight = 8.6 * Constants::DEG2RAD ;
-		//double steeringSteep = 9.05 * Constants::DEG2RAD ;
 
 		Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_1);
 		SteeringData sd_old = containerSteeringData.getData<SteeringData> ();
@@ -255,6 +266,9 @@ namespace msv {
 		Container containerShortDistanceData = getKeyValueDataStore().get(Container::USER_DATA_4);
 		ShortDistanceData sdd_old = containerShortDistanceData.getData<ShortDistanceData>();
 		dist[1] = sdd_old.getShortDistanceData();
+
+		cout << "Old Steering Data " << steer<< endl;
+		cout << "Old distant  " << dist[0]<<" "<<dist[1]<< endl;
 
 //		if((checkLane(right,w) == 4 || checkLane(left,w) == 4) && abs(steer) < 0.05 ){
 //
@@ -294,20 +308,15 @@ namespace msv {
 
 		} else if((checkLane(left,w) == 3 && checkLane(right,w) == 3)){
 
-			cout << "Old Steering Data " << steer<< endl;
-			cout << "Old distant  " << dist[0]<<" "<<dist[1]<< endl;
+
 			ldd.setLongDistanceData(dist[0]);
 			sdd.setShortDistanceData(dist[1]);
-			sd.setExampleData(abs(steer));
+			sd.setExampleData(steer);
 			spd.setSpeedData(2);
 			cout<<"Mode: 8"<<endl;
 
 
 		} else {
-			cout << "Old Steering Data " << steer<< endl;
-			cout << "Old distant  " << dist[0]<<" "<<dist[1]<< endl;
-
-			//int dist = 215;
 
 			if (checkLane(right, w) != 1 && straightLine(right, y_pos) == true) {
 
@@ -347,7 +356,7 @@ namespace msv {
 
 				} else {
 
-					sd.setExampleData((dist[1] - left[3])/30.5 * Constants::DEG2RAD);
+					sd.setExampleData((dist[1] - left[3])/31 * Constants::DEG2RAD);
 					spd.setSpeedData(2);
 					ldd.setLongDistanceData(dist[0]);
 					sdd.setShortDistanceData(dist[1]);
@@ -362,11 +371,11 @@ namespace msv {
 				double steeringAngle;
 
 
-				steeringAngle = 9.055 * Constants::DEG2RAD;
+				steeringAngle = 9.03 * Constants::DEG2RAD;
 				//steeringAngle = tangent/4;
 
 
-				if(right[0] == dist[0]){
+				if(right[0] == dist[0] && abs(steer) < 0.001){
 					sd.setExampleData(0);
 					spd.setSpeedData(2);
 					cout << "Mode: 8" << endl;
