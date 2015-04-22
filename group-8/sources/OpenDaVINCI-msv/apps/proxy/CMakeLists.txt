@@ -25,6 +25,8 @@ INCLUDE_DIRECTORIES (${libopendavinci_SOURCE_DIR}/include)
 INCLUDE_DIRECTORIES (${libdata_SOURCE_DIR}/include)
 INCLUDE_DIRECTORIES (include)
 
+INCLUDE_DIRECTORIES (/home/msv/serial/include)
+
 set(serial_SRCS /home/msv/serial/src/serial.cc /home/msv/serial/include/serial/serial.h /home/msv/serial/include/serial/v8stdint.h)
 if(UNIX)
     list(APPEND serial_SRCS /home/msv/serial/src/impl/unix.cc)
