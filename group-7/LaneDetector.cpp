@@ -371,8 +371,8 @@ namespace msv {
 				double steeringAngle;
 
 
-				steeringAngle = 9.03 * Constants::DEG2RAD;
-				//steeringAngle = tangent/4;
+				//steeringAngle = 9.03 * Constants::DEG2RAD;
+				steeringAngle = tangent/4;
 
 
 				if(right[0] == dist[0] && abs(steer) < 0.001){
