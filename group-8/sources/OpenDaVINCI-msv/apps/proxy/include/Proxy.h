@@ -76,6 +76,8 @@ namespace msv {
             virtual void tearDown();
 
             void distribute(core::data::Container c);
+            int getSerial();
+            void distSerial();
 
         private:
             tools::recorder::Recorder *m_recorder;
