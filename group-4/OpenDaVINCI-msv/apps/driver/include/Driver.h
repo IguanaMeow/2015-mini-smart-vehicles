@@ -22,7 +22,7 @@
 
 #include "core/base/ConferenceClientModule.h"
 #include "core/data/environment/Point3.h"
- #include "core/data/environment/VehicleData.h"
+#include "core/data/environment/VehicleData.h"
 #include "core/data/control/VehicleControl.h"
 
 
@@ -85,20 +85,23 @@ namespace msv {
 
             virtual void tearDown();
 // find suitable gap
-            bool find_gapStart(bool* is_measure,double* oldValue,double* newValue);
-            bool find_gapEnd(bool* is_measure,double* oldValue,double* newValue);
+            bool find_gapStart(bool,float*,float*);
+            bool find_gapEnd(bool,float* oldValue,float* newValue);
 
-            void recording(double, double);
+            void recording(float, float,float);
             void startMeasure(Point3);
             void finishMeasure(Point3);
             void stopforParking();
             void defaultDriving();
 // start parking
 
-            void pre_parking();
-            bool is_readyParking();
-            void tureWheelToRight();
-            void tureWheelToLeft();
+
+            void defaultParking();
+            void tureWheelToRightBack();
+            void tureWheelToLeftBack();
+
+            void tureWheelToRightForward();
+            void tureWheelToLeftForward();
 
 
 /*
