@@ -25,7 +25,7 @@
 #include "core/data/Container.h"
 #include "core/data/TimeStamp.h"
 #include "core/data/environment/VehicleData.h"
-#include <serial/serial.h>
+#include "serial/serial.h"
 
 #include "OpenCVCamera.h"
 
@@ -43,10 +43,10 @@ namespace msv {
     //VehicleData
     //using namespace core::data::environment;
 
-    const int INSERIAL = 16;
+    const int INSERIAL = 17;
 
     Proxy::Proxy(const int32_t &argc, char **argv) :
-	    ConferenceClientModule(argc, argv, "proxy"),
+        ConferenceClientModule(argc, argv, "proxy"),
         m_recorder(NULL),
         this_serial(NULL),
         endByte(0xFF),
@@ -60,7 +60,7 @@ namespace msv {
     }
 
     void Proxy::setUp() {
-	    // This method will be call automatically _before_ running body().
+        // This method will be call automatically _before_ running body().
         if (getFrequency() < 20) {
             cerr << endl << endl << "Proxy: WARNING! Running proxy with a LOW frequency (consequence: data updates are too seldom and will influence your algorithms in a negative manner!) --> suggestions: --freq=20 or higher! Current frequency: " << getFrequency() << " Hz." << endl << endl << endl;
         }
@@ -104,7 +104,7 @@ namespace msv {
         //Establish serial port connection
 
         uint32_t baud = 9600;
-        string port = "/dev/ttyS0" 
+        string port = "/dev/ttyS0"; 
         // posible commands for getting serial port
         // CommandLineParser cmdParser;
         // cmdParser.addCommandLineArgument("id");
@@ -115,7 +115,7 @@ namespace msv {
     }
 
     void Proxy::tearDown() {
-	    // This method will be call automatically _after_ return from body().
+        // This method will be call automatically _after_ return from body().
         OPENDAVINCI_CORE_DELETE_POINTER(m_recorder);
         OPENDAVINCI_CORE_DELETE_POINTER(m_camera);
     }
@@ -140,13 +140,13 @@ namespace msv {
         uint8_t success = 0;
 
         while (this_serial.read(&current,1) && current != endByte);
-        success = this_serial.read(&tempincoming,INSERIAL);
-        for(int i = 0; i > (INSERIAL- 1); i++)
+        success = this_serial.read(tempincoming,INSERIAL);
+        for(int i = 0; i > (INSERIAL- 1); i++){
             check ^= tempincoming[i];
         }
         if(success){
             if(tempincoming[0] == startByte && tempincoming[INSERIAL - 2] == endByte && check == 0){
-                incomingSer = tempincoming;
+                memcpy(incomingSer, tempincoming, 17 * sizeof(uint8_t) );
             }
             return 1;
         }else{
@@ -158,20 +158,20 @@ namespace msv {
     // }
 
     void Proxy::distSerial() {
-        VehicleData vd;
+        //VehicleData vd;
         SensorBoardData sbd;
 
         //Hardcodetest
-        // uint16_t speed = 100;
-        // uint16_t steering = 100;
+         uint16_t speed = 100;
+         uint16_t steering = 100;
         // uint16_t usFront = 100;
         // uint16_t usFrontRight = 100;
         // uint16_t irFrontRight = 100;
         // uint16_t irMiddleRight = 100;
         // uint16_t irBack = 100;
 
-        uint16_t speed = ((uint16_t)incomingSer[2] << 8) | incomingSer[1];
-        uint16_t steering = ((uint16_t)incomingSer[3] << 8) | incomingSer[4];
+        //uint16_t speed = ((uint16_t)incomingSer[2] << 8) | incomingSer[1];
+        //uint16_t steering = ((uint16_t)incomingSer[3] << 8) | incomingSer[4];
         uint16_t irFrontRight = ((uint16_t)incomingSer[5] << 8) | incomingSer[6];
         uint16_t irMiddleRight = ((uint16_t)incomingSer[7] << 8) | incomingSer[8];
         uint16_t irBack = ((uint16_t)incomingSer[9] << 8) | incomingSer[10];
@@ -266,4 +266,3 @@ namespace msv {
     }
 
 } // msv
-

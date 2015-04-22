@@ -25,7 +25,7 @@
 #include "core/base/ConferenceClientModule.h"
 #include "core/data/Container.h"
 #include "tools/recorder/Recorder.h"
-#include <serial/serial.h>
+#include "serial/serial.h"
 
 #include "Camera.h"
 
@@ -83,8 +83,8 @@ namespace msv {
             serial::Serial this_serial;
             uint8_t endByte;
             uint8_t startByte;
-            uint8_t incomingSer[16];
-            uint8_t oldIncomingSer[16];
+            uint8_t incomingSer[17];
+            uint8_t oldIncomingSer[17];
 
 
     };
