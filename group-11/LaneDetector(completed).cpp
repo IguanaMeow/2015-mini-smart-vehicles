@@ -34,17 +34,6 @@
 #include "GeneratedHeaders_Data.h"
 
 #include "LaneDetector.h"
-void testArrow( cv::Mat img, cv::Point start, cv::Point end )
-{
-  int thickness = 5;
-  int lineType = 6;
-  line( img,
-        start,
-        end,
-        cv::Scalar( 0, 0, 255 ),
-        thickness,
-        lineType );
-}
 void verticalLine( cv::Mat img, cv::Point start, cv::Point end )
 {
   int thickness = 1;
@@ -63,7 +52,7 @@ void rightArrow( cv::Mat img, cv::Point start, cv::Point end )
   line( img,
         start,
         end,
-        cv::Scalar( 98, 206, 81 ),
+        cv::Scalar( 240, 206, 81 ),
         thickness,
         lineType );
 }
@@ -151,7 +140,7 @@ namespace msv {
 			    m_sharedImageMemory->unlock();
 
 			    // Mirror the image.
-			    cvFlip(m_image, 0, -1);
+			    //cvFlip(m_image, 0, -1);
 
 			    retVal = true;
 		    }
@@ -166,10 +155,6 @@ namespace msv {
         cv::Mat mat_img(m_image);  //converts the IPL image to a mat image
         int rows = mat_img.rows;
         int cols = mat_img.cols;
-
-        cv::Size s = mat_img.size(); //gets rows and columns
-        rows = s.height;
-        cols = s.width;
 
         cv::Point pt1;  //initialize the startin and ending points for each arrow
         cv::Point pt2;
@@ -197,6 +182,23 @@ namespace msv {
         pt6.x = 50;
         pt6.y = 350;
 
+        for(int y=0;y<rows;y++){
+        for(int x=0;x<cols;x++){
+        cv::Vec3b color = mat_img.at<cv::Vec3b>(cv::Point(x,y));
+        if(color[0] < 230 && color[1] < 230 && color[2] < 230){
+            color[0] = 0;
+            color[1] = 0;
+            color[2] = 0;
+ 	mat_img.at<cv::Vec3b>(cv::Point(x,y)) = color;
+        }
+        else{
+            color.val[0] = 255;
+            color.val[1] = 255;
+            color.val[2] = 255;
+ 	mat_img.at<cv::Vec3b>(cv::Point(x,y)) = color;
+        }
+    }
+    }
         cv::Vec3b rightLaneColor = mat_img.at<cv::Vec3b>(pt4); //defines the color at current positions
         while(pt4.x != cols){
             pt4.x = pt4.x +1; //extend the arrow
