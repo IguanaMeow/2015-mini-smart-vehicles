@@ -102,8 +102,8 @@ namespace msv {
             
 			Lines rightLine1;
         	Lines rightLine2;
-        	Lines rightLine3;
-        	Lines rightLine4;
+        	//Lines rightLine3;
+        	//Lines rightLine4;
 
         	Lines leftLine1;
         	Lines leftLine2;
