@@ -166,11 +166,15 @@ namespace msv {
 
       SteeringData sd;
       //sd.setSpeedData(2);
+      LaneData ld;      
+
+      ld.setRightLine1(rightLine1.getXPos());
+      std::cout << "lane data" << rightLine1.getXPos() << std::endl;
 
       switch (state) {
         case 1: // Lanedetection state
           std::cout << "state 1" << std::endl;
-          sd.setSpeedData(2);
+          sd.setSpeedData(3);
           
           // Following upper right lines
           if(rightLine1.getXPos() > 270 && rightLine2.getXPos() > 270 && leftLine1.getXPos() > 270 && leftLine2.getXPos() > 270)
@@ -273,8 +277,12 @@ namespace msv {
 
         // Create container for finally sending the data.
         Container c(Container::USER_DATA_1, sd);
+        Container c1(Container::USER_DATA_3, ld);
+
         // Send container.
         getConference().send(c);
+        getConference().send(c1);
+
     }
 
     // This method will do the main data processing job.
