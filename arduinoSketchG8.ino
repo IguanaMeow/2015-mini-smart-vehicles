@@ -1,7 +1,12 @@
 
+
+//----Libraries----
+#include <Wire.h>            //For US sensors
+#include <SonarSRF08.h>      //For US sensors
+
 //----Special Bytes ----
-const byte endByte = 'f';
-const byte startByte = 's';
+const byte endByte = 0xFF;
+const byte startByte = 0xAA;
 
 //----Incoming Data ----
 byte recSignal[8];         // a byte array to hold incoming data
@@ -16,23 +21,37 @@ int steeringInOld;            //Last changed steering data
 //byte lightsInOld
 
 //----Outgoing Data ----
-byte sendSignal[16];         // a byte array to hold outgoing data
+byte sendSignal[17];         // a byte array to hold outgoing data
 int speedOut;              //outgoing speed data from Wheel encoder
 int steeringOut;           //outgoing steering data (current setting)
-int ir1Out;                //IR sensor 1 outgoing
-int ir2Out;                //IR sensor 2 outgoing
-int us1Out;                //US sensor 1 outgoing
-int us2Out;                //US sensor 2 outgoing
-byte lightsOut = 0;
+int irFrontOut;            //IR sensor right front outgoing
+int irMiddleOut;           //IR sensor right back outgoing
+int irBackOut;             //IR sensor back outgoing
+int usFrontOut;                //US sensor 1 outgoing
+int usRightOut;                //US sensor 2 outgoing
 
+//----Defining Sensor Data----
+#define irFrontPin  0      //IR sensor right front in analog pin 0
+#define irMiddlePin 1      //IR sensor right back in analog pin 1
+#define irBackPin   2      //IR sensor back in analog pin 2
+#define FRONT_08_ADDRESS (0xE6 >> 1) //Address for the Front US sensor
+#define RIGHT_08_ADDRESS (0xE0 >> 1) // adress for the Right US sensor
+SonarSRF08 usFront;
+SonarSRF08 usRight;
+char unit = 'c'; // 'i' for inches, 'c' for centimeters, 'm' for micro-seconds used to define distance with US sensors
 
-
-
+// Setup Analogue Gain
+// http://www.robot-electronics.co.uk/htm/srf08tech.html section "Analogue Gain"
+#define GAIN_REGISTER 0x09
+// Setup Range Location
+// http://www.robot-electronics.co.uk/htm/srf08tech.html section "Changing the Range"
+#define LOCATION_REGISTER 0x8C
 
 void setup() {
   // initialize serial:
   Serial.begin(9600);
-  
+  usFront.connect(FRONT_08_ADDRESS, GAIN_REGISTER, LOCATION_REGISTER);//connect to the front US sensor
+  usRight.connect(RIGHT_08_ADDRESS, GAIN_REGISTER, LOCATION_REGISTER);//connect yo the right US sensor
   // TODO - A blocking function that waits for a predefined signal from the Odroid here or in loop
   // Possibly use the handshake example?
 }
@@ -56,10 +75,11 @@ void loop() {
   //Gather sensor Data
   getSpeed();
   getSteering();
-  getIR1();
-  getIR2();
-  getUS1();
-  getUS2();
+  getIRFront();
+  getIRMiddle();
+  getIRBack();
+  getUSFront();
+  getUSRight();
   sendData();
 }
 
@@ -72,27 +92,28 @@ void distIncoming(){
 
 //Build buffer for serial out, send it over the wire
 void sendData(){
-  sendSignal[15] = 0;
+  sendSignal[16] = 0;
   byte i = 0;
   sendSignal[0] = startByte;
   sendSignal[1] = speedOut & 0xFF;
   sendSignal[2] = (speedOut >> 8) & 0xFF;
   sendSignal[3] = steeringOut & 0xFF;
   sendSignal[4] = (steeringOut >> 8) & 0xFF;
-  sendSignal[5] = ir1Out & 0xFF;
-  sendSignal[6] = (ir1Out >> 8) & 0xFF;
-  sendSignal[7] = ir2Out & 0xFF;
-  sendSignal[8] = (ir2Out >> 8) & 0xFF;
-  sendSignal[9] = us1Out & 0xFF;
-  sendSignal[10] = (us1Out >> 8) & 0xFF;
-  sendSignal[11] = us1Out & 0xFF;
-  sendSignal[12] = (us2Out >> 8) & 0xFF;
-  sendSignal[13] = lightsOut;
-  sendSignal[14] = endByte;
-  for(i = 0; i < 15; i++){
-    sendSignal[15] ^= sendSignal[i];
+  sendSignal[5] = irFrontOut & 0xFF;
+  sendSignal[6] = (irFrontOut >> 8) & 0xFF;
+  sendSignal[7] = irMiddleOut & 0xFF;
+  sendSignal[8] = (irMiddleOut >> 8) & 0xFF;
+  sendSignal[9] = irBackOut & 0xFF;
+  sendSignal[10] = (irBackOut >> 8) & 0xFF;
+  sendSignal[11] = usFrontOut & 0xFF;
+  sendSignal[12] = (usFrontOut >> 8) & 0xFF;
+  sendSignal[13] = usRightOut & 0xFF;
+  sendSignal[14] = (usRightOut >> 8) & 0xFF;
+  sendSignal[15] = endByte;
+  for(i = 0; i < 16; i++){
+    sendSignal[16] ^= sendSignal[i];
   } 
-  Serial.write(sendSignal, 15);
+  Serial.write(sendSignal, 17);
 }
 
 //Set the speed controller
@@ -119,24 +140,34 @@ void getSteering(){
   //TODO
 }
 
-//get first IR Sensor
-void getIR1(){
-  //TODO
+//get right front IR Sensor by reading the analog pin
+void getIRFront(){
+  irFrontOut = analogRead (irFrontPin);
+  //Serial.println (irFrontOut);
 }
 
-//get second IR Sensor
-void getIR2(){
-  //TODO
+//get right back IR Sensor by reading the analog pin
+void getIRMiddle(){
+  irMiddleOut = analogRead (irMiddlePin);
+  //Serial.println (irMiddleOut);
+}
+
+//get back IR Sensor by reading the analog pin
+void getIRBack(){
+  irBackOut = analogRead (irBackPin);
+  //Serial.println (irBackOut);
 }
 
 //get first Ultra Sonic Sensor
-void getUS1(){
-  //TODO
+void getUSFront(){
+  usFrontOut = usFront.getRange(unit);
+  //Serial.println (usFrontOut);
 }
 
 //get second Ultra Sonic Sensor
-void getUS2(){
-  //TODO
+void getUSRight(){
+  usRightOut = usRight.getRange(unit);
+  //Serial.println (usRightOut);
 }
 
 

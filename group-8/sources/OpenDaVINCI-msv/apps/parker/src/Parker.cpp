@@ -42,10 +42,14 @@ namespace msv {
         const int MEASURING = 1;
         const int ALIGNING = 2;
         const int BACK_RIGHT = 3;
+        const int BACK_STRAIGHT = 8;
         const int BACK_LEFT = 4;
         const int STRAIGHTEN = 5;
         const int STOPPING = 6;
         const int STOP = 7;
+        const int ABORT = 9;
+
+        const int CAR_LENGTH = 4;
 
         Parker::Parker(const int32_t &argc, char **argv) :
 	        ConferenceClientModule(argc, argv, "Parker") {
@@ -67,7 +71,11 @@ namespace msv {
                 int mode = SCANNING;
                 int currentTraveledPath;
                 double distanceBackRight;
+                double distanceRear;
                 double absTraveledPath;
+                double initialHeading;
+                double heading;
+                double steeringWheelAngle;
 
 	        while (getModuleState() == ModuleState::RUNNING) {
                 // In the following, you find example for the various data sources that are available:
@@ -95,7 +103,10 @@ namespace msv {
 
                 // Design your control algorithm here depending on the input data from above.
                 distanceBackRight = sbd.getValueForKey_MapOfDistances(2);
+                distanceRear = sbd.getValueForKey_MapOfDistances(3);
                 absTraveledPath = vd.getAbsTraveledPath();
+                steeringWheelAngle = sd.getHeadingData();
+                heading = vd.getHeading();
 
                 // Create vehicle control data.
                 VehicleControl vc;
@@ -104,20 +115,21 @@ namespace msv {
 
                         case SCANNING:
                         vc.setSpeed(1);
+                        vc.setSteeringWheelAngle(sd.getHeadingData());
                         if(distanceBackRight < 0){
                                 mode = MEASURING;
-                                currentTraveledPath = vd.getAbsTraveledPath();
+                                currentTraveledPath = absTraveledPath;
                         }
                         break;
 
                         case MEASURING:
                         vc.setSpeed(1);
-                        
-                        if(distanceBackRight > -1 && (absTraveledPath - currentTraveledPath) < 7){
+                        vc.setSteeringWheelAngle(sd.getHeadingData());
+                        if((distanceBackRight > -1 && (absTraveledPath - currentTraveledPath) < CAR_LENGTH * 1.75) || (steeringWheelAngle > 1 || steeringWheelAngle < -1)){
                                 vc.setSpeed(0);
                                 mode = SCANNING;
                         }
-                        else if ((absTraveledPath - currentTraveledPath) >= 7){
+                        else if ((absTraveledPath - currentTraveledPath) >= CAR_LENGTH * 1.75){
                                 mode = ALIGNING;
                                 currentTraveledPath = absTraveledPath;
                         }
@@ -125,37 +137,65 @@ namespace msv {
 
                         case BACK_RIGHT:
                         vc.setSpeed(-0.5);
-                        vc.setSteeringWheelAngle(20 * Constants::DEG2RAD);
-                        if ((absTraveledPath - currentTraveledPath) > 6.5){
-                                mode = BACK_LEFT;
+                        vc.setSteeringWheelAngle(25 * Constants::DEG2RAD);
+                        if (angleDifference(initialHeading, heading) > 45){
+                                mode = BACK_STRAIGHT;
                                 currentTraveledPath = absTraveledPath;
+                                vc.setSteeringWheelAngle(0);
+                        }
+                        if(distanceRear < CAR_LENGTH * 0.25 && distanceRear > 0){
+                                mode = ABORT;
+                                currentTraveledPath = absTraveledPath;
+                                vc.setSpeed(0);
                         }
 
                         break;
 
-                        case BACK_LEFT:
+                        case BACK_STRAIGHT:
                         vc.setSpeed(-0.5);
+                        vc.setSteeringWheelAngle(0);
+                        if((absTraveledPath - currentTraveledPath) > CAR_LENGTH * 0.4){
+                                mode = BACK_LEFT;
+                                currentTraveledPath = absTraveledPath;
+                                vc.setSteeringWheelAngle(-26 * Constants::DEG2RAD);
+                        }
+                        if(distanceRear < CAR_LENGTH * 0.25 && distanceRear > 0){
+                                mode = ABORT;
+                                currentTraveledPath = absTraveledPath;
+                                vc.setSpeed(0);
+                        }
+                        break;
+
+                        case BACK_LEFT:
+                        vc.setSpeed(-0.2);
                         vc.setSteeringWheelAngle(-26 * Constants::DEG2RAD);
-                        if((absTraveledPath - currentTraveledPath) > 4){
+                        if(angleDifference(initialHeading, heading) < 10){
                                 vc.setSpeed(0);
                                 currentTraveledPath = absTraveledPath;
                                 mode = STRAIGHTEN;
+                        }
+                        if(distanceRear < CAR_LENGTH * 0.25 && distanceRear > 0){
+                                mode = ABORT;
+                                currentTraveledPath = absTraveledPath;
+                                vc.setSpeed(0);
                         }
 
                         break;
 
                         case STRAIGHTEN:
-                        vc.setSteeringWheelAngle(10);
+                        vc.setSteeringWheelAngle(25);
                         vc.setSpeed(0.5);
-                        if(absTraveledPath - currentTraveledPath > 1.3)
+                        if(angleDifference(initialHeading, heading) < 0.5)
                                 mode = STOP;
 
                         break;
 
                         case ALIGNING:
                         vc.setSpeed(0.5);
-                        if((absTraveledPath - currentTraveledPath) > 3)
+                        if((absTraveledPath - currentTraveledPath) > CAR_LENGTH * 0.625){
                                 mode = STOPPING;
+                                initialHeading = heading;
+                        }
                         
                         break;
 
@@ -172,8 +212,14 @@ namespace msv {
                         vc.setSpeed(0);
                         break;
 
+                        case ABORT:
+                        vc.setSpeed(0.5);
+                        if((absTraveledPath - currentTraveledPath) > CAR_LENGTH * 0.67)
+                                mode = SCANNING;
+                        break;
+
                 }
-                cerr << "Heading: " << vd.getHeading() << endl;
+                cerr << "Heading: " << heading * Constants::RAD2DEG << endl;
                 cerr << "Mode: " << mode << endl;
                 cerr << "Sensor 0 IR Front-Right: " << sbd.getValueForKey_MapOfDistances(0) << endl;
                 cerr << " Sensor 1 IR Rear: " << sbd.getValueForKey_MapOfDistances(1) << endl;
@@ -189,6 +235,16 @@ namespace msv {
 	        }
 
 	        return ModuleState::OKAY;
+        }
+
+        double Parker::angleDifference(double initialHeading, double heading){
+
+                initialHeading = abs(initialHeading) * Constants::RAD2DEG;
+                heading = abs(heading) * Constants::RAD2DEG;
+
+                if (heading < initialHeading)
+                        return heading + 360 - initialHeading;
+                return heading - initialHeading;
         }
 } // msv
 

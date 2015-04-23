@@ -67,6 +67,8 @@ namespace msv {
             virtual void setUp();
 
             virtual void tearDown();
+
+            double angleDifference(double initialHeading, double heading);
     };
 
 } // msv

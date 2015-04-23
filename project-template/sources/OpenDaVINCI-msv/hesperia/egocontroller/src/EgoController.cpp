@@ -116,6 +116,26 @@ namespace egocontroller {
                 kvc.getValue<double>("egocontroller.wheelbase") );
     }
 
+    LinearBicycleModelBehaviour* EgoController::createLinearBicycleModelBehaviour() {
+        cerr << "Using linearbicyclenew control." << endl;
+
+        stringstream vehicleTranslation;
+        vehicleTranslation << "egocontroller.start";
+        Point3 translation(getKeyValueConfiguration().getValue<string>(vehicleTranslation.str()));
+
+        stringstream vehicleRotZ;
+        vehicleRotZ << "egocontroller.rotZ";
+        const double rotZ = getKeyValueConfiguration().getValue<double>(vehicleRotZ.str());
+
+        KeyValueConfiguration kvc = getKeyValueConfiguration();
+
+        return new LinearBicycleModelBehaviour(translation, rotZ,
+                kvc.getValue<double>("egocontroller.LinearBicycleModelNew.minimumTurningRadiusLeft"),
+                kvc.getValue<double>("egocontroller.LinearBicycleModelNew.minimumTurningRadiusRight"),
+                kvc.getValue<double>("egocontroller.LinearBicycleModelNew.wheelbase"),
+                kvc.getValue<double>("egocontroller.LinearBicycleModelNew.maxSpeed") );
+    }
+
     ModuleState::MODULE_EXITCODE EgoController::body() {
         KeyValueConfiguration kvc = getKeyValueConfiguration();
 
@@ -139,14 +159,16 @@ namespace egocontroller {
             cerr << "Using simple control." << endl;
 
             stringstream vehicleTranslation;
-            vehicleTranslation << "egocontroller.simpleStart";
+            vehicleTranslation << "egocontroller.start";
             Point3 translation(getKeyValueConfiguration().getValue<string>(vehicleTranslation.str()));
 
             stringstream vehicleRotZ;
-            vehicleRotZ << "egocontroller.simpleRotZ";
+            vehicleRotZ << "egocontroller.rotZ";
             const double rotZ = getKeyValueConfiguration().getValue<double>(vehicleRotZ.str());
 
             behaviour = new SimpleControlBehaviour(translation, rotZ);
+        } else if (behaviorType == "linearbicyclenew") {
+            behaviour = createLinearBicycleModelBehaviour();
         }
 
         if (behaviour == NULL) {
@@ -173,6 +195,23 @@ namespace egocontroller {
             controller->doWork();
 
             Container container(Container::EGOSTATE, controller->getEgoState());
+/*
+        // Update internal data.
+        m_vehicleData.setPosition(position);
+        m_vehicleData.setHeading(m_heading);
+        m_vehicleData.setVelocity(velocity);
+        m_vehicleData.setSpeed(m_speed);
+        m_vehicleData.setV_log(0);
+        m_vehicleData.setV_batt(0);
+        // For fake :-)
+        m_vehicleData.setTemp(19.5 + cos(m_heading + m_deltaHeading));
+        m_vehicleData.setRelTraveledPath(relDrivenPath);
+//        const double FAULT = (1+(rand()%10)/300.0);
+        const double FAULT = 1.0;
+        m_vehicleData.setAbsTraveledPath(m_vehicleData.getAbsTraveledPath() + (relDrivenPath * FAULT));
+//cerr << "FAULT: " << FAULT << ", tD: " << m_vehicleData.getAbsTraveledPath() << endl;
+*/
+
             getConference().send(container);
         }
 

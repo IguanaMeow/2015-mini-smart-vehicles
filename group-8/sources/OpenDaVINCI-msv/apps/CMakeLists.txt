@@ -13,6 +13,9 @@ IF((NOT "${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin") AND (NOT "${CMAKE_SYSTEM_NAME}
     # Application for parking logic
     ADD_SUBDIRECTORY (parker)
 
+    # Application for overtaking logic
+    ADD_SUBDIRECTORY (overtaker)
+
     # Application for recording a video of the driving performance.
     ADD_SUBDIRECTORY (VCR)
 ENDIF()

@@ -1,5 +1,5 @@
 /**
- * proxy - Sample application to encapsulate HW/SW interfacing with embedded systems.
+ * Overtaker - Sample application for calculating steering and acceleration commands.
  * Copyright (C) 2012 - 2015 Christian Berger
  *
  * This program is free software; you can redistribute it and/or
@@ -17,26 +17,19 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef PROXY_H_
-#define PROXY_H_
-
-#include <map>
+#ifndef OVERTAKER_H_
+#define OVERTAKER_H_
 
 #include "core/base/ConferenceClientModule.h"
-#include "core/data/Container.h"
-#include "tools/recorder/Recorder.h"
-#include "serial/serial.h"
-
-#include "Camera.h"
 
 namespace msv {
 
     using namespace std;
 
     /**
-     * This class wraps the software/hardware interface board.
+     * This class is a skeleton to send driving commands to Hesperia-light's vehicle driving dynamics simulation.
      */
-    class Proxy : public core::base::ConferenceClientModule {
+    class Overtaker : public core::base::ConferenceClientModule {
         private:
             /**
              * "Forbidden" copy constructor. Goal: The compiler should warn
@@ -45,7 +38,7 @@ namespace msv {
              *
              * @param obj Reference to an object of this class.
              */
-            Proxy(const Proxy &/*obj*/);
+            Overtaker(const Overtaker &/*obj*/);
 
             /**
              * "Forbidden" assignment operator. Goal: The compiler should warn
@@ -55,7 +48,7 @@ namespace msv {
              * @param obj Reference to an object of this class.
              * @return Reference to this instance.
              */
-            Proxy& operator=(const Proxy &/*obj*/);
+            Overtaker& operator=(const Overtaker &/*obj*/);
 
         public:
             /**
@@ -64,9 +57,9 @@ namespace msv {
              * @param argc Number of command line arguments.
              * @param argv Command line arguments.
              */
-            Proxy(const int32_t &argc, char **argv);
+            Overtaker(const int32_t &argc, char **argv);
 
-            virtual ~Proxy();
+            virtual ~Overtaker();
 
             core::base::ModuleState::MODULE_EXITCODE body();
 
@@ -74,23 +67,8 @@ namespace msv {
             virtual void setUp();
 
             virtual void tearDown();
-
-            void distribute(core::data::Container c);
-            int getSerial();
-            void distSerial();
-
-        private:
-            tools::recorder::Recorder *m_recorder;
-            Camera *m_camera;
-            serial::Serial this_serial;
-            uint8_t endByte;
-            uint8_t startByte;
-            uint8_t incomingSer[17];
-            uint8_t oldIncomingSer[17];
-
-
     };
 
 } // msv
 
-#endif /*PROXY_H_*/
+#endif /*Overtaker_H_*/
