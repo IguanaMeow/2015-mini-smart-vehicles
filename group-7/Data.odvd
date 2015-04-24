@@ -25,6 +25,14 @@ message msv.SpeedData {
     double speedData;
 }
 
+message msv.LongDistanceData {
+    double longDistanceData;
+}
+
+message msv.ShortDistanceData {
+    double shortDistanceData;
+}
+
 message msv.UserButtonData {
     enum ButtonStatus {
         UNDEFINED = -1,

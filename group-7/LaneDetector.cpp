@@ -20,6 +20,8 @@
 #include <iostream>
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
+//#include "opencv2/imgcodecs.h"
+#include "opencv2/imgproc/imgproc.hpp"
 #include <unistd.h>
 #include <math.h>
 #include "core/data/Constants.h"
@@ -143,7 +145,8 @@ namespace msv {
 		}
 
 		for (i = 1; i < 3; i++){
-			if (fabs(angle[0] - angle[i]) > 0.011){
+			if (fabs(angle[0] - angle[i]) > 0.021){
+				cout << "Diff_angle :"<< fabs(angle[0] - angle[i])<<endl;
 				return false;
 			}
 		}
@@ -151,22 +154,23 @@ namespace msv {
 		return true;
 	}
 
+
 	/***Pimmie***/
 	//compare array left and right to w/2
-	int compare_left_right(int *arr1, int w){
+	int checkLane(int *arr1, int w){
 
 		int i;
 		int check = 0, count = 0;
 
 		for(i=0; i<4; i++){
+			if (arr1[i] == 0) return 4;
 			if(w/2 == abs(arr1[i]))count = count+1;
-
 			if(w/2 > abs(arr1[i]))count = count -1;
 		}
 
 
-		if(count==4)check = 1;
-		if(count==(-4))check = 2;
+		if(count==4)check = 1; //Lane is not detected
+		if(count==(-4))check = 2; //Lane is detected
 		if(count<4&&count!=(-4))check =3;
 
 		return check;
@@ -176,25 +180,28 @@ namespace msv {
 		/***Phuong***/
     void LaneDetector::processImage() {
 
-		//Gray scale picture
-		//IplImage *im_gray = cvCreateImage(cvGetSize(m_image),IPL_DEPTH_8U,1);
-		//cvCvtColor(m_image,im_gray,CV_RGB2GRAY);
-		//cvThreshold(im_gray, im_gray, 0, 127, CV_THRESH_BINARY );
 
-		//IplImage *out_image = cvCreateImage(cvGetSize(m_image),8,3);
-		//cvCvtColor(im_gray, out_image, CV_GRAY2RGB);
-
+		IplImage *img_gray = cvCreateImage(cvGetSize(m_image),IPL_DEPTH_8U,1);
+		IplImage *canny_image = cvCreateImage(cvGetSize(m_image),IPL_DEPTH_8U,1);
 		IplImage *out_image = cvCreateImage(cvGetSize(m_image),8,3);
-		cvThreshold(m_image, out_image, 127, 255, CV_THRESH_BINARY );
+//		cvThreshold(m_image, out_image, 127, 255, CV_THRESH_BINARY );
+
+			//IplImage *img_gray, *out_image;
+			cvCvtColor(m_image,img_gray, CV_RGB2GRAY);
+			cvCanny(img_gray, canny_image, 10, 100, 3 );
+			cvCvtColor(canny_image, out_image, CV_GRAY2RGB);
+
+			cvReleaseImage(&img_gray);
+			cvReleaseImage(&canny_image);
+
 
 
 		//initiate values
 		int w = m_image->width, h = m_image->height;
-		int gap[4] = {60, 90, 115, 135};
+		int gap[4] = {60, 95, 125, 150};
 		//The gap distance gets smaller, 3d drawing kind of thing :v
 
-		int right[4];
-		int left[4];
+		int right[4], left[4], i;
 		int y_pos[4] = {h -gap[0], h-gap[1], h-gap[2], h-gap[3]};
 
 		CvPoint middle_bottom = cvPoint (w/2, h);
@@ -204,49 +211,29 @@ namespace msv {
 		CvScalar blue = CV_RGB(0,0,255);
 		CvScalar green = CV_RGB(0,255,0);
 
-		CvPoint left_end_1, left_end_2, left_end_3, left_end_4;
-		CvPoint right_end_1, right_end_2, right_end_3, right_end_4;
+		CvPoint left_pos[4], right_pos[4], start_pos[4];
 
-		CvPoint start_horz_1 = cvPoint(w/2, y_pos[0]);
-		CvPoint start_horz_2 = cvPoint(w/2, y_pos[1]);
-		CvPoint start_horz_3 = cvPoint(w/2, y_pos[2]);
-		CvPoint start_horz_4 = cvPoint(w/2, y_pos[3]);
 
 		//Get left and right distance
-		left[0] = count(0, gap[0], out_image, -1);
-		left_end_1 = cvPoint(w/2+left[0], y_pos[0]);
-		left[1] = count(0, gap[1], out_image, -1);
-		left_end_2 = cvPoint(w/2+left[1], y_pos[1]);
-		left[2] = count(0, gap[2], out_image, -1);
-		left_end_3 = cvPoint(w/2+left[2], y_pos[2]);
-		left[3] = count(0, gap[3], out_image, -1);
-		left_end_4 = cvPoint(w/2+left[3], y_pos[3]);
+		for (i = 0; i< 4; i ++) {
 
-		right[0] = count (0, gap[0], out_image, 1);
-		right_end_1 = cvPoint(w/2+right[0], y_pos[0]);
-		right[1] = count (0, gap[1], out_image, 1);
-		right_end_2 = cvPoint(w/2+right[1], y_pos[1]);
-		right[2] = count (0, gap[2], out_image, 1);
-		right_end_3 = cvPoint(w/2+right[2], y_pos[2]);
-		right[3] = count (0, gap[3], out_image, 1);
-		right_end_4 = cvPoint(w/2+right[3], y_pos[3]);
+			start_pos[i] = cvPoint(w/2, y_pos[i]);
 
+			left[i] = count(0, gap[i], out_image, -1);
+			left_pos[i] = cvPoint(w/2 + left[i], y_pos[i]);
+
+			right[i] = count(0, gap[i], out_image, 1);
+			right_pos[i] = cvPoint(w/2 + right[i], y_pos[i]);
+		}
 
 		//Draw lines
         if (m_debug) {
             if (m_image != NULL){
 
-				cvLine(out_image, start_horz_1, right_end_1, green, 2, 8);
-				cvLine(out_image, start_horz_1, left_end_1, blue, 2, 8);
-
-				cvLine(out_image, start_horz_2, right_end_2, green, 2, 8);
-				cvLine(out_image, start_horz_2, left_end_2, blue, 2, 8);
-
-				cvLine(out_image, start_horz_3, right_end_3, green, 2, 8);
-				cvLine(out_image, start_horz_3, left_end_3, blue, 2, 8);
-
-				cvLine(out_image, start_horz_4, right_end_4, green, 2, 8);
-				cvLine(out_image, start_horz_4, left_end_4, blue, 2, 8);
+				for (i = 0; i<4; i++){
+					cvLine(out_image, start_pos[i], right_pos[i], green, 2, 8);
+					cvLine(out_image, start_pos[i], left_pos[i], blue, 2, 8);
+				}
 
 				cvLine(out_image, middle_bottom, middle_top, red, 2, 8);
 
@@ -256,26 +243,57 @@ namespace msv {
             }
         }
 
-		cout<<"Right: "<<right[0]<<" "<<right[1]<<" "<<right[2]<<" "<<right[3]<<endl;
-		cout<<"gap: "<<y_pos[0]<<" "<<y_pos[1]<<" "<<y_pos[2]<<" "<<y_pos[3]<<endl;
+		//cout<<"Right: "<<right[0]<<" "<<right[1]<<" "<<right[2]<<" "<<right[3]<<endl;
+		//cout<<"gap: "<<y_pos[0]<<" "<<y_pos[1]<<" "<<y_pos[2]<<" "<<y_pos[3]<<endl;
 
 
 		SteeringData sd;
 		SpeedData spd;
-		DistanceData dd;
-		//double steeringLight = 11 * Constants::DEG2RAD ;
-		//double steeringSteep = 12 * Constants::DEG2RAD ;
+		LongDistanceData ldd;
+		ShortDistanceData sdd;
 
-		if (compare_left_right(left, w) == 1 && compare_left_right(right,w) == 1 ){
+		int dist[2];
+
+		Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_1);
+		SteeringData sd_old = containerSteeringData.getData<SteeringData> ();
+		double steer = sd_old.getExampleData();
+
+		Container containerLongDistanceData = getKeyValueDataStore().get(Container::USER_DATA_3);
+		LongDistanceData ldd_old = containerLongDistanceData.getData<LongDistanceData>();
+		dist[0] = ldd_old.getLongDistanceData();
+
+
+		Container containerShortDistanceData = getKeyValueDataStore().get(Container::USER_DATA_4);
+		ShortDistanceData sdd_old = containerShortDistanceData.getData<ShortDistanceData>();
+		dist[1] = sdd_old.getShortDistanceData();
+
+		cout << "Old Steering Data " << steer<< endl;
+		cout << "Old distant  " << dist[0]<<" "<<dist[1]<< endl;
+
+//		if((checkLane(right,w) == 4 || checkLane(left,w) == 4) && abs(steer) < 0.05 ){
+//
+//			sd.setExampleData(0);
+//			spd.setSpeedData(1);
+//			ldd.setLongDistanceData(dist[0]);
+//			sdd.setShortDistanceData(dist[1]);
+//
+//			cout<<"Mode: 0"<<endl;
+//
+//		} else
+
+		if (checkLane(left, w) == 1 && checkLane(right,w) == 1){
 			//if no line detected, go straight
+
 			sd.setExampleData(0);
 			spd.setSpeedData(1);
+			ldd.setLongDistanceData(dist[0]);
+			sdd.setShortDistanceData(dist[1]);
+
 			cout<<"Mode: 1"<<endl;
-		} else if ((compare_left_right(left, w) != 1 && compare_left_right(right, w) == 1)){
+
+		} else if ((checkLane(left, w) != 1 && checkLane(right, w) == 1) ||
+				(checkLane(left, w) == 1 && checkLane(right, w) !=2)){
 			//if no line just do what it did before
-			Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_1);
-			SteeringData sd_old = containerSteeringData.getData<SteeringData> ();
-			double steer = sd_old.getExampleData();
 
 			Container containerSpeedData = getKeyValueDataStore().get(Container::USER_DATA_2);
 			SpeedData spd_old = containerSpeedData.getData<SpeedData> ();
@@ -283,97 +301,113 @@ namespace msv {
 
 			sd.setExampleData(steer);
 			spd.setSpeedData(speed);
+			ldd.setLongDistanceData(dist[0]);
+			sdd.setShortDistanceData(dist[1]);
 			cout<<"Mode: 2"<<endl;
+
+
+		} else if((checkLane(left,w) == 3 && checkLane(right,w) == 3)){
+
+
+			ldd.setLongDistanceData(dist[0]);
+			sdd.setShortDistanceData(dist[1]);
+			sd.setExampleData(steer);
+			spd.setSpeedData(2);
+			cout<<"Mode: 8"<<endl;
 
 
 		} else {
 
-//			Container containerDistanceData = getKeyValueDataStore().get(Container::USER_DATA_3);
-//			DistanceData dd_old = containerDistanceData.getData<DistanceData>();
-//			int dist = dd_old.getDistanceData();
+			if (checkLane(right, w) != 1 && straightLine(right, y_pos) == true) {
 
-			int dist = 215;
-//
-//			double tangent_right = atan2(y_pos[0] - y_pos[1], right[0] - right[1]);
-//			double tangent_left = atan2(y_pos[0] - y_pos[1], left[0] - left[1]);
-//
-//			if (straightLine(right, y_pos) == true && fabs(tangent_right - 0.814)<0.01){
-//
-//				dd.setDistanceData(abs(right[3]));
-//				cout<<"Distance: "<<right[3]<<endl;
-//				sd.setExampleData(0);
-//				spd.setSpeedData(2);
-//				cout<<"Mode: 3"<<endl;
-//			} else if (straightLine(left, y_pos) == true && fabs(tangent_left + 0.814)<0.01){
-//				dd.setDistanceData(left[3]);
-//				cout<<"Distance: "<<left[3]<<endl;
-//				sd.setExampleData(0);
-//				spd.setSpeedData(2);
-//				cout<<"Mode: 4"<<endl;
-//			} else {
+				if (((right[3] < dist[1]+2 && right[3] > dist[1] -2) || dist[0] == 0)
+						&& abs(steer) < 0.001){
 
-				//if (compare_left_right(right, w) == 2){
-//				cout<<"Distance: "<<right[3]<<endl;
-//					double tangent = atan2(y_pos[0] - y_pos[1], right[0] - right[1]);
-//					cout<<tangent<<endl;
-					double steeringAngle = 10* Constants::DEG2RAD;
-//
-//					if(fabs(tangent) > 0.6){
-//						steeringAngle = steeringLight;
-//					} else {
-//						steeringAngle = steeringSteep;
-//					}
+					//cout << "Distance: " << right[0] << endl;
+					sd.setExampleData(0);
+					spd.setSpeedData(2);
+					ldd.setLongDistanceData(right[0]);
+					sdd.setShortDistanceData(right[3]);
+					cout << "Mode: 3" << endl;
 
-					if (abs(right[1]) > dist+2){
-						sd.setExampleData(steeringAngle);
-						spd.setSpeedData(0.5);
-						cout<<"Mode: 5"<<endl;
-					} else if (abs(right[1]) < dist-2){
-						sd.setExampleData(-steeringAngle);
-						spd.setSpeedData(0.5);
-						cout<<"Mode: 6"<<endl;
-					} else {
-						sd.setExampleData(0);
-						spd.setSpeedData(2);
-						cout<<"Mode: 7"<<endl;
-					}
-//				} else {
-//
-//					double tangent = atan2(y_pos[0] - y_pos[1], left[0] - left[1]);
-//					cout<<tangent<<endl;
-//					double steeringAngle;
-//
-//					if(fabs(tangent) > 0.6){
-//						steeringAngle = steeringLight;
-//					} else {
-//						steeringAngle = steeringSteep;
-//					}
-//
-//					if (abs(left[3]) > dist){
-//						sd.setExampleData(steeringAngle);
-//						spd.setSpeedData(1);
-//						cout<<"Mode: 8"<<endl;
-//					} else if (abs(left[3]) < dist){
-//						sd.setExampleData(-steeringAngle);
-//						spd.setSpeedData(1);
-//						cout<<"Mode: 9"<<endl;
-//					} else {
-//						sd.setExampleData(0);
-//						spd.setSpeedData(1);
-//						cout<<"Mode: 10"<<endl;
-//					}
-//				}
-//
-//			}
+				} else {
+
+
+					sd.setExampleData((right[3] - dist[1]) / 30.5 * Constants::DEG2RAD);
+
+					spd.setSpeedData(2);
+					ldd.setLongDistanceData(dist[0]);
+					sdd.setShortDistanceData(dist[1]);
+					cout << "Mode: 9" << endl;
+
+				}
+
+			} else if (checkLane(left, w) != 1 && straightLine(left, y_pos) == true) {
+
+				if (((left[3] < dist[1]+2 && left[3] > dist[1] -2) || dist[0] == 0)
+					&& abs(steer) < 0.001){
+
+					//cout << "Distance: " << right[0] << endl;
+					sd.setExampleData(0);
+					spd.setSpeedData(2);
+					ldd.setLongDistanceData(right[0]);
+					sdd.setShortDistanceData(right[3]);
+					cout << "Mode: 4" << endl;
+
+				} else {
+
+					sd.setExampleData((dist[1] - left[3])/31 * Constants::DEG2RAD);
+					spd.setSpeedData(2);
+					ldd.setLongDistanceData(dist[0]);
+					sdd.setShortDistanceData(dist[1]);
+					cout << "Mode: 5" << endl;
+
+				}
+
+			} else {
+
+				double tangent = atan2(y_pos[1] - y_pos[2], right[1] - right[2]);
+				cout << tangent << endl;
+				double steeringAngle;
+
+
+				steeringAngle = 9.03 * Constants::DEG2RAD;
+				//steeringAngle = tangent/4;
+
+
+				if(right[0] == dist[0] && abs(steer) < 0.001){
+					sd.setExampleData(0);
+					spd.setSpeedData(2);
+					cout << "Mode: 8" << endl;
+				}
+				else if (abs(tangent) < 0) {
+					sd.setExampleData(steeringAngle);
+					spd.setSpeedData(2);
+					cout << "Mode: 7" << endl;
+
+				} else {
+					sd.setExampleData(-steeringAngle);
+					spd.setSpeedData(2);
+					cout << "Mode: 6" << endl;
+				}
+
+
+				ldd.setLongDistanceData(dist[0]);
+				sdd.setShortDistanceData(dist[1]);
+
+			}
 		}
 
 		//Send message
 		Container c(Container::USER_DATA_1, sd);
 		Container c_1(Container::USER_DATA_2, spd);
-		Container c_2(Container::USER_DATA_3, dd);
+		Container c_2(Container::USER_DATA_3, ldd);
+		Container c_3(Container::USER_DATA_4, sdd);
+
 		getConference().send(c);
 		getConference().send(c_1);
 		getConference().send(c_2);
+		getConference().send(c_3);
 
     }
 

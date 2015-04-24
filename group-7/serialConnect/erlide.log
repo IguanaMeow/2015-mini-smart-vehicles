@@ -1,0 +1,102 @@
+19:15:46,136 I: (ErlangCore.java:64) : Starting CORE Thread[Worker-3,5,main]
+19:15:46,149 I: (ErlangCore.java:79) : *** starting Erlide v0.29.11.201502161407 (core=0.24.12.201502161407) (model api=0.24.11.201502161407) *** (UTF-8) ui
+19:15:46,150 I: (ErlangCore.java:86) : Started CORE
+19:15:46,151 F: (ErlangPlugin.java:88) : Core started
+19:15:51,651 F: (ErlangHostnameRetriever.java:40) : Test long hostname: null
+19:15:51,652 W: (ErlangHostnameRetriever.java:46) : Can't use null as long name
+19:15:52,517 F: (ErlangHostnameRetriever.java:40) : Test long hostname: jani-HP-EliteBook-2560p
+19:15:54,164 W: (ErlangHostnameRetriever.java:46) : Can't use jani-HP-EliteBook-2560p as long name
+19:15:56,989 F: (ErlangHostnameRetriever.java:40) : Test short hostname: jani-HP-EliteBook-2560p
+19:15:57,007 F: (HostnameUtils.java:74) : Detected:: jani-HP-EliteBook-2560p && null
+19:15:57,110 F: (BackendActivator.java:25) : Backend plugin started
+19:15:57,120 I: (ErlideUIPlugin.java:130) : Starting UI Thread[Worker-3,5,main]
+19:15:57,139 F: (ModelActivator.java:19) : Starting Erlang model api
+19:15:57,176 F: (BackendFactory.java:42) : Create ide backend R16B02-basho5
+19:15:57,176 F: (BackendFactory.java:56) : Create backend c0b50_jani_476177_erlide
+19:15:57,294 F: (OtpNodeProxy.java:302) : Runtime c0b50_jani_476177_erlide@jani-HP-EliteBook-2560p starting
+19:15:57,297 F: (OtpNodeProxy.java:420) : START node :> [/home/jani/otp_src_R16B02-basho5/bin/erl, -sname, c0b50_jani_476177_erlide@jani-HP-EliteBook-2560p, -setcookie, erlide] *** /home/jani/git/2015-mini-smart-vehicles/group-7/serialConnect
+19:15:57,319 F: (OtpNodeProxy.java:213) : c0b50_jani_476177_erlide@jani-HP-EliteBook-2560p: waiting connection to peer... 
+19:15:57,729 F: (OtpNodeProxy.java:220) : connected!
+19:15:57,840 F: (OtpNodeProxy.java:307) : Runtime c0b50_jani_476177_erlide@jani-HP-EliteBook-2560p running
+19:15:58,361 F: (ModelActivator.java:30) : Started model api
+19:15:58,692 I: (ErlideUIPlugin.java:152) : Started UI
+19:15:58,905 F: (LogEventHandler.java:27) : info: {"Monitoring java node",'jerlide_7476200@jani-HP-EliteBook-2560p'}
+19:15:58,908 F: (LogEventHandler.java:27) : info: {"Start monitor process: ",10000000,50000000}
+20:17:58,699 F: (OtpNodeProxy.java:302) : Runtime c0b50_jani_476177_erlide@jani-HP-EliteBook-2560p starting
+20:17:58,504 F: (OtpNodeProxy.java:420) : START node :> [/home/jani/otp_src_R16B02-basho5/bin/erl, -sname, c0b50_jani_476177_erlide@jani-HP-EliteBook-2560p, -setcookie, erlide] *** /home/jani/git/2015-mini-smart-vehicles/group-7/serialConnect
+20:18:04,939 F: (OtpNodeProxy.java:213) : c0b50_jani_476177_erlide@jani-HP-EliteBook-2560p: waiting connection to peer... 
+20:18:14,314 S: (OtpNodeProxy.java:217) : Could not connect to c0b50_jani_476177_erlide@jani-HP-EliteBook-2560p! Please check runtime settings.
+20:18:14,390 F: (OtpNodeProxy.java:302) : Runtime c0b50_jani_476177_erlide@jani-HP-EliteBook-2560p starting
+20:18:14,521 F: (OtpNodeProxy.java:420) : START node :> [/home/jani/otp_src_R16B02-basho5/bin/erl, -sname, c0b50_jani_476177_erlide@jani-HP-EliteBook-2560p, -setcookie, erlide] *** /home/jani/git/2015-mini-smart-vehicles/group-7/serialConnect
+20:18:14,554 F: (OtpNodeProxy.java:213) : c0b50_jani_476177_erlide@jani-HP-EliteBook-2560p: waiting connection to peer... 
+20:18:21,313 S: (OtpNodeProxy.java:217) : Could not connect to c0b50_jani_476177_erlide@jani-HP-EliteBook-2560p! Please check runtime settings.
+20:18:21,427 F: (OtpNodeProxy.java:302) : Runtime c0b50_jani_476177_erlide@jani-HP-EliteBook-2560p starting
+20:18:21,471 F: (OtpNodeProxy.java:420) : START node :> [/home/jani/otp_src_R16B02-basho5/bin/erl, -sname, c0b50_jani_476177_erlide@jani-HP-EliteBook-2560p, -setcookie, erlide] *** /home/jani/git/2015-mini-smart-vehicles/group-7/serialConnect
+20:18:21,513 F: (OtpNodeProxy.java:213) : c0b50_jani_476177_erlide@jani-HP-EliteBook-2560p: waiting connection to peer... 
+20:18:30,339 S: (OtpNodeProxy.java:217) : Could not connect to c0b50_jani_476177_erlide@jani-HP-EliteBook-2560p! Please check runtime settings.
+20:18:33,137 F: (OtpNodeProxy.java:302) : Runtime c0b50_jani_476177_erlide@jani-HP-EliteBook-2560p starting
+20:18:33,210 F: (OtpNodeProxy.java:420) : START node :> [/home/jani/otp_src_R16B02-basho5/bin/erl, -sname, c0b50_jani_476177_erlide@jani-HP-EliteBook-2560p, -setcookie, erlide] *** /home/jani/git/2015-mini-smart-vehicles/group-7/serialConnect
+20:18:33,211 F: (OtpNodeProxy.java:213) : c0b50_jani_476177_erlide@jani-HP-EliteBook-2560p: waiting connection to peer... 
+20:18:37,057 F: (OtpNodeProxy.java:220) : connected!
+20:18:37,750 F: (OtpNodeProxy.java:307) : Runtime c0b50_jani_476177_erlide@jani-HP-EliteBook-2560p running
+20:18:48,757 S: (BackendUtils.java:89) : timeout in file:read_file_info/1
+org.erlide.runtime.rpc.RpcTimeoutException: timeout in file:read_file_info/1
+	at org.erlide.runtime.internal.rpc.OtpRpc.getRpcResult(OtpRpc.java:375)
+	at org.erlide.runtime.rpc.RpcFuture.checkedGet(RpcFuture.java:98)
+	at org.erlide.runtime.internal.rpc.OtpRpc.call(OtpRpc.java:150)
+	at org.erlide.runtime.internal.rpc.OtpRpc.call(OtpRpc.java:169)
+	at org.erlide.runtime.internal.rpc.OtpRpc.call(OtpRpc.java:244)
+	at org.erlide.backend.BackendUtils.isAccessibleDir(BackendUtils.java:76)
+	at org.erlide.backend.internal.CodeManager.register(CodeManager.java:76)
+	at org.erlide.backend.internal.Backend.registerCodeBundle(Backend.java:139)
+	at org.erlide.backend.internal.Backend$4.running(Backend.java:341)
+	at org.erlide.runtime.RestartableService$RestartListener.running(RestartableService.java:51)
+	at com.google.common.util.concurrent.AbstractService$2.call(AbstractService.java:66)
+	at com.google.common.util.concurrent.AbstractService$2.call(AbstractService.java:64)
+	at com.google.common.util.concurrent.ListenerCallQueue.run(ListenerCallQueue.java:118)
+	at com.google.common.util.concurrent.MoreExecutors$SameThreadExecutorService.execute(MoreExecutors.java:297)
+	at com.google.common.util.concurrent.ListenerCallQueue.execute(ListenerCallQueue.java:86)
+	at com.google.common.util.concurrent.AbstractService.executeListeners(AbstractService.java:433)
+	at com.google.common.util.concurrent.AbstractService.notifyStarted(AbstractService.java:322)
+	at com.google.common.util.concurrent.AbstractExecutionThreadService$1$2.run(AbstractExecutionThreadService.java:56)
+	at com.google.common.util.concurrent.Callables$3.run(Callables.java:95)
+	at java.lang.Thread.run(Thread.java:745)
+20:18:59,107 F: (CodeManager.java:81) : loading org.erlide.tracing.ttbe_0.1.12.201502161407 [1531] for otp_src_R16B02-basho5
+20:19:26,112 F: (LogEventHandler.java:27) : info: {"Monitoring java node",'jerlide_7476200@jani-HP-EliteBook-2560p'}
+20:19:26,867 F: (OtpNodeProxy.java:302) : Runtime c0b50_jani_476177_erlide@jani-HP-EliteBook-2560p starting
+20:19:26,867 F: (OtpNodeProxy.java:420) : START node :> [/home/jani/otp_src_R16B02-basho5/bin/erl, -sname, c0b50_jani_476177_erlide@jani-HP-EliteBook-2560p, -setcookie, erlide] *** /home/jani/git/2015-mini-smart-vehicles/group-7/serialConnect
+20:19:27,346 F: (OtpNodeProxy.java:213) : c0b50_jani_476177_erlide@jani-HP-EliteBook-2560p: waiting connection to peer... 
+20:19:27,480 F: (OtpNodeProxy.java:220) : connected!
+20:19:27,713 F: (OtpNodeProxy.java:307) : Runtime c0b50_jani_476177_erlide@jani-HP-EliteBook-2560p running
+20:19:28,594 F: (LogEventHandler.java:27) : info: {"Start monitor process: ",10000000,50000000}
+20:19:28,803 F: (LogEventHandler.java:27) : info: {"Monitoring java node",'jerlide_7476200@jani-HP-EliteBook-2560p'}
+20:19:39,909 F: (OtpNodeProxy.java:420) : START node :> [/home/jani/otp_src_R16B02-basho5/bin/erl, -sname, c0b50_jani_476177_erlide@jani-HP-EliteBook-2560p, -setcookie, erlide] *** /home/jani/git/2015-mini-smart-vehicles/group-7/serialConnect
+20:19:39,909 F: (OtpNodeProxy.java:302) : Runtime c0b50_jani_476177_erlide@jani-HP-EliteBook-2560p starting
+20:19:39,911 F: (OtpNodeProxy.java:213) : c0b50_jani_476177_erlide@jani-HP-EliteBook-2560p: waiting connection to peer... 
+20:19:39,912 F: (OtpNodeProxy.java:220) : connected!
+20:19:40,047 F: (OtpNodeProxy.java:307) : Runtime c0b50_jani_476177_erlide@jani-HP-EliteBook-2560p running
+20:19:40,180 F: (LogEventHandler.java:27) : info: {"Monitoring java node",'jerlide_7476200@jani-HP-EliteBook-2560p'}
+20:19:45,673 W: (OtpNodeProxy.java:281) : Runtime c0b50_jani_476177_erlide@jani-HP-EliteBook-2560p crashed, exit code: 1.
+20:19:50,925 I: (ConsoleMessageReporter.java:13) : 4::: Backend 'c0b50_jani_476177_erlide@jani-HP-EliteBook-2560p' is down
+
+Please report the problem and restart Eclipse.
+If this happened at startup, it is likely that your network is misconfigured or uses 'strange' host names.
+
+Please check the pageWindow->preferences->erlang->network for hints about that.
+
+Also, check if you can create and connect two erlang nodes on your machine using "erl -name foo1" and "erl -name foo2".
+
+If this happened after a while, the Erlang runtime might have run out of memory.
+
+If an error report named 'jani_<timestamp>.txt' has been created in your home directory, please consider reporting the problem. 
+http://www.assembla.com/spaces/erlide/support/tickets
+------
+20:19:51,708 S: (ErlRuntimeReporter.java:70) : Backend 'c0b50_jani_476177_erlide@jani-HP-EliteBook-2560p' crashed with exit code 1.
+20:19:57,197 I: (ConsoleMessageReporter.java:13) : 4::: Backend 'c0b50_jani_476177_erlide@jani-HP-EliteBook-2560p' crashed with exit code 1.
+
+This error is not recoverable, please restart your Eclipse instance.
+
+
+An error log has been created at /home/jani/jani_20150423_201955.txt. Please report the problem so that we can fix it.
+http://www.assembla.com/spaces/erlide/support/tickets
+------
