@@ -28,8 +28,11 @@ namespace msv {
 
     OpenCVCamera::OpenCVCamera(const string &name, const uint32_t &id, const uint32_t &width, const uint32_t &height, const uint32_t &bpp) :
         Camera(name, id, width, height, bpp),
-        m_capture(NULL),
-        m_image(NULL) {
+        m_capture(NULL),       
+        m_image(NULL),
+        out(NULL),
+        merge_image(NULL),
+        gray_out(NULL) {
 
         m_capture = cvCaptureFromCAM(id);
         if (m_capture) {

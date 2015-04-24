@@ -49,12 +49,12 @@ namespace msv {
     Proxy::Proxy(const int32_t &argc, char **argv) :
         ConferenceClientModule(argc, argv, "proxy"),
         m_recorder(NULL),
+        m_camera(NULL),
         this_serial(NULL),
         endByte(0xFF),
         startByte(0xAA),
         incomingSer(),
-        oldIncomingSer(),
-        m_camera(NULL)
+        oldIncomingSer()     
     {}
 
     Proxy::~Proxy() {
@@ -129,7 +129,7 @@ namespace msv {
         uint8_t current = 0;
         uint8_t tempincoming[INSERIAL];
         uint8_t check = 0;
-        uint8_t success = 0;
+        //uint8_t success = 0;
 
 
         while (this_serial->read(&current,1) && current != endByte);

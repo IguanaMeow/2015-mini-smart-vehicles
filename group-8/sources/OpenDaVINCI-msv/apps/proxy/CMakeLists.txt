@@ -35,10 +35,10 @@ else()
     list(APPEND serial_SRCS serial/src/impl/win.cc)
 endif()
 ## Add serial library
-add_library(serial ${serial_SRCS})
-if(UNIX AND NOT APPLE)
-    target_link_libraries(serial rt)
-endif()
+add_library(serial STATIC ${serial_SRCS})
+#if(UNIX AND NOT APPLE)
+#    target_link_libraries(serial rt)
+#endif()
 
 # Recipe for building "proxy".
 FILE(GLOB_RECURSE proxy-sources "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")

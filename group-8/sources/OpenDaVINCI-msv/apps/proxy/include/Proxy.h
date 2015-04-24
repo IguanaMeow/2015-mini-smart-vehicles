@@ -82,7 +82,7 @@ namespace msv {
         private:
             tools::recorder::Recorder *m_recorder;
             Camera *m_camera;
-            serial::Serial this_serial;
+            serial::Serial *this_serial;
             uint8_t endByte;
             uint8_t startByte;
             uint8_t incomingSer[17];
