@@ -57,7 +57,7 @@ namespace msv {
 
         // This method will do the main data processing job.
         ModuleState::MODULE_EXITCODE Driver::body() {
-                int state;
+                int state = 0;
                 double US_Front;
                 double US_FR;
                // double US_RR;
@@ -117,71 +117,96 @@ namespace msv {
                             
                         switch(state){ // using switch-case to change state
 
-                            case 0:
-                                speed = 0;
-                                desiredSteeringWheelAngle = 0;
+                            case 1:
+                                speed = spd_old.getSpeedData();
+                                desiredSteeringWheelAngle = sd.getExampleData();
+
+                                if((US_FR <0||US_FR > 5.5)&& IF_FR <0 && IF_RR <0){
+            
+                                    state = 2; //state gap enough
+                                    distance_1 = vd.getAbsTraveledPath();
+                                }
+
+                                if(US_FR >0&&US_FR < 5.5)state = 0;
                                 break;
                             
-                            case 1: //gap enough sate, then drive 10 units more to find appropriate distance to park to start parking state
+                            case 2: //gap enough sate, then drive 10 units more to find appropriate distance to park to start parking state
                                 speed = 1;
                                 desiredSteeringWheelAngle = 0;
-                                if(vd.getAbsTraveledPath() >= distance_1+12){
-                               // if(sbd.getValueForKey_MapOfDistances(US_RR)<0){
-                                    state = 2;
+                                //need to be 10,48 since 10.47 doesn't park right and 10.5 the car crash with another car
+                                if(vd.getAbsTraveledPath() >= distance_1+10.48){
+                               
+                                    state = 3;
                                     distance_2 = vd.getAbsTraveledPath();
                                 }
                                 break;
 
-                            case 2: // start parking state, drive backward.
+                            case 3: // start parking state, drive backward.
                                 speed=-1.5;
-                                desiredSteeringWheelAngle = 15;
-                                if(vd.getAbsTraveledPath()>= distance_2+7.8){
-                                    state = 3;
+                                desiredSteeringWheelAngle = 16;
+                                if(vd.getAbsTraveledPath()>= distance_2+7.5){
+                                    state = 4;
                                     distance_3 = vd.getAbsTraveledPath();
                                 }
                                 break;
 
-                            case 3: // parking state 3 (The car detect behind object or drive more 5 meter)
+                            case 4: // parking state 3 (The car detect behind object or drive more 5 meter)
                                 speed = -1;
                                 desiredSteeringWheelAngle = -26;
 
                                 if(vd.getAbsTraveledPath()>= distance_3+7.5 //if it doesn't detect any car behind after drive 10 meters more.
                                     && IF_Rear <0){
 
-                                    state = 0;
+                                    state = 7;
                                 }
 
-                                if(IF_Rear <= 3 && IF_Rear >0) state = 4;
-                                break;
-
-                            case 4:// move 1 to make the car park right
-                                speed = 1;
-                                desiredSteeringWheelAngle = 20;
-                                //if IF_Rear doesn't detect any object Or US_Front detect any object
-                                if(IF_Rear <0 ||(US_Front <3.5 && US_Front >0)){
-                                   
+                                if(IF_Rear <= 2.6 && IF_Rear >0){
+                                    speed = 0;
+                                    desiredSteeringWheelAngle = 0;
                                     state = 5;
-                                   // distance_4 = vd.getAbsTraveledPath();
+
+                                } 
+                                break;
+
+                            case 5:// move 1 to make the car park right
+                                speed = 1;
+                                desiredSteeringWheelAngle = 25;
+                                //if IF_Rear doesn't detect any object Or US_Front detect any object
+                             if(IF_Rear <0 ||(US_Front < 2.2 && US_Front >0)){
+                                    speed = 0;
+                                    desiredSteeringWheelAngle = 0;
+                                    state = 6;
+                                  
                                 }
                                 break;
 
-                            case 5: // finding the appropriated position of the car
+                            case 6: // finding the appropriated position of the car
                                 speed = -0.4;
-                                desiredSteeringWheelAngle = -20;
-                                if(IF_Rear<2.75 && IF_Rear>0) state = 0;
+                                desiredSteeringWheelAngle = -26;
+                               
+                                if(IF_Rear<=2.4 && IF_Rear>0){
+                                
+                                    state = 7;
+                                } 
                                 break;
 
-                            default: // find space for parking and right place to park (found the obstacle)
+                            case 7:
+                                speed = 0;
+                                desiredSteeringWheelAngle = 0;
+                                break;
+
+                            case 0: // find space for parking and right place to park (found the obstacle)
                                
                                //get speed data and wheelangle from the lane detector through container
                                 speed = spd_old.getSpeedData();
                                 desiredSteeringWheelAngle = sd.getExampleData();
 
-                                if(US_FR <0 // 6 meter enough to park
-                                    && IF_FR <0 && IF_RR <0){
-                                   // &&sbd.getValueForKey_MapOfDistances(US_RR)>0){
+                                //make sure that it is not curve, before going to the next state.
+                                if((US_FR <0 || US_FR > 8)
+                                  &&desiredSteeringWheelAngle<1 && desiredSteeringWheelAngle>-1){ 
+                                  
                                     state = 1; //state gap enough
-                                    distance_1 = vd.getAbsTraveledPath();
+                                    
                                 }
                                 break;
                         }
