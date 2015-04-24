@@ -5,8 +5,7 @@ IF((NOT "${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin") AND (NOT "${CMAKE_SYSTEM_NAME}
     ADD_SUBDIRECTORY (lanedetector)
 
     # Application for connecting to a serial embedded software/hardware board (STM32F4 Discovery Board or Arduino).
-    #ADD_SUBDIRECTORY (proxy)
-    #proxy commented out until serial library included in git repo
+    ADD_SUBDIRECTORY (proxy)
 
     # Application to compute steering wheel values and acceleration/braking values.
     ADD_SUBDIRECTORY (driver)
