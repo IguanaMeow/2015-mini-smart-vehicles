@@ -102,8 +102,6 @@ namespace msv {
             
 			Lines rightLine1;
         	Lines rightLine2;
-        	//Lines rightLine3;
-        	//Lines rightLine4;
 
         	Lines leftLine1;
         	Lines leftLine2;
@@ -118,6 +116,7 @@ namespace msv {
         	double inputAngle1;
         	double inputAngle2;
         	double inputAngle3;
+
 
 	};
 

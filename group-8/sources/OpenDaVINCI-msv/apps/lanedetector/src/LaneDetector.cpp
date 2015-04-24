@@ -58,8 +58,6 @@ namespace msv {
         m_debug(false),
         rightLine1(0, 50, 250),
         rightLine2(0, 70, 0),
-        //rightLine3(0, 245, 63),
-        //rightLine4(0, 255, 0),
 
         leftLine1(0, 90, 214),
         leftLine2(0, 115, 190),
@@ -148,8 +146,6 @@ namespace msv {
 
       rightLine1.setXPos(measureDistance(50, 1, m_image));
       rightLine2.setXPos(measureDistance(70, 1, m_image));
-      //rightLine3.setXPos(measureDistance(245, 1, m_image));
-      //rightLine4.setXPos(measureDistance(255, 1, m_image));
       leftLine1.setXPos(measureDistance(90, 0, m_image));
       leftLine2.setXPos(measureDistance(115, 0, m_image));
       leftLine3.setXPos(measureDistance(140, 0, m_image));
@@ -165,7 +161,6 @@ namespace msv {
       vector<Lines> valid = validateLines(&leftList);
 
       SteeringData sd;
-      //sd.setSpeedData(2);
       LaneData ld;      
 
       ld.setRightLine1(measureAngle(m_image->height - rightLine2.getYPos(), rightLine2.getXPos(), m_image->height - rightLine1.getYPos(), rightLine1.getXPos()));

@@ -24,19 +24,7 @@ message msv.SteeringData {
 }
 
 message msv.LaneData {
-    uint32 rightLine1;
-    uint32 rightLine2;
-    uint32 rightLine3;
-    uint32 rightLine4;
-
-    uint32 leftLine1;
-    uint32 leftLine2;
-    uint32 leftLine3;
-    uint32 leftLine4;
-
-    uint32 upLine1;
-    uint32 upLine2;
-
+    double rightLine1;
 }
 
 message msv.UserButtonData {
