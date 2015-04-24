@@ -38,24 +38,39 @@ namespace msv {
         using namespace core::data::control;
         using namespace core::data::environment;
 
+        /*Overtaking variables*/
+        int counter;
+        bool obstacleFound;
+        bool overtakingLeft;
+        bool passObstacle;
+
+        /*Sensors*/
+        int UltraSonic_FrontCenter;
+        double Infrared_RearRight;
+
         Driver::Driver(const int32_t &argc, char **argv) :
-	        ConferenceClientModule(argc, argv, "Driver") {
+          ConferenceClientModule(argc, argv, "Driver") {
         }
 
         Driver::~Driver() {}
 
         void Driver::setUp() {
-	        // This method will be call automatically _before_ running body().
+            counter = 0;
+            obstacleFound = false;
+            overtakingLeft = false;
+            passObstacle = false;
+
+          // This method will be call automatically _before_ running body().
         }
 
         void Driver::tearDown() {
-	        // This method will be call automatically _after_ return from body().
+          // This method will be call automatically _after_ return from body().
         }
 
         // This method will do the main data processing job.
         ModuleState::MODULE_EXITCODE Driver::body() {
 
-	        while (getModuleState() == ModuleState::RUNNING) {
+          while (getModuleState() == ModuleState::RUNNING) {
                 // In the following, you find example for the various data sources that are available:
 
                 // 1. Get most recent vehicle data:
@@ -78,34 +93,78 @@ namespace msv {
                 SteeringData sd = containerSteeringData.getData<SteeringData> ();
                 cerr << "Most recent steering data: '" << sd.toString() << "'" << endl;
 
-
-
                 // Design your control algorithm here depending on the input data from above.
+                // Sensors output
+                UltraSonic_FrontCenter = sbd.getValueForKey_MapOfDistances(3);
+                cerr << "UltraSonic_FrontCenter distance: '" << UltraSonic_FrontCenter << "m'" << endl;
 
-
-
+                Infrared_RearRight = sbd.getValueForKey_MapOfDistances(2);
                 // Create vehicle control data.
                 VehicleControl vc;
 
                 // With setSpeed you can set a desired speed for the vehicle in the range of -2.0 (backwards) .. 0 (stop) .. +2.0 (forwards)
-                vc.setSpeed(0.4);
+                vc.setSpeed(2);
 
                 // With setSteeringWheelAngle, you can steer in the range of -26 (left) .. 0 (straight) .. +25 (right)
-                double desiredSteeringWheelAngle = 4; // 4 degree but SteeringWheelAngle expects the angle in radians!
+                double desiredSteeringWheelAngle = 0; // 4 degree but SteeringWheelAngle expects the angle in radians!
                 vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
+
+                // First try: Obstacle dected by UltraSonic_FrontCenter around 10mts, car stops
+                if(UltraSonic_FrontCenter < 9){
+                    obstacleFound = true;
+                    vc.setSpeed(0); // Test 1: car stops at 10 mts far away from the obstacle
+                    if(UltraSonic_FrontCenter <= 10){
+                        overtakingLeft = true;
+                        // vc.setSteeringWheelAngle(-15 * Constants::DEG2RAD);
+                        vc.setSpeed(0.5);
+                    }else{
+                        overtakingLeft = false;
+                        vc.setSpeed(0);
+                    }
+                }
+                
+                if(obstacleFound){
+                    // cerr << "counter: " << counter << endl;
+                    cerr << "Infrared_RearRight: '" << Infrared_RearRight << " '" <<  endl;
+
+                    if((counter <= 90) && (overtakingLeft == true)){ //Turn left
+                        vc.setSteeringWheelAngle(-15 * Constants::DEG2RAD);
+                    }else if((counter <= 120) && (counter <= 180) && (overtakingLeft == true)){ //turn right
+                        vc.setSteeringWheelAngle(25 * Constants::DEG2RAD);
+                        passObstacle = true;
+                    }else if((counter <= 180) && (counter <= 250) && (passObstacle == true)){ //gets the correct angle to be parallel to the object
+                        vc.setSteeringWheelAngle(20 * Constants::DEG2RAD);
+                    }else if((counter <= 250) && (counter <= 320) && (passObstacle == true)){ // keeps straight to overtake the obstacle
+                        vc.setSteeringWheelAngle(0 * Constants::DEG2RAD);
+                    }else if(passObstacle && (sbd.getValueForKey_MapOfDistances(2) <= -1)){
+                        vc.setSpeed(0);
+                    }
+
+                    counter++;
+                } 
 
                 // You can also turn on or off various lights:
                 vc.setBrakeLights(false);
                 vc.setLeftFlashingLights(false);
                 vc.setRightFlashingLights(true);
 
+
                 // Create container for finally sending the data.
                 Container c(Container::VEHICLECONTROL, vc);
                 // Send container.
                 getConference().send(c);
-	        }
+          }
 
-	        return ModuleState::OKAY;
+          return ModuleState::OKAY;
         }
 } // msv
 
+//                 /* ID Sensors
+//                 0 = Infrared_FrontRight
+//                 1 = Infrared_Rear
+//                 2 = Infrared_RearRight
+
+//                 3 = UltraSonic_FrontCenter
+//                 4 = UltraSonic_FrontRight
+//                 5 = UltraSonic_RearRight
+//                 */
