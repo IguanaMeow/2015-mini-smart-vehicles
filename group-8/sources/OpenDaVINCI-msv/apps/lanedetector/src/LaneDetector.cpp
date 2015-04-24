@@ -168,8 +168,7 @@ namespace msv {
       //sd.setSpeedData(2);
       LaneData ld;      
 
-      ld.setRightLine1(rightLine1.getXPos());
-      std::cout << "lane data" << rightLine1.getXPos() << std::endl;
+      ld.setRightLine1(measureAngle(m_image->height - rightLine2.getYPos(), rightLine2.getXPos(), m_image->height - rightLine1.getYPos(), rightLine1.getXPos()));
 
       switch (state) {
         case 1: // Lanedetection state
