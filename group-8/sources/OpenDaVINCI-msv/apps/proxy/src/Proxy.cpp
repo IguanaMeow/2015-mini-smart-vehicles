@@ -33,6 +33,7 @@
 
 #include "Proxy.h"
 
+
 namespace msv {
 
     using namespace std;
@@ -103,15 +104,6 @@ namespace msv {
 
         //Establish serial port connection
 
-        uint32_t baud = 9600;
-        string port = "/dev/ttyS0"; 
-        // posible commands for getting serial port
-        // CommandLineParser cmdParser;
-        // cmdParser.addCommandLineArgument("id");
-        Serial this_serial(port, baud, serial::Timeout::simpleTimeout(2000));
-        if(!this_serial.isOpen()){
-            cerr << "SerialPort is not open" << endl;
-        }
     }
 
     void Proxy::tearDown() {
@@ -133,24 +125,36 @@ namespace msv {
     }
 
     int Proxy::getSerial() {
-
+        cerr << "Gettingserial" << endl;
         uint8_t current = 0;
         uint8_t tempincoming[INSERIAL];
         uint8_t check = 0;
         uint8_t success = 0;
 
-        while (this_serial.read(&current,1) && current != endByte);
-        success = this_serial.read(tempincoming,INSERIAL);
-        for(int i = 0; i > (INSERIAL- 1); i++){
+
+        while (this_serial->read(&current,1) && current != endByte);
+        
+        this_serial->read(&current,1);
+        for(int i = 0; i < INSERIAL; i++){
+            this_serial->read(&current,1);
+            tempincoming[i] = current;
+        }
+        for(int i = 0; i < INSERIAL; i++){
             check ^= tempincoming[i];
         }
-        if(success){
-            if(tempincoming[0] == startByte && tempincoming[INSERIAL - 2] == endByte && check == 0){
-                memcpy(incomingSer, tempincoming, 17 * sizeof(uint8_t) );
+
+        cout << (uint16_t)tempincoming[0] << endl;
+        cout << (uint16_t)tempincoming[2] << endl;
+        cout << (uint16_t)tempincoming[INSERIAL - 2] << endl;
+        cout << (uint16_t)check << endl;
+        if(tempincoming[0] == startByte && tempincoming[INSERIAL - 2] == endByte && check == 0){
+            // memcpy(incomingSer, tempincoming, 17 * sizeof(uint8_t) );
+            for(int i = 0; i < INSERIAL; i++){
+                incomingSer[i] = tempincoming[i];
             }
             return 1;
         }else{
-            return 0;
+            return 1;
         }
     }
 
@@ -159,11 +163,12 @@ namespace msv {
 
     void Proxy::distSerial() {
         //VehicleData vd;
+
         SensorBoardData sbd;
 
         //Hardcodetest
-         uint16_t speed = 100;
-         uint16_t steering = 100;
+        //uint16_t speed = 100;
+        //uint16_t steering = 100;
         // uint16_t usFront = 100;
         // uint16_t usFrontRight = 100;
         // uint16_t irFrontRight = 100;
@@ -172,11 +177,11 @@ namespace msv {
 
         //uint16_t speed = ((uint16_t)incomingSer[2] << 8) | incomingSer[1];
         //uint16_t steering = ((uint16_t)incomingSer[3] << 8) | incomingSer[4];
-        uint16_t irFrontRight = ((uint16_t)incomingSer[5] << 8) | incomingSer[6];
-        uint16_t irMiddleRight = ((uint16_t)incomingSer[7] << 8) | incomingSer[8];
-        uint16_t irBack = ((uint16_t)incomingSer[9] << 8) | incomingSer[10];
-        uint16_t usFront = ((uint16_t)incomingSer[11] << 8) | incomingSer[12];
-        uint16_t usFrontRight = ((uint16_t)incomingSer[13] << 8) | incomingSer[14];
+        uint16_t irFrontRight = ((uint16_t)incomingSer[6] << 8) | incomingSer[5];
+        uint16_t irMiddleRight = ((uint16_t)incomingSer[8] << 8) | incomingSer[7];   
+        uint16_t irBack = ((uint16_t)incomingSer[10] << 8) | incomingSer[9];
+        uint16_t usFront = ((uint16_t)incomingSer[12] << 8) | incomingSer[11];
+        uint16_t usFrontRight = ((uint16_t)incomingSer[14] << 8) | incomingSer[13];
 
 
         // vd.setSpeed((double)speed);
@@ -208,8 +213,15 @@ namespace msv {
     ModuleState::MODULE_EXITCODE Proxy::body() {
 
         //Serial connection check
+        uint32_t baud = 9600;
+        string port = "/dev/ttyACM0"; 
+        cerr << "Testing port dev/ttySAC3" << endl;
+        // posible commands for getting serial port
+        // CommandLineParser cmdParser;
+        // cmdParser.addCommandLineArgument("id");
+
         int connection = 1;
-        this_serial.flushInput();
+        
 
         uint32_t captureCounter = 0;
         //Framerate
@@ -220,12 +232,33 @@ namespace msv {
         double smoothduration;
         start = clock();
 
+        this_serial = new Serial(port, baud, Timeout::simpleTimeout(2000));
+        while(!this_serial->isOpen()){
+            cerr << "SerialPort is not open" << endl;
+        }
+        this_serial->flushInput();
+
 
         while (getModuleState() == ModuleState::RUNNING) {
+
+            if(this_serial->isOpen()){
+                
+                connection = getSerial();
+                if(connection){
+                    distSerial();
+
+                }else{
+                    cout << "Proxy timed out on serial connection " << endl;
+                    break;
+                }
+            }
             // Capture frame.
             if (m_camera != NULL) {
+
+
                 
                 core::data::image::SharedImage si = m_camera->capture();
+                
 
                 Container c(Container::SHARED_IMAGE, si);
                 distribute(c);
@@ -246,16 +279,22 @@ namespace msv {
             // TODO: Here, you need to implement the data links to the embedded system
             // to read data from IR/US.
             //Serial
-            connection = getSerial();
-            distSerial();
+            cerr << this_serial->isOpen() << endl;
+            if(this_serial->isOpen()){
+                
+                connection = getSerial();
+                
 
 
-            if(connection){
-                this_serial.flushInput();
-            }else{
-                cout << "Proxy timed out on serial connection " << endl;
-                break;
+                if(connection){
+                    distSerial();
+
+                }else{
+                    cout << "Proxy timed out on serial connection " << endl;
+                    break;
+                }
             }
+            this_serial->flushInput();
         }
         cumduration = ( clock() - start ) / (double) CLOCKS_PER_SEC;
         cout << "Proxy: Captured " << captureCounter << " frames." << endl;
