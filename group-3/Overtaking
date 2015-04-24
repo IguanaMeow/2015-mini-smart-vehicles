@@ -19,6 +19,7 @@
 
 #include <stdio.h>
 #include <math.h>
+#include <stdint.h>
 
 #include "core/io/ContainerConference.h"
 #include "core/data/Container.h"
@@ -54,6 +55,7 @@ namespace msv {
 
         // This method will do the main data processing job.
         ModuleState::MODULE_EXITCODE Driver::body() {
+               //int laneLine = 0;
 
 	        while (getModuleState() == ModuleState::RUNNING) {
                 // In the following, you find example for the various data sources that are available:
@@ -61,37 +63,83 @@ namespace msv {
                 // 1. Get most recent vehicle data:
                 Container containerVehicleData = getKeyValueDataStore().get(Container::VEHICLEDATA);
                 VehicleData vd = containerVehicleData.getData<VehicleData> ();
-                cerr << "Most recent vehicle data: '" << vd.toString() << "'" << endl;
+                //                cerr << "Most recent vehicle data: '" << vd.toString() << "'" << endl;
 
                 // 2. Get most recent sensor board data:
-                Container containerSensorBoardData = getKeyValueDataStore().get(Container::USER_DATA_0);
-                SensorBoardData sbd = containerSensorBoardData.getData<SensorBoardData> ();
-                cerr << "Most recent sensor board data: '" << sbd.toString() << "'" << endl;
+
+                //                cerr << "Most recent sensor board data: '" << sbd.toString() << "'" << endl;
 
                 // 3. Get most recent user button data:
-                Container containerUserButtonData = getKeyValueDataStore().get(Container::USER_BUTTON);
-                UserButtonData ubd = containerUserButtonData.getData<UserButtonData> ();
-                cerr << "Most recent user button data: '" << ubd.toString() << "'" << endl;
+//                Container containerUserButtonData = getKeyValueDataStore().get(Container::USER_BUTTON);
+//                UserButtonData ubd = containerUserButtonData.getData<UserButtonData> ();
+                //                cerr << "Most recent user button data: '" << ubd.toString() << "'" << endl;
 
                 // 4. Get most recent steering data as fill from lanedetector for example:
-                Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_1);
-                SteeringData sd = containerSteeringData.getData<SteeringData> ();
-                cerr << "Most recent steering data: '" << sd.toString() << "'" << endl;
+//                Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_1);
+//                SteeringData sd = containerSteeringData.getData<SteeringData> ();
+                //                cerr << "Most recent steering data: '" << sd.toString() << "'" << endl;
 
-
-
+                //                    sbd.getValueForKey_MapOfDistances(4);
                 // Design your control algorithm here depending on the input data from above.
+                    Container containerSensorBoardData = getKeyValueDataStore().get(Container::USER_DATA_0);
+                    SensorBoardData sbd = containerSensorBoardData.getData<SensorBoardData> ();
+                    double infraredRearRight = sbd.getValueForKey_MapOfDistances(2);
+                double ultraSonicFrontCenter = sbd.getValueForKey_MapOfDistances(3);
+                double infraredFrontRight= sbd.getValueForKey_MapOfDistances(0);
+                double ultraSonicRearRight = sbd.getValueForKey_MapOfDistances(5);
+               // double infraredRear= sbd.getValueForKey_MapOfDistances(1);
+            double desiredSteeringWheelAngle = 0;
+                              // double ultraSonicFrontRight = sbd.getValueForKey_MapOfDistances(4);
 
 
 
                 // Create vehicle control data.
                 VehicleControl vc;
+//                    cerr << "relative path: '" << vd.getRelTraveledPath() << "'" << endl;
+//                    cerr << "absolute path: '" << vd.getAbsTraveledPath() << "'" << endl;
+
 
                 // With setSpeed you can set a desired speed for the vehicle in the range of -2.0 (backwards) .. 0 (stop) .. +2.0 (forwards)
-                vc.setSpeed(0.4);
+                    cerr << "rearRight: '" << infraredRearRight << "'" << endl;
+
+
+                   // if (laneLine) {
+                                                       // desiredSteeringWheelAngle = 26;
+                      //      vc.setSpeed(1);
+                   // } else {
+                           // vc.setSpeed(2);
+                  //  }
+
+                  vc.setSpeed(1);
+                if (ultraSonicFrontCenter < 7) {
+                          desiredSteeringWheelAngle=-60;
+
+                    // if ((infraredRearRight < 0) && (ultraSonicFrontCenter=-1) ){
+                            //    desiredSteeringWheelAngle = 0;
+                              //  laneLine = 1;
+                      //  }
+//                        vc.setSpeed(0);
+               // } else {
+//                        vc.setSpeed(2);
+                }
+                if (ultraSonicFrontCenter<0){
+                    desiredSteeringWheelAngle=0;
+                }
+                if ((infraredRearRight >0) && (ultraSonicFrontCenter<0)&&(infraredFrontRight<0) ){
+                        desiredSteeringWheelAngle = 60;
+
+                      }
+                if ((ultraSonicRearRight>0)&&(infraredFrontRight<0)&&(infraredRearRight<0)&&(ultraSonicFrontCenter)<0)){
+                    desiredSteeringWheelAngle =-60;
+
+
+                }
+
+
+
 
                 // With setSteeringWheelAngle, you can steer in the range of -26 (left) .. 0 (straight) .. +25 (right)
-                double desiredSteeringWheelAngle = 4; // 4 degree but SteeringWheelAngle expects the angle in radians!
+                 // 4 degree but SteeringWheelAngle expects the angle in radians!
                 vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
 
                 // You can also turn on or off various lights:
@@ -108,4 +156,3 @@ namespace msv {
 	        return ModuleState::OKAY;
         }
 } // msv
-
