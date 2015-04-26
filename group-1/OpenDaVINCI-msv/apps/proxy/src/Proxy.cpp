@@ -17,37 +17,91 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <termios.h>
+#include <dirent.h>
+#include <stdio.h>
+#include <unistd.h>
+
+#include <stdlib.h>
+  #include <sys/time.h>
+
+
+
 #include <ctype.h>
 #include <cstring>
 #include <cmath>
+#include <iostream>
+
+#include <errno.h>
+
+
+
 
 #include "core/base/KeyValueConfiguration.h"
 #include "core/data/Container.h"
 #include "core/data/TimeStamp.h"
-
+#include "core/data/control/VehicleControl.h"
 #include "OpenCVCamera.h"
 
 #include "GeneratedHeaders_Data.h"
 
 #include "Proxy.h"
+#include <netstring.h>
 
 namespace msv {
 
+int valIr1;
+int valIr2;
+int valIr3;
+int valUs1;
+int valUs2;
+int valUs3;
+
+
+
+
+
+int wr;
+int rd;
+struct termios oldR;
+struct termios oldW;
+const char *MODEMDEVICE ;
+string readings;
+double distance;
+
+
+bool open1(const char* x,int y,struct termios z);
+
+void connect(string x,int y,struct termios z);
+
+void write(string text);
+string read();
+    
     using namespace std;
     using namespace core::base;
     using namespace core::data;
     using namespace tools::recorder;
+using namespace core::data::control;
 
     Proxy::Proxy(const int32_t &argc, char **argv) :
-	    ConferenceClientModule(argc, argv, "proxy"),
-        m_recorder(NULL),
-        m_camera(NULL)
+	 ConferenceClientModule(argc, argv, "proxy"),
+    m_recorder(NULL),
+    m_camera(NULL)
+       
     {}
 
     Proxy::~Proxy() {
     }
 
     void Proxy::setUp() {
+      msv::connect("/dev/ttyACM2",rd,oldR); // connect to arduino reading from
+      msv::connect("/dev/ttyACM0",wr,oldW); // connect to arduino sending to
+
+
 	    // This method will be call automatically _before_ running body().
         if (getFrequency() < 20) {
             cerr << endl << endl << "Proxy: WARNING! Running proxy with a LOW frequency (consequence: data updates are too seldom and will influence your algorithms in a negative manner!) --> suggestions: --freq=20 or higher! Current frequency: " << getFrequency() << " Hz." << endl << endl << endl;
@@ -55,7 +109,8 @@ namespace msv {
 
         // Get configuration data.
         KeyValueConfiguration kv = getKeyValueConfiguration();
-
+	
+	
         // Create built-in recorder.
         const bool useRecorder = kv.getValue<uint32_t>("proxy.useRecorder") == 1;
         if (useRecorder) {
@@ -110,8 +165,15 @@ namespace msv {
 
     // This method will do the main data processing job.
     ModuleState::MODULE_EXITCODE Proxy::body() {
+
+
+
+
         uint32_t captureCounter = 0;
         while (getModuleState() == ModuleState::RUNNING) {
+
+  
+  
             // Capture frame.
             if (m_camera != NULL) {
                 core::data::image::SharedImage si = m_camera->capture();
@@ -120,15 +182,199 @@ namespace msv {
                 distribute(c);
                 captureCounter++;
             }
+	Container containerVehicleControl = getKeyValueDataStore().get(Container::VEHICLECONTROL);
+             VehicleControl vc = containerVehicleControl.getData<VehicleControl> ();
+             cerr << "Speed data: " << vc.getSpeed() << endl;
 
             // TODO: Here, you need to implement the data links to the embedded system
             // to read data from IR/US.
-        }
+	msv::SensorBoardData sensorBoardData;
+   // string userInput="6:300045,"; throtell 300 , servo 045 degree
+
+    
+
+    //msv::write(userInput); // send to arduino
+
+
+      readings=msv::read();
+	
+	
+	
+  
+  // cout<< "readings are "<< readings << endl;
+
+ 
+  
+  if(readings.length()==23){
+    string ir1=readings.substr(3,3);
+
+    valIr1=atoi(ir1.c_str());
+  	
+
+
+    string ir2=readings.substr(6,3);
+
+    valIr2=atoi(ir2.c_str());
+    
+
+    string ir3=readings.substr(9,3);
+
+    valIr3=atoi(ir3.c_str());
+    
+
+    string us1=readings.substr(12,3);
+
+    valUs1=atoi(us1.c_str());
+    
+
+  string us2=readings.substr(15,3);
+
+    valUs2=atoi(us2.c_str());
+    
+
+
+  string us3=readings.substr(18,3);
+
+    valUs3=atoi(us3.c_str());
+    
+}
+
+sensorBoardData.putTo_MapOfDistances(4,valUs2);
+sensorBoardData.putTo_MapOfDistances(3,valUs1);
+sensorBoardData.putTo_MapOfDistances(1,valIr3/10);
+sensorBoardData.putTo_MapOfDistances(2,valIr2/10);
+sensorBoardData.putTo_MapOfDistances(0,valIr1/10);
+sensorBoardData.putTo_MapOfDistances(5,valUs3);
+
+Container c = Container(Container::USER_DATA_0, sensorBoardData);
+  distribute(c);
+
+
+ }
 
         cout << "Proxy: Captured " << captureCounter << " frames." << endl;
 
         return ModuleState::OKAY;
     }
 
+
+void connect(string address,int fd,struct termios oldtio)
+{
+  
+ 
+MODEMDEVICE=address.c_str ();
+  if(MODEMDEVICE!=0)
+  open1(MODEMDEVICE,fd,oldtio);
+}
+
+
+/*
+Found at https://github.com/ranma1988/cArduino/blob/master/SOURCE/cArduino.cpp
+*/
+bool open1(const char *DeviceFileName,int fd , struct termios oldtio )
+{
+  struct termios newtio;
+
+  MODEMDEVICE = DeviceFileName;
+  /*
+  Open modem device for reading and writing and not as controlling tty
+  because we don't want to get killed if linenoise sends CTRL-C.
+  */
+  if(MODEMDEVICE==0)
+  return false;
+
+  fd = ::open(MODEMDEVICE, O_RDWR | O_NOCTTY );
+  if (fd <0) {
+    perror(MODEMDEVICE);
+    return false;
+  }
+
+  tcgetattr(fd,&oldtio); /* save current serial port settings */
+  bzero(&newtio, sizeof(newtio)); /* clear struct for new port settings */
+
+  /*
+  BAUDRATE: Set bps rate. You could also use cfsetispeed and cfsetospeed.
+  CRTSCTS : output hardware flow control (only used if the cable has
+      all necessary lines. See sect. 7 of Serial-HOWTO)
+  CS8     : 8n1 (8bit,no parity,1 stopbit)
+  CLOCAL  : local connection, no modem contol
+  CREAD   : enable receiving characters
+  */
+  newtio.c_cflag =  B9600 | CRTSCTS | CS8 | CLOCAL | CREAD;
+
+  /*
+  IGNPAR  : ignore bytes with parity errors
+  ICRNL   : map CR to NL (otherwise a CR input on the other computer
+      will not terminate input)
+  otherwise make device raw (no other input processing)
+  */
+  newtio.c_iflag = IGNPAR | ICRNL;
+
+  /*
+  Raw output.
+  */
+  newtio.c_oflag = 0;
+
+  /*
+  ICANON  : enable canonical input
+  disable all echo functionality, and don't send signals to calling program
+  */
+  newtio.c_lflag = ICANON;
+
+  /*
+  initialize all control characters
+  default values can be found in /usr/include/termios.h, and are given
+  in the comments, but we don't need them here
+  */
+  newtio.c_cc[VINTR]    = 0;     /* Ctrl-c */
+  newtio.c_cc[VQUIT]    = 0;     /* Ctrl-\ */
+  newtio.c_cc[VERASE]   = 0;     /* del */
+  newtio.c_cc[VKILL]    = 0;     /* @ */
+  newtio.c_cc[VEOF]     = 4;     /* Ctrl-d */
+  newtio.c_cc[VTIME]    = 0;     /* inter-character timer unused */
+  newtio.c_cc[VMIN]     = 1;     /* blocking read until 1 character arrives */
+  newtio.c_cc[VSWTC]    = 0;     /* '\0' */
+  newtio.c_cc[VSTART]   = 0;     /* Ctrl-q */
+  newtio.c_cc[VSTOP]    = 0;     /* Ctrl-s */
+  newtio.c_cc[VSUSP]    = 0;     /* Ctrl-z */
+  newtio.c_cc[VEOL]     = 0;     /* '\0' */
+  newtio.c_cc[VREPRINT] = 0;     /* Ctrl-r */
+  newtio.c_cc[VDISCARD] = 0;     /* Ctrl-u */
+  newtio.c_cc[VWERASE]  = 0;     /* Ctrl-w */
+  newtio.c_cc[VLNEXT]   = 0;     /* Ctrl-v */
+  newtio.c_cc[VEOL2]    = 0;     /* '\0' */
+
+  /*
+  now clean the modem line and activate the settings for the port
+  */
+  tcflush(fd, TCIFLUSH);
+  tcsetattr(fd,TCSANOW,&newtio);
+
+  /*
+  terminal settings done, now handle input
+  */
+  return true;
+}
+
+string read()
+{
+  /* read blocks program execution until a line terminating character is
+  input, even if more than 255 chars are input. If the number
+  of characters read is smaller than the number of chars available,
+  subsequent reads will return the remaining chars. res will be set
+  to the actual number of characters actually read */
+  char buf[255];
+
+  int res = ::read(rd,buf,255);
+  buf[res]=0;             /* set end of string, so we can printf */
+
+  string ret(buf);
+  return ret;
+}
+void write(string text)
+{
+  ::write(  wr,(char*)text.c_str(),(size_t)text.length() );
+}
 } // msv
+
 
