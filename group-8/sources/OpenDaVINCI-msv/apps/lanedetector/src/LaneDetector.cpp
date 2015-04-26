@@ -85,7 +85,6 @@ namespace msv {
         cvNamedWindow("WindowShowImage", CV_WINDOW_AUTOSIZE);
         cvMoveWindow("WindowShowImage", 300, 100);
       }
-      KeyValueConfiguration kv = getKeyValueConfiguration();
     }
 
     void LaneDetector::tearDown() {

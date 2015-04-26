@@ -21,18 +21,22 @@
 
 #include "opencv2/imgproc/imgproc_c.h"
 #include "opencv2/imgproc/imgproc.hpp"
+#include "core/base/KeyValueConfiguration.h"
 
 #include "OpenCVCamera.h"
 
+using namespace core::base;
+
 namespace msv {
 
-    OpenCVCamera::OpenCVCamera(const string &name, const uint32_t &id, const uint32_t &width, const uint32_t &height, const uint32_t &bpp) :
+    OpenCVCamera::OpenCVCamera(const string &name, const uint32_t &id, const uint32_t &width, const uint32_t &height, const uint32_t &bpp, const bool &headless) :
         Camera(name, id, width, height, bpp),
         m_capture(NULL),       
         m_image(NULL),
         out(NULL),
         merge_image(NULL),
-        gray_out(NULL) {
+        gray_out(NULL),
+        isheadless(headless) {
 
         m_capture = cvCaptureFromCAM(id);
         if (m_capture) {
@@ -60,22 +64,6 @@ namespace msv {
         if (m_capture != NULL) {
             if (cvGrabFrame(m_capture)) {
                 if (getBPP() == 1) {
-                    // IplImage *tmpFrame = cvRetrieveFrame(m_capture);
-
-                    // if (m_image == NULL || out == NULL || gray_out == NULL) {
-                    //     out = cvCreateImage( cvGetSize(tmpFrame), IPL_DEPTH_8U, 1 );
-                    //     gray_out = cvCreateImage( cvGetSize(tmpFrame), IPL_DEPTH_8U, 1 );
-                    //     merge_image = cvCreateImage( cvGetSize(tmpFrame), IPL_DEPTH_8U, 1 );
-                    //     m_image = cvCreateImage(cvGetSize(tmpFrame), IPL_DEPTH_8U, 3);                    
-                    // }                   
-
-                    // cvCvtColor( tmpFrame , gray_out, CV_BGR2GRAY);
-                    // cvSmooth( gray_out, out, CV_GAUSSIAN, 25, 25 );       
-                    // cvCanny( out, merge_image, 60, 20, 3 );
-                    // cvMerge(merge_image, merge_image, merge_image, NULL, tmpFrame);
-                    // cvDilate(tmpFrame, m_image,NULL,1);
-
-
                     IplImage *tmpFrame = cvRetrieveFrame(m_capture);
 
                     if (m_image == NULL || out == NULL || gray_out == NULL) {
@@ -88,8 +76,6 @@ namespace msv {
                     cvCvtColor( tmpFrame , gray_out, CV_BGR2GRAY);
                     cvSmooth( gray_out, out, CV_GAUSSIAN, 25, 25 );       
                     cvCanny( out, m_image, 60, 20, 3 );
-                    // cvMerge(merge_image, merge_image, merge_image, NULL, tmpFrame);
-                    // cvDilate(tmpFrame, m_image,NULL,1);
 
                 }
                 else {
@@ -121,7 +107,9 @@ namespace msv {
         if ( (dest != NULL) && (size > 0) && (m_image != NULL) ) {
             ::memcpy(dest, m_image->imageData, size);
 
-            //cvShowImage("WindowShowImage", m_image);
+            if(!isheadless){
+                cvShowImage("WindowShowImage", m_image);
+            }
             cvWaitKey(10);
 
             retVal = true;

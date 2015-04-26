@@ -93,9 +93,9 @@ namespace msv {
         const uint32_t WIDTH = getKeyValueConfiguration().getValue<uint32_t>("proxy.camera.width");
         const uint32_t HEIGHT = getKeyValueConfiguration().getValue<uint32_t>("proxy.camera.height");
         const uint32_t BPP = getKeyValueConfiguration().getValue<uint32_t>("proxy.camera.bpp");
-
+        const bool headless = getKeyValueConfiguration().getValue<uint32_t>("global.headless") == 1;
         if (TYPE.compare("opencv") == 0) {
-            m_camera = new OpenCVCamera(NAME, ID, WIDTH, HEIGHT, BPP);
+            m_camera = new OpenCVCamera(NAME, ID, WIDTH, HEIGHT, BPP, headless);
         }
 
         if (m_camera == NULL) {

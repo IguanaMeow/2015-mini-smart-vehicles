@@ -62,7 +62,7 @@ namespace msv {
              * @param height
              * @param bpp
              */
-            OpenCVCamera(const string &name, const uint32_t &id, const uint32_t &width, const uint32_t &height, const uint32_t &bpp);
+            OpenCVCamera(const string &name, const uint32_t &id, const uint32_t &width, const uint32_t &height, const uint32_t &bpp, const bool &headless);
 
             virtual ~OpenCVCamera();
 
@@ -79,6 +79,7 @@ namespace msv {
             IplImage *out;
             IplImage *merge_image;
             IplImage *gray_out;
+            bool isheadless;
     };
 
 } // msv
