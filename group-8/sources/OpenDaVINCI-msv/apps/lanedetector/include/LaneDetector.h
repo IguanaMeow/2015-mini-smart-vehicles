@@ -113,7 +113,6 @@ namespace msv {
 
         	int state;
         	int counter;
-        	uint32_t imgbpp;
 
         	double inputAngle1;
         	double inputAngle2;

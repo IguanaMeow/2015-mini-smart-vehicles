@@ -69,7 +69,6 @@ namespace msv {
         upline2(340, 0, 120),
         state(1),
         counter(0),
-        imgbpp(0),
 
         inputAngle1(0.0),
         inputAngle2(0.0),
@@ -111,16 +110,13 @@ namespace msv {
               = core::wrapper::SharedMemoryFactory::attachToSharedMemory(
                   si.getName());
         }
-        if(imgbpp == 0){
-          imgbpp = si.getBytesPerPixel();
-        }
-        //Single channel verison of image copy
+        const uint32_t numberOfChannels = si.getBytesPerPixel();
+        //Single channel version of image copy
         if (m_sharedImageMemory->isValid()){ 
-          if(imgbpp == 1) {
+          if(numberOfChannels == 1) {
             // Lock the memory region to gain exclusive access. REMEMBER!!! DO NOT FAIL WITHIN lock() / unlock(), otherwise, the image producing process would fail.
               m_sharedImageMemory->lock();
               {
-                const uint32_t numberOfChannels = imgbpp;
                 // For example, simply show the image.
                 if (merge_image == NULL) {
                   merge_image = cvCreateImage(cvSize(si.getWidth(), si.getHeight()), IPL_DEPTH_8U, numberOfChannels);
@@ -142,7 +138,6 @@ namespace msv {
             // Lock the memory region to gain exclusive access. REMEMBER!!! DO NOT FAIL WITHIN lock() / unlock(), otherwise, the image producing process would fail.
             m_sharedImageMemory->lock();
             {
-              const uint32_t numberOfChannels = imgbpp;
               // For example, simply show the image.
               if (m_image == NULL) {
                 m_image = cvCreateImage(cvSize(si.getWidth(), si.getHeight()), IPL_DEPTH_8U, numberOfChannels);
@@ -159,7 +154,7 @@ namespace msv {
           // Release the memory region so that the image produce (i.e. the camera for example) can provide the next raw image data.
           m_sharedImageMemory->unlock();
 
-          if(imgbpp == 1){
+          if(numberOfChannels == 1){
             cvDilate(merge_image, merge_image,NULL,1);
             cvMerge(merge_image, merge_image, merge_image, NULL, m_image);       
           }
