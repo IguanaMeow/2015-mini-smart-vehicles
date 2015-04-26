@@ -81,6 +81,7 @@ namespace msv {
 	        bool m_hasAttachedToSharedImageMemory;
 	        core::SharedPointer<core::wrapper::SharedMemory> m_sharedImageMemory;
 	        IplImage *m_image;
+	        IplImage *merge_image;
             bool m_debug;
 
 			/* Scans for two valid lines in a vector of lines */
@@ -112,6 +113,7 @@ namespace msv {
 
         	int state;
         	int counter;
+        	uint32_t imgbpp;
 
         	double inputAngle1;
         	double inputAngle2;

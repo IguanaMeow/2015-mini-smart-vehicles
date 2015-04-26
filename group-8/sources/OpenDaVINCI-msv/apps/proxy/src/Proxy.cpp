@@ -221,6 +221,7 @@ namespace msv {
         // cmdParser.addCommandLineArgument("id");
 
         int connection = 1;
+        int correctserial = true;
         
 
         uint32_t captureCounter = 0;
@@ -232,16 +233,21 @@ namespace msv {
         double smoothduration;
         start = clock();
 
-        this_serial = new Serial(port, baud, Timeout::simpleTimeout(2000));
-        while(!this_serial->isOpen()){
-            cerr << "SerialPort is not open" << endl;
+        try{
+            this_serial = new Serial(port, baud, Timeout::simpleTimeout(2000));
+        }catch (IOException e){
+            cerr << "IO Exception - SerialPort" << port << "is not configured correctly" << endl;
+            correctserial = false;
+        }    
+        if(correctserial && this_serial->isOpen()){
+            this_serial->flushInput();
         }
-        this_serial->flushInput();
+        
 
 
         while (getModuleState() == ModuleState::RUNNING) {
 
-            if(this_serial->isOpen()){
+            if(correctserial && this_serial->isOpen()){
                 
                 connection = getSerial();
                 if(connection){
@@ -279,22 +285,10 @@ namespace msv {
             // TODO: Here, you need to implement the data links to the embedded system
             // to read data from IR/US.
             //Serial
-            cerr << this_serial->isOpen() << endl;
-            if(this_serial->isOpen()){
-                
-                connection = getSerial();
-                
-
-
-                if(connection){
-                    distSerial();
-
-                }else{
-                    cout << "Proxy timed out on serial connection " << endl;
-                    break;
-                }
+            if(correctserial && this_serial->isOpen()){
+                this_serial->flushInput();
             }
-            this_serial->flushInput();
+            
         }
         cumduration = ( clock() - start ) / (double) CLOCKS_PER_SEC;
         cout << "Proxy: Captured " << captureCounter << " frames." << endl;

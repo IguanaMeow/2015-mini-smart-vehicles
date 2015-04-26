@@ -55,6 +55,7 @@ namespace msv {
         m_hasAttachedToSharedImageMemory(false),
         m_sharedImageMemory(),
         m_image(NULL),
+        merge_image(NULL),
         m_debug(false),
         rightLine1(0, 50, 250),
         rightLine2(0, 70, 0),
@@ -68,6 +69,8 @@ namespace msv {
         upline2(340, 0, 120),
         state(1),
         counter(0),
+        imgbpp(1),
+
         inputAngle1(0.0),
         inputAngle2(0.0),
         inputAngle3(0.0)
@@ -82,6 +85,7 @@ namespace msv {
         cvNamedWindow("WindowShowImage", CV_WINDOW_AUTOSIZE);
         cvMoveWindow("WindowShowImage", 300, 100);
       }
+      KeyValueConfiguration kv = getKeyValueConfiguration();
     }
 
     void LaneDetector::tearDown() {
@@ -101,34 +105,64 @@ namespace msv {
       if (c.getDataType() == Container::SHARED_IMAGE) {
         SharedImage si = c.getData<SharedImage> ();
 
+
         // Check if we have already attached to the shared memory.
         if (!m_hasAttachedToSharedImageMemory) {
           m_sharedImageMemory
               = core::wrapper::SharedMemoryFactory::attachToSharedMemory(
                   si.getName());
         }
+        //Single channel verison of image copy
+        if (m_sharedImageMemory->isValid()){ 
+          if(imgbpp == 1) {
+            // Lock the memory region to gain exclusive access. REMEMBER!!! DO NOT FAIL WITHIN lock() / unlock(), otherwise, the image producing process would fail.
+              m_sharedImageMemory->lock();
+              {
+                const uint32_t numberOfChannels = imgbpp;
+                // For example, simply show the image.
+                if (merge_image == NULL) {
+                  merge_image = cvCreateImage(cvSize(si.getWidth(), si.getHeight()), IPL_DEPTH_8U, numberOfChannels);
+                }
+                if (m_image == NULL){
+                  m_image = cvCreateImage(cvSize(si.getWidth(), si.getHeight()), IPL_DEPTH_8U, 3);
+                }
 
-        // Check if we could successfully attach to the shared memory.
-        if (m_sharedImageMemory->isValid()) {
-          // Lock the memory region to gain exclusive access. REMEMBER!!! DO NOT FAIL WITHIN lock() / unlock(), otherwise, the image producing process would fail.
-          m_sharedImageMemory->lock();
-          {
-            const uint32_t numberOfChannels = 3;
-            // For example, simply show the image.
-            if (m_image == NULL) {
-              m_image = cvCreateImage(cvSize(si.getWidth(), si.getHeight()), IPL_DEPTH_8U, numberOfChannels);
-            }
+                // Copying the image data is very expensive...
+                if (merge_image != NULL) {
+                  memcpy(merge_image->imageData,
+                     m_sharedImageMemory->getSharedMemory(),
+                     si.getWidth() * si.getHeight() * numberOfChannels);
+                }
+              }
+          }
+          // Check if we could successfully attach to the shared memory.
+          if (imgbpp == 3) {
+            // Lock the memory region to gain exclusive access. REMEMBER!!! DO NOT FAIL WITHIN lock() / unlock(), otherwise, the image producing process would fail.
+            m_sharedImageMemory->lock();
+            {
+              const uint32_t numberOfChannels = imgbpp;
+              // For example, simply show the image.
+              if (m_image == NULL) {
+                m_image = cvCreateImage(cvSize(si.getWidth(), si.getHeight()), IPL_DEPTH_8U, numberOfChannels);
+              }
 
-            // Copying the image data is very expensive...
-            if (m_image != NULL) {
-              memcpy(m_image->imageData,
-                 m_sharedImageMemory->getSharedMemory(),
-                 si.getWidth() * si.getHeight() * numberOfChannels);
+              // Copying the image data is very expensive...
+              if (m_image != NULL) {
+                memcpy(m_image->imageData,
+                   m_sharedImageMemory->getSharedMemory(),
+                   si.getWidth() * si.getHeight() * numberOfChannels);
+              }
             }
           }
-
           // Release the memory region so that the image produce (i.e. the camera for example) can provide the next raw image data.
           m_sharedImageMemory->unlock();
+
+          if(imgbpp == 1){
+            cvMerge(merge_image, merge_image, merge_image, NULL, m_image);
+            cvDilate(m_image, m_image,NULL,1);
+          }
+
+
 
           // Mirror the image.
           cvFlip(m_image, 0, -1);
@@ -285,8 +319,14 @@ namespace msv {
       // Get configuration data.
       KeyValueConfiguration kv = getKeyValueConfiguration();
       m_debug = kv.getValue<int32_t> ("lanedetector.debug") == 1;
+      imgbpp = kv.getValue<uint32_t>("global.camera.bpp");
 
         Player *player = NULL;
+
+        uint32_t lanecounter = 0;
+        clock_t start;
+        start = clock();
+        double cumduration;
 /*
         // Lane-detector can also directly read the data from file. This might be interesting to inspect the algorithm step-wisely.
         core::io::URL url("file://recorder.rec");
@@ -322,8 +362,12 @@ namespace msv {
         // Process the read image.
         if (true == has_next_frame) {
           processImage();
+          lanecounter++;
         }
       }
+        cumduration = ( clock() - start ) / (double) CLOCKS_PER_SEC;
+        cout << "LaneDetector: processed " << lanecounter << " frames." << endl;
+        cout << "LaneDetector: processed " << lanecounter/cumduration << " frames per sec." << endl;
 
         OPENDAVINCI_CORE_DELETE_POINTER(player);
 
