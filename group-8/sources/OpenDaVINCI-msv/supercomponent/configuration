@@ -19,7 +19,6 @@ global.car = Scenarios/Models/FordEscape.objx
 #global.car = Scenarios/Models/RedRocketCar.objx
 global.scenario = file://Scenarios/NoObstacles_StopLines.scnx
 global.showGrid = 0
-global.camera.bpp = 1
 global.headless = 0
 
 # The following attributes define the buffer sizes for recording and replaying.

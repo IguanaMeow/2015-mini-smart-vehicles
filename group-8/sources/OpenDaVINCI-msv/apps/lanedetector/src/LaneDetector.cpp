@@ -69,7 +69,7 @@ namespace msv {
         upline2(340, 0, 120),
         state(1),
         counter(0),
-        imgbpp(1),
+        imgbpp(0),
 
         inputAngle1(0.0),
         inputAngle2(0.0),
@@ -111,6 +111,9 @@ namespace msv {
               = core::wrapper::SharedMemoryFactory::attachToSharedMemory(
                   si.getName());
         }
+        if(imgbpp == 0){
+          imgbpp = si.getBytesPerPixel();
+        }
         //Single channel verison of image copy
         if (m_sharedImageMemory->isValid()){ 
           if(imgbpp == 1) {
@@ -135,7 +138,7 @@ namespace msv {
               }
           }
           // Check if we could successfully attach to the shared memory.
-          if (imgbpp == 3) {
+          else {
             // Lock the memory region to gain exclusive access. REMEMBER!!! DO NOT FAIL WITHIN lock() / unlock(), otherwise, the image producing process would fail.
             m_sharedImageMemory->lock();
             {
@@ -157,8 +160,8 @@ namespace msv {
           m_sharedImageMemory->unlock();
 
           if(imgbpp == 1){
-            cvMerge(merge_image, merge_image, merge_image, NULL, m_image);
-            cvDilate(m_image, m_image,NULL,1);
+            cvDilate(merge_image, merge_image,NULL,1);
+            cvMerge(merge_image, merge_image, merge_image, NULL, m_image);       
           }
 
 
@@ -318,7 +321,6 @@ namespace msv {
       // Get configuration data.
       KeyValueConfiguration kv = getKeyValueConfiguration();
       m_debug = kv.getValue<int32_t> ("lanedetector.debug") == 1;
-      imgbpp = kv.getValue<uint32_t>("global.camera.bpp");
 
         Player *player = NULL;
 
