@@ -65,8 +65,8 @@ int valUs3;
 
 
 
-int wr;
-int rd;
+int wd;
+int fd;
 struct termios oldR;
 struct termios oldW;
 const char *MODEMDEVICE ;
@@ -74,9 +74,9 @@ string readings;
 double distance;
 
 
-bool open1(const char* x,int y,struct termios z);
+bool open1(const char* x,int y);
 
-void connect(string x,int y,struct termios z);
+void connect(string x,int y);
 
 void write(string text);
 string read();
@@ -91,15 +91,15 @@ using namespace core::data::control;
 	 ConferenceClientModule(argc, argv, "proxy"),
     m_recorder(NULL),
     m_camera(NULL)
-       
+        //arduino(ArduinoBaundRate::B9600bps)
     {}
 
     Proxy::~Proxy() {
     }
 
     void Proxy::setUp() {
-      msv::connect("/dev/ttyACM2",rd,oldR); // connect to arduino reading from
-      msv::connect("/dev/ttyACM0",wr,oldW); // connect to arduino sending to
+      msv::connect("/dev/ttyACM3",1); // connect to arduino reading from
+      msv::connect("/dev/ttyACM1",2); // connect to arduino sending to
 
 
 	    // This method will be call automatically _before_ running body().
@@ -189,21 +189,22 @@ using namespace core::data::control;
             // TODO: Here, you need to implement the data links to the embedded system
             // to read data from IR/US.
 	msv::SensorBoardData sensorBoardData;
-   // string userInput="6:300045,"; throtell 300 , servo 045 degree
+   string userInput="6:300180,";
 
     
 
-    //msv::write(userInput); // send to arduino
+    msv::write(userInput);
 
 
       readings=msv::read();
-	
+	//distance=msv::decode(readings);
 	
 	
   
-  // cout<< "readings are "<< readings << endl;
+  cout<< "readings are "<< readings << endl;
 
- 
+//strcpy(test,buff);
+//  
   
   if(readings.length()==23){
     string ir1=readings.substr(3,3);
@@ -248,7 +249,8 @@ sensorBoardData.putTo_MapOfDistances(5,valUs3);
 
 Container c = Container(Container::USER_DATA_0, sensorBoardData);
   distribute(c);
-
+ // tcflush(fd, TCIFLUSH);
+//usleep(2000000);
 
  }
 
@@ -258,20 +260,20 @@ Container c = Container(Container::USER_DATA_0, sensorBoardData);
     }
 
 
-void connect(string address,int fd,struct termios oldtio)
+void connect(string address,int z)
 {
   
  
 MODEMDEVICE=address.c_str ();
   if(MODEMDEVICE!=0)
-  open1(MODEMDEVICE,fd,oldtio);
+  open1(MODEMDEVICE,z);
 }
 
 
 /*
 Found at https://github.com/ranma1988/cArduino/blob/master/SOURCE/cArduino.cpp
 */
-bool open1(const char *DeviceFileName,int fd , struct termios oldtio )
+bool open1(const char *DeviceFileName,int x)
 {
   struct termios newtio;
 
@@ -282,16 +284,26 @@ bool open1(const char *DeviceFileName,int fd , struct termios oldtio )
   */
   if(MODEMDEVICE==0)
   return false;
-
+if(x==1){
   fd = ::open(MODEMDEVICE, O_RDWR | O_NOCTTY );
   if (fd <0) {
     perror(MODEMDEVICE);
     return false;
   }
 
-  tcgetattr(fd,&oldtio); /* save current serial port settings */
+  tcgetattr(fd,&oldR); /* save current serial port settings */
   bzero(&newtio, sizeof(newtio)); /* clear struct for new port settings */
+}
+if(x==2){
+  wd = ::open(MODEMDEVICE, O_RDWR | O_NOCTTY );
+  if (wd <0) {
+    perror(MODEMDEVICE);
+    return false;
+  }
 
+  tcgetattr(wd,&oldW); /* save current serial port settings */
+  bzero(&newtio, sizeof(newtio)); /* clear struct for new port settings */
+}
   /*
   BAUDRATE: Set bps rate. You could also use cfsetispeed and cfsetospeed.
   CRTSCTS : output hardware flow control (only used if the cable has
@@ -347,9 +359,14 @@ bool open1(const char *DeviceFileName,int fd , struct termios oldtio )
   /*
   now clean the modem line and activate the settings for the port
   */
+ if(x==1){
   tcflush(fd, TCIFLUSH);
   tcsetattr(fd,TCSANOW,&newtio);
-
+}
+if(x==2){
+  tcflush(wd, TCIFLUSH);
+  tcsetattr(wd,TCSANOW,&newtio);
+}
   /*
   terminal settings done, now handle input
   */
@@ -365,7 +382,7 @@ string read()
   to the actual number of characters actually read */
   char buf[255];
 
-  int res = ::read(rd,buf,255);
+  int res = ::read(fd,buf,255);
   buf[res]=0;             /* set end of string, so we can printf */
 
   string ret(buf);
@@ -373,7 +390,7 @@ string read()
 }
 void write(string text)
 {
-  ::write(  wr,(char*)text.c_str(),(size_t)text.length() );
+  ::write(  wd,(char*)text.c_str(),(size_t)text.length() );
 }
 } // msv
 
