@@ -78,15 +78,19 @@ namespace msv {
             void distribute(core::data::Container c);
             int getSerial();
             void distSerial();
+            void sendSerial();
 
         private:
+            static const int INSERIAL = 17;
+            static const int OUTSERIAL = 7;
             tools::recorder::Recorder *m_recorder;
             Camera *m_camera;
             serial::Serial *this_serial;
             uint8_t endByte;
             uint8_t startByte;
-            uint8_t incomingSer[17];
-            uint8_t oldIncomingSer[17];
+            uint8_t outSer[OUTSERIAL];
+            uint8_t incomingSer[INSERIAL];
+            uint8_t oldIncomingSer[OUTSERIAL];
 
 
     };

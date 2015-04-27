@@ -39,12 +39,13 @@ namespace msv {
     using namespace std;
     using namespace core::base;
     using namespace core::data;
+    using namespace core::data::environment;
     using namespace tools::recorder;
     using namespace serial;
     //VehicleData
     //using namespace core::data::environment;
 
-    const int INSERIAL = 17;
+
 
     Proxy::Proxy(const int32_t &argc, char **argv) :
         ConferenceClientModule(argc, argv, "proxy"),
@@ -53,6 +54,7 @@ namespace msv {
         this_serial(NULL),
         endByte(0xFF),
         startByte(0xAA),
+        outSer(),
         incomingSer(),
         oldIncomingSer()     
     {}
@@ -158,11 +160,34 @@ namespace msv {
         }
     }
 
-    // void Proxy::sendSerial() {
-    // }
+    void Proxy::sendSerial() {
+        Container containerVehicleData = getKeyValueDataStore().get(Container::VEHICLEDATA);
+        VehicleData vdata = containerVehicleData.getData<VehicleData> ();
+        uint16_t speedOut = ((uint16_t)vdata.getSpeed()+1);
+        uint16_t steeringOut = ((uint16_t)vdata.getHeading()+1);
+        cerr << "start: " << (uint16_t)outSer[0] << endl;
+        cerr << "speedOut: " << speedOut << endl;
+        cerr << "steeringOut: " << steeringOut << endl;
+
+        outSer[6] = 0;
+        outSer[0] = startByte;
+        outSer[1] = speedOut & 0xFF;
+        outSer[2] = (speedOut >> 8) & 0xFF;
+        outSer[3] = steeringOut & 0xFF;
+        outSer[4] = (steeringOut >> 8) & 0xFF;
+        outSer[5] = endByte;
+
+        for(int i = 0; i < OUTSERIAL-1; i++){
+            outSer[OUTSERIAL - 1] ^= outSer[i];
+        } 
+        cerr << "checksum: " << (uint16_t)outSer[6] << endl;
+        int sentnum = (int)this_serial->write(outSer, 7);
+        cerr << "sent bytes: " << sentnum << endl;
+
+    }
 
     void Proxy::distSerial() {
-        //VehicleData vd;
+        VehicleData vd;
 
         SensorBoardData sbd;
 
@@ -175,8 +200,8 @@ namespace msv {
         // uint16_t irMiddleRight = 100;
         // uint16_t irBack = 100;
 
-        //uint16_t speed = ((uint16_t)incomingSer[2] << 8) | incomingSer[1];
-        //uint16_t steering = ((uint16_t)incomingSer[3] << 8) | incomingSer[4];
+        uint16_t speed = ((uint16_t)incomingSer[2] << 8) | incomingSer[1];
+        uint16_t steering = ((uint16_t)incomingSer[4] << 8) | incomingSer[3];
         uint16_t irFrontRight = ((uint16_t)incomingSer[6] << 8) | incomingSer[5];
         uint16_t irMiddleRight = ((uint16_t)incomingSer[8] << 8) | incomingSer[7];   
         uint16_t irBack = ((uint16_t)incomingSer[10] << 8) | incomingSer[9];
@@ -184,8 +209,8 @@ namespace msv {
         uint16_t usFrontRight = ((uint16_t)incomingSer[14] << 8) | incomingSer[13];
 
 
-        // vd.setSpeed((double)speed);
-        // vd.setSteering((double)steering);
+        vd.setSpeed((double)speed);
+        vd.setHeading((double)steering);
         sbd.putTo_MapOfDistances(0, (double)irFrontRight);
         sbd.putTo_MapOfDistances(1, (double)irBack);
         sbd.putTo_MapOfDistances(2, (double)irMiddleRight);
@@ -194,8 +219,11 @@ namespace msv {
 
 
 
-        // cerr << "Speed: " << vd.getSpeed(); << endl;
-        // cerr << "Steering: " << vd.getHeading(); << endl;
+        cerr << "Speed: " << speed << endl;
+        cerr << "Steering: " << steering << endl;
+
+        cerr << "Speed: " << vd.getSpeed() << endl;
+        cerr << "Steering: " << vd.getHeading() << endl;
 
         cerr << "Sensor 0 IR Front-Right: " << sbd.getValueForKey_MapOfDistances(0) << endl;
         cerr << " Sensor 1 IR Back: " << sbd.getValueForKey_MapOfDistances(1) << endl;
@@ -203,8 +231,8 @@ namespace msv {
         cerr << " Sensor 3 US Front-Center: " << sbd.getValueForKey_MapOfDistances(3) << endl;
         cerr << " Sensor 4 US Front-Right: " << sbd.getValueForKey_MapOfDistances(4) << endl;
 
-        // Container contVD(Container::VEHICLEDATA, vd);
-        // distribute(contVD);
+        Container contVD(Container::VEHICLEDATA, vd);
+        distribute(contVD);
         Container contSBD(Container::USER_DATA_0, sbd);
         distribute(contSBD);
     }
@@ -212,9 +240,10 @@ namespace msv {
     // This method will do the main data processing job.
     ModuleState::MODULE_EXITCODE Proxy::body() {
 
+
         //Serial connection check
         uint32_t baud = 9600;
-        string port = "/dev/ttyACM0"; 
+        string port = "/dev/ttyACM2"; 
         cerr << "Testing port dev/ttySAC3" << endl;
         // posible commands for getting serial port
         // CommandLineParser cmdParser;
@@ -248,10 +277,14 @@ namespace msv {
         while (getModuleState() == ModuleState::RUNNING) {
 
             if(correctserial && this_serial->isOpen()){
-                
+                if(connection){
+                    sendSerial();
+                }
+                cerr << "Serial Baud =  " << this_serial->getBaudrate() << endl;
                 connection = getSerial();
                 if(connection){
                     distSerial();
+                    
 
                 }else{
                     cout << "Proxy timed out on serial connection " << endl;
@@ -287,6 +320,7 @@ namespace msv {
             //Serial
             if(correctserial && this_serial->isOpen()){
                 this_serial->flushInput();
+
             }
             
         }
