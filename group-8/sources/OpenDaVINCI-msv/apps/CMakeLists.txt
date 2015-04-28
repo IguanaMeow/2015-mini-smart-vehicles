@@ -22,7 +22,7 @@ ENDIF()
 
 IF("${PANDABOARD}" STREQUAL "YES")
 ADD_CUSTOM_TARGET(push2meili-1
-    COMMAND rsync -ave ssh --rsync-path='sudo rsync' /opt/msv-ARM/ odroid@192.168.1.137:/opt/msv/
+    COMMAND rsync -ave ssh --rsync-path='sudo rsync' /opt/msv-ARM/ odroid@172.16.0.8:/opt/msv/
     DEPENDS lanedetector driver proxy
 )
 ENDIF("${PANDABOARD}" STREQUAL "YES")

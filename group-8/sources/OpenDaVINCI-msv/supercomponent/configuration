@@ -19,7 +19,7 @@ global.car = Scenarios/Models/FordEscape.objx
 #global.car = Scenarios/Models/RedRocketCar.objx
 global.scenario = file://Scenarios/NoObstacles_StopLines.scnx
 global.showGrid = 0
-global.headless = 0
+global.headless = 0 #show video in proxy
 
 # The following attributes define the buffer sizes for recording and replaying.
 # You need to adjust these parameters depending on the camera resolution for example (640x480x3 --> 1000000 for memorySegment, 1280x720x3 --> 2800000).
@@ -161,8 +161,8 @@ proxy.useRecorder = 0 # 1 = record all captured data directly, 0 otherwise.
 proxy.camera.name = WebCam
 proxy.camera.type = OpenCV # OpenCV or UEYE
 proxy.camera.id = 0 # Select here the proper ID for OpenCV
-proxy.camera.width = 480
-proxy.camera.height = 360
+proxy.camera.width = 640
+proxy.camera.height = 480
 proxy.camera.bpp = 1
 
 

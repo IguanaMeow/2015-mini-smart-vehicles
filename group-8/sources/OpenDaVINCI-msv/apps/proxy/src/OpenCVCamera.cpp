@@ -74,6 +74,7 @@ namespace msv {
                     }                   
 
                     cvCvtColor( tmpFrame , m_image, CV_BGR2GRAY);
+                    cvSmooth( m_image, m_image, CV_GAUSSIAN, 11, 11 );
 
 
                 }

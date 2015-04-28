@@ -154,9 +154,8 @@ namespace msv {
           // Release the memory region so that the image produce (i.e. the camera for example) can provide the next raw image data.
           m_sharedImageMemory->unlock();
 
-          if(numberOfChannels == 1){
-            cvSmooth( merge_image, merge_image, CV_GAUSSIAN, 25, 25 );       
-            cvCanny( merge_image, merge_image, 60, 20, 3 );
+          if(numberOfChannels == 1){       
+            cvCanny( merge_image, merge_image, 100, 50, 3 );
             cvDilate(merge_image, merge_image,NULL,1);
             cvMerge(merge_image, merge_image, merge_image, NULL, m_image);
 
