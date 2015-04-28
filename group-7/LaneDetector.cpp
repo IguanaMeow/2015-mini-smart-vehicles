@@ -121,6 +121,7 @@ namespace msv {
 
 	/***Phuong***/
 	int count(int x, int gap, IplImage *m_image, int ctrl){
+		//Get the white pixel, ctrl to get left or right side
 		int move = m_image->widthStep;
 		int w = m_image->width, h = m_image->height;
 
@@ -137,6 +138,7 @@ namespace msv {
 	}
 
 	bool straightLine (int *x_pos, int *y_pos){
+		//Check if line is straight
 		int i;
 		double angle[3];
 
@@ -144,6 +146,7 @@ namespace msv {
 			angle[i-1] = atan2((y_pos[0] - y_pos[i]), (x_pos[0]-x_pos[i]));
 		}
 
+		//If calculated angles are almost the same, line is straight
 		for (i = 1; i < 3; i++){
 			if (fabs(angle[0] - angle[i]) > 0.016){
 				cout << "Diff_angle :"<< fabs(angle[0] - angle[i])<<endl;
@@ -155,6 +158,8 @@ namespace msv {
 	}
 
 	bool proportional (int *x_pos){
+		//If differences between one line and its previous and after are not almost the same
+		//line may be not a continuous line
 		int i;
 		int diff[3];
 		for (i = 0; i<4; i++){
@@ -169,15 +174,12 @@ namespace msv {
 
 		return true;
 
-
 	}
 
 	double getAngle (int *x_pos, int *y_pos, int w){
+		//Get angle (use when the lanne is not fully detected))
 		int new_x_pos[4], new_y_pos[4];
 		int i, j=0;
-
-		//int x_pos_2[4];
-
 
 		for(i=0; i<4;i++){
 			if(abs(*x_pos) < w/2){
@@ -189,11 +191,14 @@ namespace msv {
 			y_pos++;
 		}
 
+		//Check if those chosen lines are on the same line or not (e.g. 2 on the dash lines
+		//other one is on the left lane)
 		if ( j> 2 && (((x_pos[0] < x_pos[1]) && (x_pos[1] < x_pos[2]))
 					 ||((x_pos[0] > x_pos[1]) && (x_pos[1] > x_pos[2])))){
 			return 0;
 		}
 
+		//If only 1 line satisfied, we cannot calculate the tangent either
 		if (j < 2){
 			return 0;
 		} else {
@@ -205,28 +210,29 @@ namespace msv {
 
 
 	/***Pimmie***/
-	//compare array left and right to w/2
-	int checkLane(int *arr1, int w){
+	//compare array left or right to w/2
+	int checkLane(int *arr, int w){
 
 		int i;
 		int check = 0, count = 0;
 
 		for(i=0; i<4; i++){
-			if(arr1[i] == 0) return 4;
-			if(w/2 == abs(arr1[i]))count = count+1;
-			if(w/2 > abs(arr1[i]))count = count -1;
+			if(w/2 == abs(arr[i]))count = count+1;
+			if(w/2 > abs(arr[i]))count = count -1;
 		}
 
 
-		if(count==4)check = 1; //Lane is not detected
-		if(count==(-4))check = 2; //Lane is detected
-		if(count<4&&count!=(-4))check =3;
+		if(count == 4) check = 1; //Lane is not detected
+		if(count == (-4)) check = 2; //Lane is detected
+		if(count < 4 && count != (-4)) check =3;
 
 		return check;
 
 	}
 
+	//initiate global values
 	int gap[4] = {60, 95, 125, 150};
+	//The gap distance gets smaller, 3d drawing kind of thing :v
 	CvScalar red = CV_RGB(255,0,0);
 	CvScalar blue = CV_RGB(0,0,255);
 	CvScalar green = CV_RGB(0,255,0);
@@ -244,22 +250,21 @@ namespace msv {
 
 		IplImage *img_gray = cvCreateImage(cvGetSize(m_image),IPL_DEPTH_8U,1);
 		IplImage *canny_image = cvCreateImage(cvGetSize(m_image),IPL_DEPTH_8U,1);
-		//IplImage *out_image = cvCreateImage(cvGetSize(m_image),8,3);
 
 		//Canny image
 		cvCvtColor(m_image,img_gray, CV_RGB2GRAY);
 		cvCanny(img_gray, canny_image, 10, 100, 3 );
 		cvCvtColor(canny_image, m_image, CV_GRAY2RGB);
 
+		//Release unused image
 		cvReleaseImage(&img_gray);
 		cvReleaseImage(&canny_image);
 
 
 		//initiate values
-
 		int w = m_image->width, h = m_image->height;
 		int right[4], left[4], i;
-		//The gap distance gets smaller, 3d drawing kind of thing :v
+
 
 
 		int y_pos[4] = {h -gap[0], h-gap[1], h-gap[2], h-gap[3]};
@@ -298,6 +303,7 @@ namespace msv {
 
 		int dist[2];
 
+		//Get old data
 		Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_1);
 		SteeringData sd_old = containerSteeringData.getData<SteeringData> ();
 		double steer = sd_old.getExampleData();
@@ -313,52 +319,47 @@ namespace msv {
 
 		cout << "Old Steering Data " << steer<< endl;
 		cout << "Old distance Data " << dist[0]<<" "<<dist[1]<<endl;
-		LaneDetected ld;
 		cout<<"Right: "<<right[0]<<" "<<right[1]<<" "<<right[2]<<" "<<right[3]<<endl;
+
+		LaneDetected ld;
+		bool laneDetected = false;
+
 
 		if (right[3] == w/2 && right[2] == w/2 && left[3] == w/2 &&left[2] == w/2
 				&& right[1] < w/2 && right[0] < w/2 && left[1] < w/2 &&left[0] < w/2
-				&& abs(steer)< 0.001){
+				&& abs(steer)< 0.02){
 
-			sleep(3);
+			//Try to detect intersection
+			sleep(5);
 			sd.setExampleData(0);
 			spd.setSpeedData(1);
 			ldd.setLongDistanceData(dist[0]);
 			sdd.setShortDistanceData(dist[1]);
-			ld.setLaneDetected(false);
 
-			cout<<"Mode 0.1: At Intersection"<<endl;
+			cout<<"Mode 0: At Intersection"<<endl;
 
-//		} else if((checkLane(right,w) == 4 || checkLane(left,w) == 4) && abs(steer) < 0.02 ){
-//
-//			sleep(3);
-//			sd.setExampleData(0);
-//			spd.setSpeedData(1);
-//			ldd.setLongDistanceData(dist[0]);
-//			sdd.setShortDistanceData(dist[1]);
-//			ld.setLaneDetected(false);
-//
-//			cout<<"Mode 0: Intersection"<<endl;
+		} else if (checkLane(left, w) == 1 && checkLane(right,w) == 1){ //No lane detected
 
-		} else if (checkLane(left, w) == 1 && checkLane(right,w) == 1){
-
-			if (abs(steer)< 0.001) sd.setExampleData(0);
+			//If car is going quite straight, possibly car is at intersection, go straight
+			if (abs(steer)< 0.02) sd.setExampleData(0);
+			//else do what it did before (for seeing no right lane)
 			else sd.setExampleData(steer + 0.01*steer );
 			spd.setSpeedData(1);
 			ldd.setLongDistanceData(dist[0]);
 			sdd.setShortDistanceData(dist[1]);
-			ld.setLaneDetected(false);
 
 			cout<<"Mode 1: Detect no line"<<endl;
 
 		} else if(checkLane(left,w) == 3 && checkLane(right,w) != 2) {
+			//When left is not detected and we can only get some data from right
 
-			if (abs(steer) < 0.01) {
+			if (abs(steer) < 0.02) {
+				//If car is going quite straight, it probably in the middle of intersection
 				sd.setExampleData(steer);
 				cout << "Mode 11: Middle of intersection" << endl;
 
 			} else {
-
+				//Else we lost the sight of right side, following left lane
 				double angle = getAngle(left, y_pos, w);
 				if (abs(angle) < 0.001) {
 					sd.setExampleData(steer);
@@ -372,10 +373,11 @@ namespace msv {
 			ldd.setLongDistanceData(dist[0]);
 			sdd.setShortDistanceData(dist[1]);
 			spd.setSpeedData(1);
-			ld.setLaneDetected(false);
 
 		} else if (checkLane(left, w) == 1 && checkLane(right, w) !=2){
 
+			//Not enough data to work with
+			//Do wha it did before
 			Container containerSpeedData = getKeyValueDataStore().get(Container::USER_DATA_2);
 			SpeedData spd_old = containerSpeedData.getData<SpeedData> ();
 			double speed = spd_old.getSpeedData();
@@ -384,16 +386,20 @@ namespace msv {
 			spd.setSpeedData(speed);
 			ldd.setLongDistanceData(dist[0]);
 			sdd.setShortDistanceData(dist[1]);
-			ld.setLaneDetected(false);
 			cout<<"Mode 2: Not enough data"<<endl;
 
 		} else if (checkLane(right, w) == 2 || checkLane(left,w) == 2){
 
+			//This case, either left or right lane is fully detected
+			laneDetected = true;
+
 			if (checkLane(right, w) == 2 && straightLine(right, y_pos) == true) {
+				//right lane detected and is a straight line
 
 				if ((right[3] == dist[1] || dist[0] == 0)
 						&& abs(steer) < 0.001){
 
+					//car is parallel to the road, go straight and save critical distance
 					sd.setExampleData(0);
 					spd.setSpeedData(2);
 					ldd.setLongDistanceData(right[0]);
@@ -402,6 +408,7 @@ namespace msv {
 
 				} else {
 
+					//else balance itself
 					int diff = right[3] - dist[1];
 					sd.setExampleData(diff /(abs(diff) < 70? 30: 15) * Constants::DEG2RAD);
 					spd.setSpeedData(1);
@@ -412,10 +419,12 @@ namespace msv {
 				}
 
 			} else if (checkLane(left, w) == 2 && straightLine(left, y_pos) == true) {
+				//left lane detected and is a straight line
 
 				if ((left[3] == dist[1] || dist[0] == 0)
 					&& abs(steer) < 0.001){
 
+					//Car is parallel to the road, go straight and save critical distance
 					sd.setExampleData(0);
 					spd.setSpeedData(2);
 					ldd.setLongDistanceData(abs(left[0]));
@@ -424,6 +433,7 @@ namespace msv {
 
 				} else {
 
+					//Balance the car
 					int diff = dist[1] - abs(left[3]);
 					sd.setExampleData(diff /(abs(diff) < 70? 30: 15) * Constants::DEG2RAD);
 					spd.setSpeedData(1);
@@ -434,25 +444,32 @@ namespace msv {
 				}
 
 			} else if (checkLane(right,w) == 2){
+				//Detect full lane on the right, in curve
 
 				double steeringAngle;
 
 				int diff = right[3] - dist[1];
-				cout<<"Diff: "<<diff<<endl;
 
+				//If diff and steer does not have same sign, it means the car changed direction
+				//Therefore sharp turn
+				//Else an less sharp turn
 				if ((diff * steer) < 0.000001){
 					steeringAngle = (diff/7 * Constants::DEG2RAD);
 				} else {
 					steeringAngle = (diff/12.5 * Constants::DEG2RAD);
 				}
 
+				//Check to prevent car from steering to early
 				if(right[0] == dist[0] && abs(steer) < 0.001){
 					sd.setExampleData(0);
 					cout << "Mode 8: Go straight, almost at curve" << endl;
 				} else if (proportional(right) == true){
+					//Proportional check to see if the line is possibly continuous or not
+					//If yes, steer use steering angle
 					sd.setExampleData(steeringAngle);
 					cout << "Mode 6: Turn" << endl;
 				} else {
+					//else do what it did before
 					sd.setExampleData(steer);
 					cout << "Mode 13: Do what it did before" << endl;
 				}
@@ -462,6 +479,8 @@ namespace msv {
 				sdd.setShortDistanceData(dist[1]);
 
 			} else {
+
+				//Same of right curve but this time, left lane is fully detected
 				double steeringAngle;
 
 				int diff = dist[1] - abs(left[3]);
@@ -488,8 +507,9 @@ namespace msv {
 				sdd.setShortDistanceData(dist[1]);
 			}
 
-			ld.setLaneDetected(true);
 		}
+		//Send data to container telling if any lane is detected
+		ld.setLaneDetected(laneDetected);
 
 		//Send message
 		Container c(Container::USER_DATA_1, sd);
