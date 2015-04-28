@@ -67,15 +67,14 @@ namespace msv {
                     IplImage *tmpFrame = cvRetrieveFrame(m_capture);
 
                     if (m_image == NULL || out == NULL || gray_out == NULL) {
-                        out = cvCreateImage( cvGetSize(tmpFrame), IPL_DEPTH_8U, 1 );
-                        gray_out = cvCreateImage( cvGetSize(tmpFrame), IPL_DEPTH_8U, 1 );
-                        merge_image = cvCreateImage( cvGetSize(tmpFrame), IPL_DEPTH_8U, 1 );
+                        // out = cvCreateImage( cvGetSize(tmpFrame), IPL_DEPTH_8U, 1 );
+                        // gray_out = cvCreateImage( cvGetSize(tmpFrame), IPL_DEPTH_8U, 1 );
+                        // merge_image = cvCreateImage( cvGetSize(tmpFrame), IPL_DEPTH_8U, 1 );
                         m_image = cvCreateImage(cvGetSize(tmpFrame), IPL_DEPTH_8U, 1);                    
                     }                   
 
-                    cvCvtColor( tmpFrame , gray_out, CV_BGR2GRAY);
-                    cvSmooth( gray_out, out, CV_GAUSSIAN, 25, 25 );       
-                    cvCanny( out, m_image, 60, 20, 3 );
+                    cvCvtColor( tmpFrame , m_image, CV_BGR2GRAY);
+
 
                 }
                 else {

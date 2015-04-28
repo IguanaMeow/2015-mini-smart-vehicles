@@ -155,14 +155,19 @@ namespace msv {
           m_sharedImageMemory->unlock();
 
           if(numberOfChannels == 1){
+            cvSmooth( merge_image, merge_image, CV_GAUSSIAN, 25, 25 );       
+            cvCanny( merge_image, merge_image, 60, 20, 3 );
             cvDilate(merge_image, merge_image,NULL,1);
-            cvMerge(merge_image, merge_image, merge_image, NULL, m_image);       
+            cvMerge(merge_image, merge_image, merge_image, NULL, m_image);
+
           }
 
 
 
           // Mirror the image.
-          cvFlip(m_image, 0, -1);
+          if(numberOfChannels != 1){
+            cvFlip(m_image, 0, -1);
+          }
 
           retVal = true;
         }
