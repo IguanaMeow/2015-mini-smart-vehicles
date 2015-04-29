@@ -40,17 +40,17 @@ namespace msv {
         using namespace core::data::environment;
 
         Driver::Driver(const int32_t &argc, char **argv) :
-	        ConferenceClientModule(argc, argv, "Driver") {
+            ConferenceClientModule(argc, argv, "Driver") {
         }
 
         Driver::~Driver() {}
 
         void Driver::setUp() {
-	        // This method will be call automatically _before_ running body().
+            // This method will be call automatically _before_ running body().
         }
 
         void Driver::tearDown() {
-	        // This method will be call automatically _after_ return from body().
+            // This method will be call automatically _after_ return from body().
         }
 
        
@@ -71,8 +71,7 @@ namespace msv {
 
                  double distance_1, distance_2, distance_3;
                  const double car_length = 5;
-
-	        while (getModuleState() == ModuleState::RUNNING) {
+            while (getModuleState() == ModuleState::RUNNING) {
                 // In the following, you find example for the various data sources that are available:
 
                 // 1. Get most recent vehicle data:
@@ -116,7 +115,7 @@ namespace msv {
                 //         &&(sbd.containsKey_MapOfDistances(IF_RR)==true)&&(sbd.containsKey_MapOfDistances(US_RR)==true)
                 //         &&(sbd.containsKey_MapOfDistances(US_FR)==true)&&(sbd.containsKey_MapOfDistances(US_Front)==true)){
                             
-          /***Start Parking***/
+ /***Start Parking***/
                         switch(state){ // using switch-case to change state
 
                             case 1:
@@ -233,9 +232,8 @@ namespace msv {
                 Container c(Container::VEHICLECONTROL, vc);
                 // Send container.
                 getConference().send(c);
-	        }
+            }
 
-	        return ModuleState::OKAY;
+            return ModuleState::OKAY;
         }
 } // msv
-
