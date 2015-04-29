@@ -58,7 +58,8 @@ ModuleState::MODULE_EXITCODE Overtaker::body() {
         int turnOut = 2;
         int turnBack = 3;
         int state = followLane;
-        int count = 0;
+        double steering = 0.5;
+       // int turning = 0;
 
         while (getModuleState() == ModuleState::RUNNING) {
         // In the following, you find example for the various data sources that are available:
@@ -66,22 +67,26 @@ ModuleState::MODULE_EXITCODE Overtaker::body() {
         // 1. Get most recent vehicle data:
         Container containerVehicleData = getKeyValueDataStore().get(Container::VEHICLEDATA);
         VehicleData vd = containerVehicleData.getData<VehicleData> ();
-        cerr << "Most recent vehicle data: '" << vd.toString() << "'" << endl;
+        //cerr << "Most recent vehicle data: '" << vd.toString() << "'" << endl;
+
+        Container containerLaneData = getKeyValueDataStore().get(Container::USER_DATA_3);
+        LaneData ld = containerLaneData.getData<LaneData> ();
+        cerr << "Most recent Lane data: '" << ld.toString() << "'" << endl;
 
         // 2. Get most recent sensor board data:
         Container containerSensorBoardData = getKeyValueDataStore().get(Container::USER_DATA_0);
         SensorBoardData sbd = containerSensorBoardData.getData<SensorBoardData> ();
-        cerr << "Most recent sensor board data: '" << sbd.toString() << "'" << endl;
+        //cerr << "Most recent sensor board data: '" << sbd.toString() << "'" << endl;
 
         // 3. Get most recent user button data:
         Container containerUserButtonData = getKeyValueDataStore().get(Container::USER_BUTTON);
         UserButtonData ubd = containerUserButtonData.getData<UserButtonData> ();
-        cerr << "Most recent user button data: '" << ubd.toString() << "'" << endl;
+        //cerr << "Most recent user button data: '" << ubd.toString() << "'" << endl;
 
         // 4. Get most recent steering data as fill from lanedetector for example:
         Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_1);
         SteeringData sd = containerSteeringData.getData<SteeringData> ();
-        cerr << "Most recent steering data: '" << sd.toString() << "'" << endl;
+        //cerr << "Most recent steering data: '" << sd.toString() << "'" << endl;
 
         //FrontCenter = 3
         //IR front right = 0
@@ -96,10 +101,12 @@ ModuleState::MODULE_EXITCODE Overtaker::body() {
 
         if(sbd.containsKey_MapOfDistances(3))
         {
+
         switch(state){
         case 1 : 
         cerr << "follow lane" << endl;
-                if(sbd.getValueForKey_MapOfDistances(3) < 5 && sbd.getValueForKey_MapOfDistances(3) > 0){
+                if(sbd.getValueForKey_MapOfDistances(3) < 6 && sbd.getValueForKey_MapOfDistances(3) > 0){
+
                         state = turnOut;
                 }
                 // With setSteeringWheelAngle, you can steer in the range of -26 (left) .. 0 (straight) .. +25 (right)
@@ -113,22 +120,19 @@ ModuleState::MODULE_EXITCODE Overtaker::body() {
                         state = turnBack;
                         break;
                 }
-                vc.setSteeringWheelAngle(-26);
+                vc.setSteeringWheelAngle(-steering);
                 break;
         case 3 :
         cerr << "turnBack" << endl;
-                if(sbd.getValueForKey_MapOfDistances(0) < 0 && sbd.getValueForKey_MapOfDistances(2) < 0 && sbd.getValueForKey_MapOfDistances(4) < 0 && sbd.getValueForKey_MapOfDistances(3) < 0)
+                if(sbd.getValueForKey_MapOfDistances(0) < 0 && sbd.getValueForKey_MapOfDistances(2) < 0 && sbd.getValueForKey_MapOfDistances(4) < 0)
                 {
-                        vc.setSteeringWheelAngle(25);
+                        vc.setSteeringWheelAngle(steering);
 
-                        if(count > 20)
+                        if(ld.getRightLine1() > 0)
                         {
                                 state = followLane;
-                                count = 0;
                                 break;   
                         }
-
-                        count++;
                         break;
                 }
                 vc.setSteeringWheelAngle(sd.getHeadingData());
