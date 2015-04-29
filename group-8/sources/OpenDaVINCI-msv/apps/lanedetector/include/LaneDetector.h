@@ -95,6 +95,8 @@ namespace msv {
 
 			double adjustAngle(int yPos1, int xPos1, int yPos2, int xPos2);
 
+			void calculateCritical(const vector<Lines>::iterator& line, int dir, IplImage* image);
+
 	        virtual void setUp();
 
 	        virtual void tearDown();
@@ -113,10 +115,15 @@ namespace msv {
 
         	int state;
         	int counter;
+        	int critCounter;
+
 
         	double inputAngle1;
         	double inputAngle2;
         	double inputAngle3;
+
+			vector<Lines> rightList;
+      		vector<Lines> leftList;
 
 
 	};

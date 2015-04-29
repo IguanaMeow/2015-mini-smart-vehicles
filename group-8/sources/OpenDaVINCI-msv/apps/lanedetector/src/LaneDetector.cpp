@@ -57,23 +57,32 @@ namespace msv {
         m_image(NULL),
         merge_image(NULL),
         m_debug(false),
-        rightLine1(0, 50, 250),
+        rightLine1(0, 50, 0),
         rightLine2(0, 70, 0),
 
-        leftLine1(0, 90, 214),
-        leftLine2(0, 115, 190),
-        leftLine3(0, 140, 167),
-        leftLine4(0, 165, 144),
+        leftLine1(0, 90, 0),
+        leftLine2(0, 115, 0),
+        leftLine3(0, 140, 0),
+        leftLine4(0, 165, 0),
         
         upline1(300, 0, 120),
         upline2(340, 0, 120),
         state(1),
         counter(0),
+        critCounter(0),
 
         inputAngle1(0.0),
         inputAngle2(0.0),
         inputAngle3(0.0)
-         {}
+         {
+          rightList.push_back(rightLine1);
+          rightList.push_back(rightLine2);
+
+          leftList.push_back(leftLine1);
+          leftList.push_back(leftLine2);
+          leftList.push_back(leftLine3);
+          leftList.push_back(leftLine4);
+         }
 
     LaneDetector::~LaneDetector() {}
 
@@ -188,11 +197,28 @@ namespace msv {
 
       //std::cout << "rightline 1 " << rightLine1.getXPos() << "\n rightLine2 " << rightLine2.getXPos() << std::endl;
 
-      vector<Lines> leftList;
-      leftList.push_back(leftLine1);
-      leftList.push_back(leftLine2);
-      leftList.push_back(leftLine3);
-      leftList.push_back(leftLine4);
+       if (critCounter < 6) {
+        for(vector<Lines>::iterator it = rightList.begin(); it != rightList.end(); it++) {
+          if (it->getCritical() < 1){
+            calculateCritical(it, 1, m_image);
+          }
+        }
+        for(vector<Lines>::iterator it = leftList.begin(); it != leftList.end(); it++) {
+          if (it->getCritical() < 1){
+            calculateCritical(it, 0, m_image);
+          }
+        }
+        rightLine1.setCritical(rightList[0].getCritical());
+        rightLine2.setCritical(rightList[1].getCritical());
+
+        leftLine1.setCritical(leftList[0].getCritical());
+        leftLine2.setCritical(leftList[1].getCritical());
+        leftLine3.setCritical(leftList[2].getCritical());
+        leftLine4.setCritical(leftList[3].getCritical());
+        
+      }
+
+
       vector<Lines> valid = validateLines(&leftList);
 
       SteeringData sd;
@@ -214,12 +240,7 @@ namespace msv {
       // Follow left lines
       else if (rightLine1.getXPos() > 270 && rightLine2.getXPos() > 270)
       {
-        std::cout << "angle1 "<< inputAngle1 <<std::endl;
-      std::cout << "angle1 "<< inputAngle1 <<std::endl;
-      std::cout << "angle2 "<< inputAngle2 <<std::endl;
-      std::cout << "angle2 "<< inputAngle2 <<std::endl;
-      std::cout << "angle3 "<< inputAngle3 <<std::endl;
-      std::cout << "angle3 "<< inputAngle3 <<std::endl;
+     
         // Get two valid lines to base steering on
         //vector<Lines> valid = validateLines(&leftList);
         // Steer to the right
@@ -240,12 +261,7 @@ namespace msv {
       // Follow the lower right lines
       else
       {
-        std::cout << "angle1 "<< inputAngle1 <<std::endl;
-      std::cout << "angle1 "<< inputAngle1 <<std::endl;
-      std::cout << "angle2 "<< inputAngle2 <<std::endl;
-      std::cout << "angle2 "<< inputAngle2 <<std::endl;
-      std::cout << "angle3 "<< inputAngle3 <<std::endl;
-      std::cout << "angle3 "<< inputAngle3 <<std::endl;
+       
         // Steer to the left
         if (rightLine1.getXPos() < rightLine1.getCritical() - 2) {
             sd.setHeadingData(-adjustAngle(m_image->height - 70, rightLine2.getXPos(), m_image->height - 50, rightLine1.getXPos()));

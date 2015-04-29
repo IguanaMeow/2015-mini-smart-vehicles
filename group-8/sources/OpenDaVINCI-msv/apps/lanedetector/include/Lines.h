@@ -10,9 +10,10 @@
 
 	        double getXPos();
 	        double getYPos();
+	        double getCritical();
 	        void setXPos(double x);
 	        void setYPos(double y);
-	        double getCritical();
+	        void setCritical(double crit);
 
         private:
             double xPos;
