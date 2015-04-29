@@ -200,6 +200,8 @@ namespace msv {
             speedOutTemp = 1560 + speedSetting;
         }
         steeringOutTemp = 90 + (uint16_t)(steeringSetting * Constants::RAD2DEG);
+        if(steeringOutTemp < 65) steeringOutTemp = 65;
+        if(steeringOutTemp > 115) steeringOutTemp = 115;
 
         if(steeringOut != steeringOutTemp || speedOut != speedOutTemp){
             steeringOut = steeringOutTemp;
@@ -231,6 +233,9 @@ namespace msv {
         VehicleData vd;
 
         SensorBoardData sbd;
+        double irFrontRightDist;
+        double irMiddleRightDist;
+        double irBackDist;
 
         //Hardcodetest
         //uint16_t speed = 100;
@@ -249,9 +254,17 @@ namespace msv {
         uint16_t usFront = ((uint16_t)incomingSer[12] << 8) | incomingSer[11];
         uint16_t usFrontRight = ((uint16_t)incomingSer[14] << 8) | incomingSer[13];
 
-
-        vd.setSpeed((double)speed);
-        vd.setHeading((double)steering);
+        if(speed > 1520){
+            vd.setSpeed((double)speed - 1560);
+        }else if(speed < 1500){
+            vd.setSpeed(-1);
+        }else {
+            speed = 0;
+        }
+        //vd.setHeading((double)steering);
+        irFrontRightDist = (2914 / (irFrontRight +5))-1;
+        irMiddleRightDist = (2914 / (irMiddleRight +5))-1;
+        irBackDist = (2914 / (irBack +5))-1;
         sbd.putTo_MapOfDistances(0, (double)irFrontRight);
         sbd.putTo_MapOfDistances(1, (double)irBack);
         sbd.putTo_MapOfDistances(2, (double)irMiddleRight);
@@ -372,6 +385,22 @@ namespace msv {
             
         }
         //cumduration = ( clock() - start ) / (double) CLOCKS_PER_SEC;
+        speedOut = 1520;
+        steeringOut = 90;
+        outSer[6] = 0;
+        outSer[0] = startByte;
+        outSer[1] = speedOut & 0xFF;
+        outSer[2] = (speedOut >> 8) & 0xFF;
+        outSer[3] = steeringOut & 0xFF;
+        outSer[4] = (steeringOut >> 8) & 0xFF;
+        outSer[5] = endByte;
+
+        for(int i = 0; i < OUTSERIAL-1; i++){
+            outSer[OUTSERIAL - 1] ^= outSer[i];
+        } 
+        for (int i = 0; i < 20; ++i){
+            int sentnum = (int)this_serial->write(outSer, 7);
+        }
         cout << "Proxy: Captured " << captureCounter << " frames." << endl;
         time_t endTime = time(0);
         cumduration = difftime(endTime, startTime);
