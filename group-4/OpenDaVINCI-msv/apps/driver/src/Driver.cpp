@@ -40,15 +40,20 @@ namespace msv {
 //        using namespace libdata::generated::msv;
 
     VehicleControl vc;
+    VehicleData vd;
 
     float speed = 1.0;
 
     float headingAngle;
     float currentSpeed;
     float desiredSteeringWheelAngle = 0;
-    float travelDistance1;
-    float travelDistance2;
+
+
+    float gapStartPosition;
+    float gapEndPosition;
+    float gapLength;
     float currentSteeringWheel;
+
 
     float decelearatingPoint;
     float oldRearRight = -1.0;
@@ -60,9 +65,21 @@ namespace msv {
     float usFrontCentre;
     float irRear;
 
+
+
+    const float defaultHeading = 180;
+    const int gapMin = 8;
+    const float slowSpeed = 0.5;
+    const float middleSpeed = 1.0;
+    const float fastSpeed = 1.5;
+
+    const float wheelAngleRight = 17.0;
+    const float wheelANgleLeft = -17.0;
+
     bool boo_measuring = false;
     bool boo_findGap = false;
     bool boo_parking = false;
+    bool boo_preReady = false;
     bool boo_parkingLoop = false;
     bool boo_parkingReady = false;
 
@@ -93,7 +110,6 @@ namespace msv {
     
         // for big gap
 
-
         if ((is_measure == false)&& (*oldValue > 0) && (*newValue < 0)){
             return true;
         }
@@ -123,6 +139,7 @@ namespace msv {
         // at the end of the gap, the rearRight sensor data will decrease more then 5
         if ((is_measure == true) && (*oldValue - *newValue > 7)){
             return true;
+
         }
 
         return false;
@@ -138,31 +155,62 @@ namespace msv {
 
     void Driver::startMeasure(Point3 position){
 
-        speed = 1.0;
+
+        speed = middleSpeed;
         boo_measuring = true;
         desiredSteeringWheelAngle = 0;
+        gapStartPosition = position.length();
+
         cout << "-------------GAP------START------------" << endl;
         recording(usFrontRight,usRearRight,irRear);
 
-        travelDistance1 = position.getY();
-        cout << "start Location:"<< travelDistance1 << endl;
+
+
+        cout << "start Location:"<< gapStartPosition << endl;
+
+
+
 
     }
 
     void Driver::finishMeasure(Point3 position){
-        travelDistance2 = position.getY();
+
+
+        gapEndPosition = position.length();
+        gapLength = gapEndPosition - gapStartPosition;
         
-        if (travelDistance2 - travelDistance1 <= 8 ){
-            speed = 0.5;
-        }else if ((travelDistance2 - travelDistance1 > 8) && boo_measuring){
+        cout << "Start Location:"<< gapStartPosition << endl;
+        cout << "End Location:"<< gapEndPosition << endl;
+        cout << "Gap Length:"<< gapLength << endl;
+
+
+        if (gapLength <= gapMin ){
+
+            speed = slowSpeed;
+
+        }else if ((gapLength > gapMin) && boo_measuring){
+
             // equals 14.29
-            speed = 0.5;
+            speed = slowSpeed;
             //cout << "wanted length: " << (travelDistance2 - decelearatingPoint) << endl;
             boo_findGap = true;
-            cout << "--------------GAP------END---------------"<< "length: " << (travelDistance2 - travelDistance1) << endl << endl;
+            cout << "--------------GAP------END---------------"<< "length: " << gapLength << endl << endl;
         }
         boo_measuring = false;
         recording(usFrontRight,usRearRight,irRear);
+
+    }
+
+
+    bool Driver::pre_parking(){
+
+        if((oldRearRight > 0) && (usRearRight  < 0)){
+            return true;
+        }
+
+        return false;
+
+        
     }
 
     void Driver::stopforParking(){
@@ -179,7 +227,7 @@ namespace msv {
 
     void Driver::defaultDriving(){
 
-        speed = 2;
+        speed = fastSpeed;
         recording(usFrontRight,usRearRight,irRear);
 
         vc.setBrakeLights(false);
@@ -190,16 +238,22 @@ namespace msv {
 
     void Driver::defaultParking(){
 
-        speed = 0.5;
+        speed = -slowSpeed;
+        recording(usFrontRight,usRearRight,irRear);
 
+        vc.setBrakeLights(false);
+        vc.setLeftFlashingLights(false);
+        vc.setRightFlashingLights(false);
+        
     }
+
 
     void Driver::tureWheelToRightBack(){
 
         vc.setRightFlashingLights(true);
         recording(usFrontRight,usRearRight,irRear);
-        desiredSteeringWheelAngle = 26;
-        speed = -0.5;
+        desiredSteeringWheelAngle = wheelAngleRight;
+        speed = -slowSpeed;
 
     }
 
@@ -207,8 +261,8 @@ namespace msv {
 
         vc.setLeftFlashingLights(true);
         recording(usFrontRight,usRearRight,irRear);
-        desiredSteeringWheelAngle = -26;
-        speed = -0.5;
+        desiredSteeringWheelAngle = wheelANgleLeft;
+        speed = -slowSpeed;
         boo_parkingLoop = true;
 
 
@@ -218,8 +272,8 @@ namespace msv {
 
         vc.setRightFlashingLights(true);
         recording(usFrontRight,usRearRight,irRear);
-        desiredSteeringWheelAngle = 26;
-        speed = 0.5;
+        desiredSteeringWheelAngle = wheelAngleRight;
+        speed = slowSpeed;
 
 
     }
@@ -228,24 +282,23 @@ namespace msv {
 
         vc.setLeftFlashingLights(true);
         recording(usFrontRight,usRearRight,irRear);
-        desiredSteeringWheelAngle = -26;
-        speed = 0.5;
+        desiredSteeringWheelAngle = wheelANgleLeft;
+        speed = slowSpeed;
 
     }
 
 
     // This method will do the main data processing job.
     ModuleState::MODULE_EXITCODE Driver::body() {
-
-
         //float back = Constants::PI + (Constants::PI/2);
         while (getModuleState() == ModuleState::RUNNING) {
             // In the following, you find example for the various data sources that are available:
 
             // 1. Get most recent vehicle data:
             Container containerVehicleData = getKeyValueDataStore().get(Container::VEHICLEDATA);
-            VehicleData vd = containerVehicleData.getData<VehicleData> ();
+            vd = containerVehicleData.getData<VehicleData> ();
             headingAngle = vd.getHeading() * Constants :: RAD2DEG;
+
             currentSpeed = vd.getSpeed();
 
 
@@ -289,7 +342,6 @@ namespace msv {
             // 4. Get most recent steering data as fill from lanedetector for example:
             Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_1);
             SteeringData sd = containerSteeringData.getData<SteeringData> ();
-            cerr << "Most recent steering data: '" << sd.toString() << "'" << endl;
 
             // Design your control algorithm here depending on the input data from above.
 
@@ -297,58 +349,6 @@ namespace msv {
 
 
             /* ---------------------   side way parking area --------------------- */
-
-
-/*            Point3 position = vd.getPosition();
-            if (!boo_findGap && !boo_parking){
-
-                // for big 
-                if (find_gapStart(boo_measuring, &oldFrontRight, &usFrontRight)){
-
-                    startMeasure(position);
-
-                    
-                }else if(find_gapEnd(boo_measuring,&oldRearRight, &usRearRight)){
-
-                    //find the end of the gap
-                    finishMeasure(position);
-
-                }else{
-                    defaultDriving();
-                }
-
-            }else if (boo_findGap && !boo_parking){
-
-                stopforParking();
-
-            }else if(boo_findGap && boo_parking){
-
-                if (!boo_parkingReady && headingAngle < 180.0){
-
-                    tureWheelToRightBack();
-                    boo_parkingReady = true;
-
-                }
-                // suppose to stop when headingAngle > 135
-                if ( boo_parkingReady && headingAngle > 180.0){
-
-                    stopforParking();
-
-                }        
-
-                if(boo_parkingLoop && (headingAngle < 91 && headingAngle > 89) ){
-                                            
-                    stopforParking();  
-
-                }
-            }
-*/
-
-            /* ---------------------   side way parking area END --------------------- */
-
-
-
-            /* ---------------------   paralle parking area START--------------------- */
 
 
             Point3 position = vd.getPosition();
@@ -375,14 +375,87 @@ namespace msv {
 
             }else if(boo_findGap && boo_parking){
 
-                if (!boo_parkingReady && headingAngle < 140.0){
+                if (!pre_parking() && usRearRight > 0){
+
+                    speed = -slowSpeed;
+
+                }
+
+                if (pre_parking() && (usRearRight < 0)){
+
+                    stopforParking();
+                    boo_preReady = true;
+
+                }
+
+                if (boo_preReady && !boo_parkingReady && (headingAngle < defaultHeading + 100)){
+                    cerr << "here we go go go " << defaultHeading + 90 << endl;
+                    cerr << "here we go go go " << defaultHeading + 90 << endl;
+                    cerr << "here we go go go " << defaultHeading + 90 << endl;
+                    cerr << "here we go go go " << defaultHeading + 90 << endl;
+                    cerr << "here we go go go " << defaultHeading + 90 << endl;
+                    cerr << "here we go go go " << defaultHeading + 90 << endl;
 
                     tureWheelToRightBack();
                     boo_parkingReady = true;
 
                 }
-                // suppose to stop when headingAngle > 135
-                if ( boo_parkingReady && headingAngle > 140.0){
+
+                if (boo_parkingReady && (headingAngle > defaultHeading + 90)){
+
+                    stopforParking();
+
+                }
+
+                if(boo_parkingLoop && (headingAngle < (defaultHeading + 1) && headingAngle > (defaultHeading - 1)) ){
+                                            
+                    stopforParking();  
+
+                }
+
+
+            }
+
+
+            /* ---------------------   side way parking area END --------------------- */
+
+
+
+            /* ---------------------   paralle parking area START--------------------- */
+
+
+/*            Point3 position = vd.getPosition();
+            if (!boo_findGap && !boo_parking){
+
+                // for big 
+                if (find_gapStart(boo_measuring, &oldFrontRight, &usFrontRight)){
+
+                    startMeasure(position);
+
+                    
+                }else if(find_gapEnd(boo_measuring,&oldRearRight, &usRearRight)){
+
+                    //find the end of the gap
+                    finishMeasure(position);
+
+                }else{
+                    defaultDriving();
+                }
+
+            }else if (boo_findGap && !boo_parking){
+
+                stopforParking();
+
+            }else if(boo_findGap && boo_parking){
+
+                if (!boo_parkingReady && headingAngle < (defaultHeading + 50)){
+
+                    tureWheelToRightBack();
+                    boo_parkingReady = true;
+
+                }
+                // suppose to stop when headingAngle > defaultHeading + 50
+                if ( boo_parkingReady && headingAngle > (defaultHeading + 50)){
 
                     //stopforParking();
                     tureWheelToLeftBack();
@@ -394,20 +467,20 @@ namespace msv {
                     
                     
 
-                    if (headingAngle > 91 && currentSpeed < 0){
+                    if (headingAngle > (defaultHeading+1) && currentSpeed < 0){
 
                             tureWheelToRightForward();
 
                         }
 
-                    if (headingAngle < 89 && currentSpeed < 0){
+                    if (headingAngle < (defaultHeading-1) && currentSpeed < 0){
 
                             tureWheelToLeftForward();
 
                         }
 
                         //if ( headingAngle < 91 && headingAngle > 89) {
-                    if (usFrontCentre < 2.0 && usFrontCentre > 1.5) {
+                    if (usFrontCentre < 2.5 && usFrontCentre > 2.0) {
 
                         stopforParking();
                         }
@@ -416,14 +489,14 @@ namespace msv {
 
                 
 
-                if(boo_parkingLoop && (headingAngle < 91 && headingAngle > 89) ){
+                if(boo_parkingLoop && (headingAngle < (defaultHeading+1) && headingAngle > (defaultHeading-1)) ){
                                             
                     stopforParking();  
 
                 }
 
 
-            }
+            }*/
 
             /* ---------------------   paralle parking area END--------------------- */
  
@@ -436,6 +509,7 @@ namespace msv {
 
             // With setSteeringWheelAngle, you can steer in the range of -26 (left) .. 0 (straight) .. +25 (right)
             //vc.setSteeringWheelAngle(sd.getWheelAngle() * Constants::DEG2RAD);
+
             vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
 
             // You can also turn on or off various lights:

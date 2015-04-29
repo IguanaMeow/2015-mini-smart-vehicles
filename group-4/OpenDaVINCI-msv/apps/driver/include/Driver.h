@@ -91,6 +91,7 @@ namespace msv {
             void recording(float, float,float);
             void startMeasure(Point3);
             void finishMeasure(Point3);
+            bool pre_parking();
             void stopforParking();
             void defaultDriving();
 // start parking
