@@ -70,6 +70,7 @@ namespace msv {
                  double speed = 0;
 
                  double distance_1, distance_2, distance_3;
+                 const double car_length = 5;
 
 	        while (getModuleState() == ModuleState::RUNNING) {
                 // In the following, you find example for the various data sources that are available:
@@ -115,26 +116,27 @@ namespace msv {
                 //         &&(sbd.containsKey_MapOfDistances(IF_RR)==true)&&(sbd.containsKey_MapOfDistances(US_RR)==true)
                 //         &&(sbd.containsKey_MapOfDistances(US_FR)==true)&&(sbd.containsKey_MapOfDistances(US_Front)==true)){
                             
+          /***Start Parking***/
                         switch(state){ // using switch-case to change state
 
                             case 1:
                                 speed = spd_old.getSpeedData();
                                 desiredSteeringWheelAngle = sd.getExampleData();
 
-                                if((US_FR <0||US_FR > 5.5)&& IF_FR <0 && IF_RR <0){
+                                if((US_FR <0||US_FR > (car_length*1.1))&& IF_FR <0 && IF_RR <0){
             
                                     state = 2; //state gap enough
                                     distance_1 = vd.getAbsTraveledPath();
                                 }
 
-                                if(US_FR >0&&US_FR < 5.5)state = 0;
+                                if(US_FR >0&&US_FR < (car_length*1.1))state = 0;
                                 break;
                             
-                            case 2: //gap enough sate, then drive 10 units more to find appropriate distance to park to start parking state
+                            case 2: //gap enough sate, then drive more around 2 times of the car length to find appropriate distance to park to start parking state
                                 speed = 1;
                                 desiredSteeringWheelAngle = 0;
-                                //need to be 10,48 since 10.47 doesn't park right and 10.5 the car crash with another car
-                                if(vd.getAbsTraveledPath() >= distance_1+10.48){
+                                
+                                if(vd.getAbsTraveledPath() >= distance_1+(car_length*2.096)){
                                
                                     state = 3;
                                     distance_2 = vd.getAbsTraveledPath();
@@ -144,17 +146,17 @@ namespace msv {
                             case 3: // start parking state, drive backward.
                                 speed=-1.5;
                                 desiredSteeringWheelAngle = 16;
-                                if(vd.getAbsTraveledPath()>= distance_2+7.5){
+                                if(vd.getAbsTraveledPath()>= distance_2+(car_length*1.5)){
                                     state = 4;
                                     distance_3 = vd.getAbsTraveledPath();
                                 }
                                 break;
 
-                            case 4: // parking state 3 (The car detect behind object or drive more 5 meter)
+                            case 4: // parking state 3 (The car detect behind object or drive more 1.5 times of the car length)
                                 speed = -1;
                                 desiredSteeringWheelAngle = -26;
 
-                                if(vd.getAbsTraveledPath()>= distance_3+7.5 //if it doesn't detect any car behind after drive 10 meters more.
+                                if(vd.getAbsTraveledPath()>= distance_3+(car_length*1.5)//if it doesn't detect any car behind after drive 10 meters more.
                                     && IF_Rear <0){
 
                                     state = 7;
@@ -172,7 +174,7 @@ namespace msv {
                                 speed = 1;
                                 desiredSteeringWheelAngle = 25;
                                 //if IF_Rear doesn't detect any object Or US_Front detect any object
-                             if(IF_Rear <0 ||(US_Front < 2.2 && US_Front >0)){
+                             if(IF_Rear <0 ||(US_Front < (car_length*0.44)&& US_Front >0)){
                                     speed = 0;
                                     desiredSteeringWheelAngle = 0;
                                     state = 6;
@@ -184,7 +186,7 @@ namespace msv {
                                 speed = -0.4;
                                 desiredSteeringWheelAngle = -26;
                                
-                                if(IF_Rear<=2.4 && IF_Rear>0){
+                                if(IF_Rear<=(car_length*0.48)&& IF_Rear>0){
                                 
                                     state = 7;
                                 } 
@@ -202,8 +204,8 @@ namespace msv {
                                 desiredSteeringWheelAngle = sd.getExampleData();
 
                                 //make sure that it is not curve, before going to the next state.
-                                if((US_FR <0 || US_FR > 8)
-                                  &&desiredSteeringWheelAngle<1 && desiredSteeringWheelAngle>-1){ 
+                                if((US_FR <0 || US_FR > (car_length*1.6))
+                                  &&desiredSteeringWheelAngle<=0.02 && desiredSteeringWheelAngle>=0{ 
                                   
                                     state = 1; //state gap enough
                                     
