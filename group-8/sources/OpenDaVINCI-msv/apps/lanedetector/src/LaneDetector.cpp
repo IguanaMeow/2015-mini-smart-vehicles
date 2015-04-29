@@ -221,8 +221,17 @@ namespace msv {
 
       SteeringData sd;
       LaneData ld;      
+      if(rightLine1.getXPos() > 250 || rightLine1.getXPos() < 160 || rightLine2.getXPos() > 250 || rightLine2.getXPos() < 160)
+      {
+        ld.setRightLine1(0);
+      }
+      else {
+        ld.setRightLine1(1);
+      }
+      std::cout << "right1 " << rightLine1.getXPos() << std::endl;
+      std::cout << "right2 " << rightLine2.getXPos() << std::endl;
 
-      ld.setRightLine1(measureAngle(m_image->height - rightLine2.getYPos(), rightLine2.getXPos(), m_image->height - rightLine1.getYPos(), rightLine1.getXPos()));
+      
 
       switch (state) {
         case 1: // Lanedetection state

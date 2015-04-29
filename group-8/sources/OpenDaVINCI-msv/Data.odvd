@@ -25,6 +25,7 @@ message msv.SteeringData {
 
 message msv.LaneData {
     double rightLine1;
+    double upline;
 }
 
 message msv.UserButtonData {
