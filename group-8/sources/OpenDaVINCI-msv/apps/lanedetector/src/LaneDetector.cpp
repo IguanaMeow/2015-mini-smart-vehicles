@@ -65,8 +65,8 @@ namespace msv {
         leftLine3(0, 140, 0),
         leftLine4(0, 165, 0),
         
-        upline1(300, 0, 120),
-        upline2(340, 0, 120),
+        upline1(300, 0, 130),
+        upline2(340, 0, 130),
         state(1),
         counter(0),
         critCounter(0),
@@ -195,8 +195,6 @@ namespace msv {
       leftLine3.setXPos(measureDistance(140, 0, m_image));
       leftLine4.setXPos(measureDistance(165, 0, m_image));
 
-      //std::cout << "rightline 1 " << rightLine1.getXPos() << "\n rightLine2 " << rightLine2.getXPos() << std::endl;
-
        if (critCounter < 6) {
         for(vector<Lines>::iterator it = rightList.begin(); it != rightList.end(); it++) {
           if (it->getCritical() < 1){
@@ -229,7 +227,7 @@ namespace msv {
       switch (state) {
         case 1: // Lanedetection state
           std::cout << "state 1" << std::endl;
-          sd.setSpeedData(3);
+          sd.setSpeedData(2);
           
           // Following upper right lines
           if(rightLine1.getXPos() > 270 && rightLine2.getXPos() > 270 && leftLine1.getXPos() > 270 && leftLine2.getXPos() > 270)
