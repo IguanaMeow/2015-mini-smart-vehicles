@@ -25,6 +25,8 @@
 #include "core/data/Container.h"
 #include "core/data/TimeStamp.h"
 #include "core/data/environment/VehicleData.h"
+#include "core/data/control/VehicleControl.h"
+#include "core/data/Constants.h"
 #include "serial/serial.h"
 
 #include "OpenCVCamera.h"
@@ -33,12 +35,14 @@
 
 #include "Proxy.h"
 
+int countcounter = 0;
 
 namespace msv {
 
     using namespace std;
     using namespace core::base;
     using namespace core::data;
+    using namespace core::data::control;
     using namespace core::data::environment;
     using namespace tools::recorder;
     using namespace serial;
@@ -56,7 +60,9 @@ namespace msv {
         startByte(0xAA),
         outSer(),
         incomingSer(),
-        oldIncomingSer()     
+        oldIncomingSer(),
+        speedOut(1521),
+        steeringOut(91)     
     {}
 
     Proxy::~Proxy() {
@@ -133,14 +139,19 @@ namespace msv {
         uint8_t check = 0;
         //uint8_t success = 0;
 
-
-        while (this_serial->read(&current,1) && current != endByte);
-        
         this_serial->read(&current,1);
-        for(int i = 0; i < INSERIAL; i++){
+        if(current != startByte){
+            while (this_serial->read(&current,1) && current != endByte);
             this_serial->read(&current,1);
-            tempincoming[i] = current;
+            this_serial->read(&current,1);
+            //this_serial->read(&current,1);
         }
+        tempincoming[0] = current;
+        this_serial->read(tempincoming + 1, 16);
+        // for(int i = 1; i < INSERIAL; i++){
+        //     this_serial->read(&current,1);
+        //     tempincoming[i] = current;
+        // }
         for(int i = 0; i < INSERIAL; i++){
             check ^= tempincoming[i];
         }
@@ -161,29 +172,59 @@ namespace msv {
     }
 
     void Proxy::sendSerial() {
-        Container containerVehicleData = getKeyValueDataStore().get(Container::VEHICLEDATA);
-        VehicleData vdata = containerVehicleData.getData<VehicleData> ();
-        uint16_t speedOut = ((uint16_t)vdata.getSpeed()+1);
-        uint16_t steeringOut = ((uint16_t)vdata.getHeading()+1);
+        Container containerVehicleControl = getKeyValueDataStore().get(Container::VEHICLECONTROL);
+        VehicleControl vdata = containerVehicleControl.getData<VehicleControl> ();
+        double speedSetting = vdata.getSpeed();
+        double steeringSetting = vdata.getSteeringWheelAngle();
+        cerr << "speedSetting: " << speedSetting << endl;
+        cerr << "steeringSetting: " << steeringSetting << endl;
+        cerr << "RAD2DEG: " << Constants::RAD2DEG << endl;
+        
+        uint16_t speedOutTemp;
+        uint16_t steeringOutTemp;
+
+        // if(countcounter == 50){
+        //     speedOut = 1;
+        //     steeringOut = 34;
+        // }
+
+        // countcounter++;
+
+
         cerr << "start: " << (uint16_t)outSer[0] << endl;
+        if(speedSetting < 0){
+            speedOutTemp = 1200;
+        }else if (speedSetting == 0){
+            speedOutTemp = 1520; 
+        }else{
+            speedOutTemp = 1560 + speedSetting;
+        }
+        steeringOutTemp = 90 + (uint16_t)(steeringSetting * Constants::RAD2DEG);
+
+        if(steeringOut != steeringOutTemp || speedOut != speedOutTemp){
+            steeringOut = steeringOutTemp;
+            speedOut = speedOutTemp;
+
+            outSer[6] = 0;
+            outSer[0] = startByte;
+            outSer[1] = speedOut & 0xFF;
+            outSer[2] = (speedOut >> 8) & 0xFF;
+            outSer[3] = steeringOut & 0xFF;
+            outSer[4] = (steeringOut >> 8) & 0xFF;
+            outSer[5] = endByte;
+
+            for(int i = 0; i < OUTSERIAL-1; i++){
+                outSer[OUTSERIAL - 1] ^= outSer[i];
+            } 
+
+            cerr << "checksum: " << (uint16_t)outSer[6] << endl;
+            int sentnum = (int)this_serial->write(outSer, 7);
+            cerr << "sent bytes: " << sentnum << endl;
+        }
+        cerr << "speedOutTemp: " << speedOutTemp << endl;
+        cerr << "steeringOutTemp: " << steeringOutTemp << endl;
         cerr << "speedOut: " << speedOut << endl;
         cerr << "steeringOut: " << steeringOut << endl;
-
-        outSer[6] = 0;
-        outSer[0] = startByte;
-        outSer[1] = speedOut & 0xFF;
-        outSer[2] = (speedOut >> 8) & 0xFF;
-        outSer[3] = steeringOut & 0xFF;
-        outSer[4] = (steeringOut >> 8) & 0xFF;
-        outSer[5] = endByte;
-
-        for(int i = 0; i < OUTSERIAL-1; i++){
-            outSer[OUTSERIAL - 1] ^= outSer[i];
-        } 
-        cerr << "checksum: " << (uint16_t)outSer[6] << endl;
-        int sentnum = (int)this_serial->write(outSer, 7);
-        cerr << "sent bytes: " << sentnum << endl;
-
     }
 
     void Proxy::distSerial() {
@@ -242,15 +283,16 @@ namespace msv {
 
 
         //Serial connection check
-        uint32_t baud = 9600;
-        string port = "/dev/ttyACM2"; 
-        cerr << "Testing port dev/ttySAC3" << endl;
+        uint32_t baud = 57600;
+        string port = "/dev/ttyACM0"; 
+        cerr << "Testing port: " << port << endl;
         // posible commands for getting serial port
         // CommandLineParser cmdParser;
         // cmdParser.addCommandLineArgument("id");
 
         int connection = 1;
         int correctserial = true;
+        int serialcounter = 0;
         
 
         uint32_t captureCounter = 0;
@@ -261,36 +303,24 @@ namespace msv {
         double oldduration = 0.0;
         double smoothduration;
         start = clock();
+        
+        time_t startTime = time(0);
+        
 
         try{
             this_serial = new Serial(port, baud, Timeout::simpleTimeout(2000));
+            //this_serial->flushInput();
         }catch (IOException e){
             cerr << "IO Exception - SerialPort" << port << "is not configured correctly" << endl;
             correctserial = false;
         }    
-        if(correctserial && this_serial->isOpen()){
-            this_serial->flushInput();
-        }
+        
         
 
 
         while (getModuleState() == ModuleState::RUNNING) {
 
-            if(correctserial && this_serial->isOpen()){
-                if(connection){
-                    sendSerial();
-                }
-                cerr << "Serial Baud =  " << this_serial->getBaudrate() << endl;
-                connection = getSerial();
-                if(connection){
-                    distSerial();
-                    
 
-                }else{
-                    cout << "Proxy timed out on serial connection " << endl;
-                    break;
-                }
-            }
             // Capture frame.
             if (m_camera != NULL) {
 
@@ -302,15 +332,15 @@ namespace msv {
                 Container c(Container::SHARED_IMAGE, si);
                 distribute(c);
                 captureCounter++;
-                cumduration = ( clock() - start ) / (double) CLOCKS_PER_SEC;
-                duration = cumduration - oldduration;
-                oldduration = cumduration;
+                // cumduration = ( clock() - start ) / (double) CLOCKS_PER_SEC;
+                // duration = cumduration - oldduration;
+                // oldduration = cumduration;
 
-                smoothduration = (smoothduration * 0.9) + ((1/duration) * 0.1);
+                // smoothduration = (smoothduration * 0.9) + ((1/duration) * 0.1);
 
-                cout<<"process time = : "<< duration <<" secs." << endl;
-                cout<<"frame rate = : "<< 1/duration <<" /sec." << endl;
-                cout<<"smoothed frame rate = : "<< smoothduration <<" /sec." << endl;
+                // cout<<"process time = : "<< duration <<" secs." << endl;
+                // cout<<"frame rate = : "<< 1/duration <<" /sec." << endl;
+                // cout<<"smoothed frame rate = : "<< smoothduration <<" /sec." << endl;
 
 
             }
@@ -318,14 +348,33 @@ namespace msv {
             // TODO: Here, you need to implement the data links to the embedded system
             // to read data from IR/US.
             //Serial
-            if(correctserial && this_serial->isOpen()){
-                this_serial->flushInput();
+            
+            if(correctserial && this_serial->isOpen() && this_serial->available() > 15){
+                if(connection){
+                    sendSerial();
+                }
+                //cerr << "Serial Baud =  " << this_serial->getBaudrate() << endl;
+                connection = getSerial();
+                if(connection){
+                    distSerial();
+                    
 
+                }else{
+                    cout << "Proxy timed out on serial connection " << endl;
+                    break;
+                }
+                serialcounter++;
+                if(this_serial->available() > 32){
+                    this_serial->flushInput();
+                    serialcounter = 0;
+                }
             }
             
         }
-        cumduration = ( clock() - start ) / (double) CLOCKS_PER_SEC;
+        //cumduration = ( clock() - start ) / (double) CLOCKS_PER_SEC;
         cout << "Proxy: Captured " << captureCounter << " frames." << endl;
+        time_t endTime = time(0);
+        cumduration = difftime(endTime, startTime);
         cout << "Proxy: Captured " << captureCounter/cumduration << " frames per sec." << endl;
         
 

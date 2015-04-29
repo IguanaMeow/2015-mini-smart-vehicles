@@ -91,6 +91,8 @@ namespace msv {
             uint8_t outSer[OUTSERIAL];
             uint8_t incomingSer[INSERIAL];
             uint8_t oldIncomingSer[OUTSERIAL];
+            uint16_t speedOut;
+            uint16_t steeringOut;
 
 
     };
