@@ -21,6 +21,9 @@ message msv.LaneDetected {
     bool laneDetected;
 }
 
+message msv.Intersection {
+    bool intersection;
+}
 
 message msv.SteeringData {
     double exampleData;

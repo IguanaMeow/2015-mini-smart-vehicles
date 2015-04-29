@@ -20,8 +20,6 @@
 #include <iostream>
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
-//#include "opencv2/imgcodecs.h"
-#include "opencv2/imgproc/imgproc.hpp"
 #include <unistd.h>
 #include <math.h>
 #include "core/data/Constants.h"
@@ -131,8 +129,6 @@ namespace msv {
 		}
 		if (x > w/2){ x = w/2; }
 		else if (x < -w/2) { x = -w/2;}
-
-		//cout << "x:"<< x<<endl;
 		return x;
 
 	}
@@ -162,16 +158,19 @@ namespace msv {
 		//line may be not a continuous line
 		int i;
 		int diff[3];
-		for (i = 0; i<4; i++){
+		int diff_1[2];
+		for (i = 0; i<3; i++){
 			int prev = *x_pos;
 			x_pos++;
 			diff[i] = prev - *x_pos ;
+			//cout<<"Diff: "<<diff[i]<<endl;
 		}
 
 		for (i= 0; i<2; i++){
-			if(abs(diff[i] - diff[i+1]) > 10) return false;
+			diff_1[i] = abs(diff[i] - diff[i+1]);
 		}
 
+		if (abs(diff_1[0] - diff_1[1]) > 5) return false;
 		return true;
 
 	}
@@ -242,6 +241,7 @@ namespace msv {
 	SpeedData spd;
 	LongDistanceData ldd;
 	ShortDistanceData sdd;
+	Intersection id;
 
 
 	/***Phuong***/
@@ -253,7 +253,7 @@ namespace msv {
 
 		//Canny image
 		cvCvtColor(m_image,img_gray, CV_RGB2GRAY);
-		cvCanny(img_gray, canny_image, 10, 100, 3 );
+		cvCanny(img_gray, canny_image, 100, 150, 3 );
 		cvCvtColor(canny_image, m_image, CV_GRAY2RGB);
 
 		//Release unused image
@@ -318,27 +318,15 @@ namespace msv {
 		dist[1] = sdd_old.getShortDistanceData();
 
 		cout << "Old Steering Data " << steer<< endl;
-		cout << "Old distance Data " << dist[0]<<" "<<dist[1]<<endl;
+		//cout << "Old distance Data " << dist[0]<<" "<<dist[1]<<endl;
 		cout<<"Right: "<<right[0]<<" "<<right[1]<<" "<<right[2]<<" "<<right[3]<<endl;
 
 		LaneDetected ld;
 		bool laneDetected = false;
+		bool intersect = false;
 
 
-		if (right[3] == w/2 && right[2] == w/2 && left[3] == w/2 &&left[2] == w/2
-				&& right[1] < w/2 && right[0] < w/2 && left[1] < w/2 &&left[0] < w/2
-				&& abs(steer)< 0.02){
-
-			//Try to detect intersection
-			sleep(5);
-			sd.setExampleData(0);
-			spd.setSpeedData(1);
-			ldd.setLongDistanceData(dist[0]);
-			sdd.setShortDistanceData(dist[1]);
-
-			cout<<"Mode 0: At Intersection"<<endl;
-
-		} else if (checkLane(left, w) == 1 && checkLane(right,w) == 1){ //No lane detected
+		if (checkLane(left, w) == 1 && checkLane(right,w) == 1){ //No lane detected
 
 			//If car is going quite straight, possibly car is at intersection, go straight
 			if (abs(steer)< 0.02) sd.setExampleData(0);
@@ -350,12 +338,30 @@ namespace msv {
 
 			cout<<"Mode 1: Detect no line"<<endl;
 
+		} else if (right[3] == w/2 && right[2] == w/2 && right[1] != w/2 && right[0] != w/2
+				/*&& right[1] < w/2 && right[0] < w/2 && left[1] < w/2 &&left[0] < w/2*/
+				   && abs(steer) < 0.02){
+
+			//Try to detect intersection
+			spd.setSpeedData(0);
+			Container c(Container::USER_DATA_2, spd);
+			getConference().send(c);
+			intersect = true;
+			sleep(5);
+
+			sd.setExampleData(0);
+			spd.setSpeedData(1);
+			ldd.setLongDistanceData(dist[0]);
+			sdd.setShortDistanceData(dist[1]);
+
+			cout<<"Mode 0: At Intersection"<<endl;
+
 		} else if(checkLane(left,w) == 3 && checkLane(right,w) != 2) {
 			//When left is not detected and we can only get some data from right
 
 			if (abs(steer) < 0.02) {
 				//If car is going quite straight, it probably in the middle of intersection
-				sd.setExampleData(steer);
+				sd.setExampleData(0);
 				cout << "Mode 11: Middle of intersection" << endl;
 
 			} else {
@@ -510,6 +516,7 @@ namespace msv {
 		}
 		//Send data to container telling if any lane is detected
 		ld.setLaneDetected(laneDetected);
+		id.setIntersection(intersect);
 
 		//Send message
 		Container c(Container::USER_DATA_1, sd);
@@ -517,12 +524,14 @@ namespace msv {
 		Container c_2(Container::USER_DATA_3, ldd);
 		Container c_3(Container::USER_DATA_4, sdd);
 		Container c_4(Container::USER_DATA_5,ld);
+		Container c_5(Container::USER_DATA_6, id);
 
 		getConference().send(c);
 		getConference().send(c_1);
 		getConference().send(c_2);
 		getConference().send(c_3);
 		getConference().send(c_4);
+		getConference().send(c_5);
 
 	}
 
