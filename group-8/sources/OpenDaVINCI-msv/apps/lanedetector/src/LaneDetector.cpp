@@ -410,6 +410,19 @@ std::vector<Lines> LaneDetector::validateLines(std::vector<Lines>* lines)
 
 }
 
+void LaneDetector::calculateCritical(const vector<Lines>::iterator& line, int dir, IplImage* image) {
+  double result;
+
+  result = measureDistance(line->getYPos(), dir, image);
+  std::cout << "line pointer" << line->getYPos() << std::endl;
+
+  if (result < 270) {
+    line->setCritical(result);
+    critCounter++;
+  }
+  
+}
+
 double LaneDetector::measureAngle(int yPos1, int xPos1, int yPos2, int xPos2) {
   double deltaY = yPos2 - yPos1;
   double deltaX = xPos2 - xPos1;
