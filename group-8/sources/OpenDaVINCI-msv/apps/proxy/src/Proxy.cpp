@@ -214,15 +214,23 @@ namespace msv {
         }else if ((int)speedSetting == 0){
             speedOutTemp = 1520; 
         }else{
-            speedOutTemp = 1560 + speedSetting;
+            speedOutTemp = 1570 + speedSetting;
         }
-        steeringOutTemp = 90 + (uint16_t)(steeringSetting * Constants::RAD2DEG);
+        steeringOutTemp = 90 - (uint16_t)(steeringSetting * Constants::RAD2DEG);
         if(steeringOutTemp < 65) steeringOutTemp = 65;
         if(steeringOutTemp > 115) steeringOutTemp = 115;
+        // if(countcounter < 1000 || countcounter > 500){
+        //     speedOut = 1600;
+        // }
+
+        // countcounter++;
+        // cerr << "countcounter" << countcounter << endl;
 
         if(steeringOut != steeringOutTemp || speedOut != speedOutTemp){
             steeringOut = steeringOutTemp;
             speedOut = speedOutTemp;
+
+
 
             outSer[6] = 0;
             outSer[0] = startByte;
