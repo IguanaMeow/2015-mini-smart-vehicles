@@ -1,0 +1,2 @@
+/opt/odv/bin/qstlink2
+/opt/odv/bin/devices.xml
