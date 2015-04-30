@@ -1,34 +1,33 @@
+//----Libraries---
 
-
-//----Libraries----
 #include <Wire.h>            //For US sensors
 #include <SonarSRF08.h>      //For US sensors
 
-//----Special Bytes ----
+//----Special Bytes----
 const byte endByte = 0xFF;
 const byte startByte = 0xAA;
 
 //----Incoming Data ----
-byte recSignal[8];         // a byte array to hold incoming data
-int speedIn = 0;               //incoming speed data
-int steeringIn = 90;            //incoming steering data
+byte recSignal[7];         // a byte array to hold incoming data
+int speedIn = 100;               //incoming speed data
+int steeringIn = 101;            //incoming steering data
 //byte lightsIn = 0;
 boolean recComplete = false; //Check if valid packet
 
 //----Old Incoming Data ----
 int speedInOld;               //Last changed speed data
 int steeringInOld;            //Last changed steering data
-//byte lightsInOld
+//byte lightsInOld;
 
 //----Outgoing Data ----
 byte sendSignal[17];         // a byte array to hold outgoing data
-int speedOut;              //outgoing speed data from Wheel encoder
-int steeringOut;           //outgoing steering data (current setting)
-int irFrontOut;            //IR sensor right front outgoing
-int irMiddleOut;           //IR sensor right back outgoing
-int irBackOut;             //IR sensor back outgoing
-int usFrontOut;                //US sensor 1 outgoing
-int usRightOut;                //US sensor 2 outgoing
+int speedOut = 100;              //outgoing speed data from Wheel encoder
+int steeringOut = 101;           //outgoing steering data (current setting)
+int irFrontOut = 102;            //IR sensor right front outgoing
+int irMiddleOut = 103;           //IR sensor right back outgoing
+int irBackOut = 104;             //IR sensor back outgoing
+int usFrontOut = 105;                //US sensor 1 outgoing
+int usRightOut = 106;                //US sensor 2 outgoing
 
 //----Defining Sensor Data----
 #define irFrontPin  0      //IR sensor right front in analog pin 0
@@ -49,7 +48,7 @@ char unit = 'c'; // 'i' for inches, 'c' for centimeters, 'm' for micro-seconds u
 
 void setup() {
   // initialize serial:
-  Serial.begin(9600);
+  Serial.begin(57600);
   usFront.connect(FRONT_08_ADDRESS, GAIN_REGISTER, LOCATION_REGISTER);//connect to the front US sensor
   usRight.connect(RIGHT_08_ADDRESS, GAIN_REGISTER, LOCATION_REGISTER);//connect yo the right US sensor
   // TODO - A blocking function that waits for a predefined signal from the Odroid here or in loop
@@ -62,12 +61,12 @@ void loop() {
     distIncoming();
     //Set Speed data if different from current
     if(speedIn != speedInOld){
-      setTheSpeed();
+      //setTheSpeed();
       speedInOld = speedIn;
     }
     //Set Speed data if different from current - currently using old value, maybe use wheel encoder?
     if(steeringIn != steeringInOld){
-      setTheSteering();
+      //setTheSteering();
       steeringInOld = steeringIn;
     }    
     recComplete = false;
@@ -114,6 +113,23 @@ void sendData(){
     sendSignal[16] ^= sendSignal[i];
   } 
   Serial.write(sendSignal, 17);
+//  Serial.print("IRFront");
+//  Serial.print(irFrontOut);
+//  Serial.print("\n");
+//  Serial.print("IRMiddle");
+//  Serial.print(irMiddleOut);
+//  Serial.print("\n");
+//  Serial.print("IRBack");
+//  Serial.print(irBackOut);
+//  Serial.print("\n");
+//  Serial.print("USFRONT");
+//  Serial.print(usFrontOut);
+//  Serial.print("\n");
+//  Serial.print("USRIGHT");
+//  Serial.print(usRightOut);
+//  Serial.print("\n");
+//  Serial.print("\n");
+//  Serial.print("\n");
 }
 
 //Set the speed controller
@@ -133,11 +149,13 @@ void setTheSteering(){
 //Get speed from wheel encoder
 void getSpeed(){
   //TODO
+  speedOut = speedIn;
 }
 
 //Check current steering data (uneccessary maybe?)
 void getSteering(){
   //TODO
+  steeringOut = steeringIn;
 }
 
 //get right front IR Sensor by reading the analog pin
@@ -170,22 +188,23 @@ void getUSRight(){
   //Serial.println (usRightOut);
 }
 
-
-//interrupt style function, get serial from Odroid and store
-void serialEvent() {
-  byte i = 0;
+void serialEvent(){
+  byte i;
+  byte badread;
   byte check = 0;
-  byte findEnd;
-  while (Serial.available() && i < 8) {
-    recSignal[i] = Serial.read();
+  while(Serial.available() && Serial.peek() != startByte){
+    Serial.read();
+  }
+  Serial.readBytes((char*)recSignal, 7);
+  for(i=0;i<7;i++){
     check ^= recSignal[i];
-    i++;
   }
-  if(i==8 && recSignal[0]== startByte && recSignal[6] == endByte && check == 0){
+  if(i==7 && recSignal[0]== startByte && recSignal[5] == endByte && check == 0){
     recComplete=true;
+  }else{ 
+    while (Serial.available() && badread != endByte){
+      badread = Serial.read();
+    }
+    
   }
-  while (Serial.available() && findEnd != 'f') {
-    findEnd = Serial.read();
-  }
-  Serial.read();
 }
