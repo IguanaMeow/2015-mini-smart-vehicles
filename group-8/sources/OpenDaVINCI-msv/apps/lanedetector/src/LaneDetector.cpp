@@ -348,8 +348,7 @@ namespace msv {
         Player *player = NULL;
 
         uint32_t lanecounter = 0;
-        clock_t start;
-        start = clock();
+        time_t startTime = time(0);
         double cumduration;
 /*
         // Lane-detector can also directly read the data from file. This might be interesting to inspect the algorithm step-wisely.
@@ -389,11 +388,12 @@ namespace msv {
           lanecounter++;
         }
       }
-        cumduration = ( clock() - start ) / (double) CLOCKS_PER_SEC;
-        cout << "LaneDetector: processed " << lanecounter << " frames." << endl;
-        cout << "LaneDetector: processed " << lanecounter/cumduration << " frames per sec." << endl;
+      cout << "LaneDetector: processed " << lanecounter << " frames." << endl;
+      time_t endTime = time(0);
+      cumduration = difftime(endTime, startTime);
+      cout << "LaneDetector: processed " << lanecounter/cumduration << " frames per sec." << endl;
 
-        OPENDAVINCI_CORE_DELETE_POINTER(player);
+      OPENDAVINCI_CORE_DELETE_POINTER(player);
 
       return ModuleState::OKAY;
     }
