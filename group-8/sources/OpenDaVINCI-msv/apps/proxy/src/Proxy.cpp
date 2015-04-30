@@ -194,7 +194,7 @@ namespace msv {
         cerr << "start: " << (uint16_t)outSer[0] << endl;
         if(speedSetting < 0){
             speedOutTemp = 1200;
-        }else if (speedSetting == 0){
+        }else if ((int)speedSetting == 0){
             speedOutTemp = 1520; 
         }else{
             speedOutTemp = 1560 + speedSetting;
@@ -265,9 +265,9 @@ namespace msv {
         irFrontRightDist = (2914 / (irFrontRight +5))-1;
         irMiddleRightDist = (2914 / (irMiddleRight +5))-1;
         irBackDist = (2914 / (irBack +5))-1;
-        sbd.putTo_MapOfDistances(0, (double)irFrontRight);
-        sbd.putTo_MapOfDistances(1, (double)irBack);
-        sbd.putTo_MapOfDistances(2, (double)irMiddleRight);
+        sbd.putTo_MapOfDistances(0, (double)irFrontRightDist);
+        sbd.putTo_MapOfDistances(1, (double)irBackDist);
+        sbd.putTo_MapOfDistances(2, (double)irMiddleRightDist);
         sbd.putTo_MapOfDistances(3, (double)usFront);
         sbd.putTo_MapOfDistances(4, (double)usFrontRight);
 
@@ -310,12 +310,12 @@ namespace msv {
 
         uint32_t captureCounter = 0;
         //Framerate
-        clock_t start;
+        //clock_t start;
         double cumduration;
-        double duration;
-        double oldduration = 0.0;
-        double smoothduration;
-        start = clock();
+        //double duration;
+        //double oldduration = 0.0;
+        //double smoothduration;
+        //start = clock();
         
         time_t startTime = time(0);
         
@@ -399,7 +399,7 @@ namespace msv {
             outSer[OUTSERIAL - 1] ^= outSer[i];
         } 
         for (int i = 0; i < 20; ++i){
-            int sentnum = (int)this_serial->write(outSer, 7);
+            this_serial->write(outSer, 7);
         }
         cout << "Proxy: Captured " << captureCounter << " frames." << endl;
         time_t endTime = time(0);
