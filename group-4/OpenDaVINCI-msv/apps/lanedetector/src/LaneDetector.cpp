@@ -112,7 +112,7 @@ namespace msv {
 			    m_sharedImageMemory->unlock();
 
 			    // Mirror the image.
-			    cvFlip(m_image, 0, -1);
+			    //cvFlip(m_image, 0, -1);
 
 			    retVal = true;
 		    }
@@ -157,8 +157,8 @@ namespace msv {
         // Variable declarations
         Mat dst, cdst;
         const int rows = 32 - (abs(prevAngle * 0.6) > 6 ? 6 : floor(abs(prevAngle * 0.6)));
-        const int center = src.cols / 2;
         const int rowdist = src.rows * 0.025;
+        const int center = src.cols / 2;
         const int lnull = -1;
         const int rnull = src.cols + 1;
         int lcount = 0;
@@ -170,13 +170,62 @@ namespace msv {
         float totalWeight = 0;
 
         // Edge detection
-        Canny(src, dst, 50, 200, 3);
+        Canny(src, dst, 100, 300, 3);
         cvtColor(dst, cdst, CV_GRAY2BGR);
         cdst.setTo(Scalar::all(0));
 
         // Line detection
         vector<Vec4i> lines;
         HoughLinesP(dst, lines, 1, CV_PI/180, 8, 10, 10);
+
+        for(size_t i = 0; i < lines.size(); i++)
+        {
+            Vec4i l = lines[i];
+            int dy = l[3] - l[1];
+            int dx = l[2] - l[0];
+            float angle = 0;
+            if(dx != 0)
+            {
+                float theta = atan2(dy, dx);
+                angle = theta * 180/CV_PI;
+            }
+            else
+            {
+                if(dy > 0)
+                    angle = 90;
+                else
+                    angle = -90;
+            }
+
+            angle *= -1;
+            if(angle < 0)
+                angle = 180 + angle;
+
+            if((l[0] <= center && l[2] >= center) || (l[0] >= center && l[2] <= center))
+            {
+                line(cdst, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0, 0, 64), 1, CV_AA);
+                lines.erase(lines.begin() + i);
+                i--;
+            }
+            else if(l[0] < center)
+            {
+                if(angle < 25 - prevAngle * 2.5 || angle > 75 - prevAngle * 2.5)
+                {
+                    line(cdst, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0, 0, 64), 1, CV_AA);
+                    lines.erase(lines.begin() + i);
+                    i--;
+                }
+            }
+            else if(l[0] > center)
+            {
+                if(angle < 115 - prevAngle * 2.5 || angle > 165 - prevAngle * 2.5)
+                {
+                    line(cdst, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0, 0, 64), 1, CV_AA);
+                    lines.erase(lines.begin() + i);
+                    i--;
+                }
+            }
+        }
 
         if (m_debug)
         {
@@ -410,6 +459,5 @@ namespace msv {
 
 	    return ModuleState::OKAY;
     }
-
 } // msv
 
