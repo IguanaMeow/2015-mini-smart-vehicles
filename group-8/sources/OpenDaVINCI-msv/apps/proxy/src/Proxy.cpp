@@ -116,6 +116,22 @@ namespace msv {
 
     void Proxy::tearDown() {
         // This method will be call automatically _after_ return from body().
+        speedOut = 1520;
+        steeringOut = 90;
+        outSer[6] = 0;
+        outSer[0] = startByte;
+        outSer[1] = speedOut & 0xFF;
+        outSer[2] = (speedOut >> 8) & 0xFF;
+        outSer[3] = steeringOut & 0xFF;
+        outSer[4] = (steeringOut >> 8) & 0xFF;
+        outSer[5] = endByte;
+
+        for(int i = 0; i < OUTSERIAL-1; i++){
+            outSer[OUTSERIAL - 1] ^= outSer[i];
+        } 
+        for (int i = 0; i < 20; ++i){
+            this_serial->write(outSer, 7);
+        }
         OPENDAVINCI_CORE_DELETE_POINTER(m_recorder);
         OPENDAVINCI_CORE_DELETE_POINTER(m_camera);
     }
@@ -172,6 +188,7 @@ namespace msv {
     }
 
     void Proxy::sendSerial() {
+        cerr << "Sending Serial: " << endl;
         Container containerVehicleControl = getKeyValueDataStore().get(Container::VEHICLECONTROL);
         VehicleControl vdata = containerVehicleControl.getData<VehicleControl> ();
         double speedSetting = vdata.getSpeed();
@@ -337,12 +354,13 @@ namespace msv {
             // Capture frame.
             if (m_camera != NULL) {
 
-
+                cerr << "Capturing frame" << endl;
                 
                 core::data::image::SharedImage si = m_camera->capture();
                 
 
                 Container c(Container::SHARED_IMAGE, si);
+                cerr << "Distributing Frame" << endl;
                 distribute(c);
                 captureCounter++;
                 // cumduration = ( clock() - start ) / (double) CLOCKS_PER_SEC;
@@ -362,12 +380,15 @@ namespace msv {
             // to read data from IR/US.
             //Serial
             
-            if(correctserial && this_serial->isOpen() && this_serial->available() > 15){
+            if(correctserial && this_serial->isOpen()){
+                cerr << "About to send serial" << endl;
                 if(connection){
                     sendSerial();
                 }
                 //cerr << "Serial Baud =  " << this_serial->getBaudrate() << endl;
-                connection = getSerial();
+                if(this_serial->available() > 15){
+                    connection = getSerial();
+                }
                 if(connection){
                     distSerial();
                     
@@ -385,22 +406,7 @@ namespace msv {
             
         }
         //cumduration = ( clock() - start ) / (double) CLOCKS_PER_SEC;
-        speedOut = 1520;
-        steeringOut = 90;
-        outSer[6] = 0;
-        outSer[0] = startByte;
-        outSer[1] = speedOut & 0xFF;
-        outSer[2] = (speedOut >> 8) & 0xFF;
-        outSer[3] = steeringOut & 0xFF;
-        outSer[4] = (steeringOut >> 8) & 0xFF;
-        outSer[5] = endByte;
 
-        for(int i = 0; i < OUTSERIAL-1; i++){
-            outSer[OUTSERIAL - 1] ^= outSer[i];
-        } 
-        for (int i = 0; i < 20; ++i){
-            this_serial->write(outSer, 7);
-        }
         cout << "Proxy: Captured " << captureCounter << " frames." << endl;
         time_t endTime = time(0);
         cumduration = difftime(endTime, startTime);
