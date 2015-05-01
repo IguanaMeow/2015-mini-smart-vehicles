@@ -38,6 +38,8 @@ namespace msv {
         using namespace core::data::control;
         using namespace core::data::environment;
 
+int state;
+int count;
         Driver::Driver(const int32_t &argc, char **argv) :
 	        ConferenceClientModule(argc, argv, "Driver") {
         }
@@ -88,12 +90,38 @@ namespace msv {
                 VehicleControl vc;
 
                 // With setSpeed you can set a desired speed for the vehicle in the range of -2.0 (backwards) .. 0 (stop) .. +2.0 (forwards)
-                vc.setSpeed(0.4);
-
+          //      vc.setSpeed(0.4);
+/*	cout<<sbd.getValueForKey_MapOfDistances(4)<<endl;
+    cout<<sbd.getValueForKey_MapOfDistances(3)<<endl;
+    cout<<sbd.getValueForKey_MapOfDistances(1)<<endl;
+    cout<<sbd.getValueForKey_MapOfDistances(2)<<endl;
+    cout<<sbd.getValueForKey_MapOfDistances(0)<<endl;
+    cout<<sbd.getValueForKey_MapOfDistances(5)<<endl;*/
                 // With setSteeringWheelAngle, you can steer in the range of -26 (left) .. 0 (straight) .. +25 (right)
-                double desiredSteeringWheelAngle = 4; // 4 degree but SteeringWheelAngle expects the angle in radians!
-                vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
+                double desiredSteeringWheelAngle = sd.getExampleData(); // 4 degree but SteeringWheelAngle expects the angle in radians!
+               
+               if(sd.getIntersectionFound()<1.0 && state==0){
+                        
+                vc.setSpeed(4.0);
+                cout<<floor(desiredSteeringWheelAngle)<<endl;
+                vc.setSteeringWheelAngle(desiredSteeringWheelAngle);
 
+
+                }else{
+                        state=1;
+        }
+        if(state==1){
+            
+                cout<<"state 1"<<endl;
+                vc.setSpeed(0.0);
+                vc.setSteeringWheelAngle(desiredSteeringWheelAngle);
+                count++;
+                if(count > 100){
+                        state=0;
+                        sd.setIntersectionFound(0.0);
+                        count=0;
+                }
+        }
                 // You can also turn on or off various lights:
                 vc.setBrakeLights(false);
                 vc.setLeftFlashingLights(false);
