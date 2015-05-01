@@ -128,7 +128,7 @@ int numOfInt=0;
                 m_sharedImageMemory->unlock();
 
                 // Mirror the image.
-                cvFlip(m_image, 0, -1);
+         //     cvFlip(m_image, 0, -1);
 
                 retVal = true;
             }
@@ -248,13 +248,15 @@ void drawLine(Mat atom_image, int line1line, int count, int &line1leftLineLength
             }
         }
   
-       Mat src,dst,color_dst,atom_image,edge;
+       Mat src,dst,color_dst,atom_image,edge,blured;
        src=m_image;
        //atom_image=src;
-       cvtColor( src, color_dst, COLOR_RGB2GRAY );
-     Canny( color_dst, dst, 50, 150, 3);
-     dst.convertTo(edge, CV_8U);
-     // threshold( color_dst, dst, threshold_value, max_BINARY_value,threshold_type );
+       blur(src , blured, Size(3,3) );
+       cvtColor( blured, color_dst, COLOR_RGB2GRAY );
+       
+     Canny( color_dst, dst, 50, 170, 3);
+    dst.convertTo(edge, CV_8U);
+    // threshold( color_dst, dst, threshold_value, max_BINARY_value,threshold_type );
       cvtColor( edge, atom_image, COLOR_GRAY2RGB );
 
    
@@ -322,10 +324,10 @@ void drawLine(Mat atom_image, int line1line, int count, int &line1leftLineLength
     int inter1Lineright = 0;
     drawLine(atom_image, inter1Line, count, inter1Lineleft, inter1Lineright);
     
-    if(interLineright==321 && interLineleft==319)
+    /*if(interLineright==321 && interLineleft==319)
         state=1; 
     else if(inter1Lineright==321 && inter1Lineleft==319)
-        state=1;
+        state=1;*/
     
     int line5line= 349;
     int line5leftLineLength = 0;
@@ -451,18 +453,20 @@ void drawLine(Mat atom_image, int line1line, int count, int &line1leftLineLength
                
              
             
-            value=(value-(tangent/6.0)); //was 7//
+            value=(value-(tangent/13)); //was 7//
           
            difference=value;
 }
     
     
 
-    else if( vp2leftLength + vp2rightLength > 351 )
-       difference = vp2RAngle-(vp2LAngle/(vp2leftLength/175));
+    else if(vp2leftLength<vp2rightLength && vp2leftLength + vp2rightLength > 270 )
+       difference = vp2RAngle-(vp2LAngle/(vp2leftLength/135));
+else if(vp2rightLength<vp2leftLength && vp2leftLength + vp2rightLength > 270)
+    difference = (vp2RAngle/(vp2rightLength/135))-vp2LAngle;
 
-    else if( vp2leftLength + vp2rightLength < 351 )
-       difference = (vp2RAngle*(vp2leftLength/175))- vp2LAngle;
+    else if( vp2leftLength + vp2rightLength < 270 )
+       difference = (vp2RAngle*(vp2leftLength/135))- vp2LAngle;
        
     else
         difference= vp2RAngle-vp2LAngle;
@@ -472,7 +476,7 @@ void drawLine(Mat atom_image, int line1line, int count, int &line1leftLineLength
     }
     value=difference;
     std::cout<<"difference: "<< difference <<'\n';
-    sd.setExampleData(difference);
+    sd.setExampleData(difference*(2.2));
     
    
     }
