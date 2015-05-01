@@ -201,7 +201,7 @@ using namespace core::data::control;
 
 
 	msv::SensorBoardData sensorBoardData;
-   string userInput="6:610"+convertedAngle+",";
+   string userInput="6:600"+convertedAngle+",";
    cout<<userInput<<endl;
     
 
