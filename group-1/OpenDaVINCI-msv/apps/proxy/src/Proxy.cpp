@@ -50,7 +50,6 @@
 #include "GeneratedHeaders_Data.h"
 
 #include "Proxy.h"
-#include <netstring.h>
 
 namespace msv {
 
@@ -99,7 +98,7 @@ using namespace core::data::control;
 
     void Proxy::setUp() {
    //   msv::connect("/dev/ttyACM3",1); // connect to arduino reading from
-      msv::connect("/dev/ttyACM0",2); // connect to arduino sending to
+      msv::connect("/dev/ttyACM2",2); // connect to arduino sending to
 
 
 	    // This method will be call automatically _before_ running body().
@@ -202,7 +201,7 @@ using namespace core::data::control;
 
 
 	msv::SensorBoardData sensorBoardData;
-   string userInput="6:300"+convertedAngle+",";
+   string userInput="6:600"+convertedAngle+",";
    cout<<userInput<<endl;
     
 
@@ -262,7 +261,7 @@ sensorBoardData.putTo_MapOfDistances(5,valUs3);
 
 Container c = Container(Container::USER_DATA_0, sensorBoardData);
   distribute(c);
- // tcflush(fd, TCIFLUSH);
+ tcflush(fd, TCIFLUSH);
 //usleep(2000000);
 
  }

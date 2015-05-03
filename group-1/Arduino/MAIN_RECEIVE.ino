@@ -1,4 +1,3 @@
-
 #include <Servo.h>
 Servo esc;
 Servo servo;
@@ -8,7 +7,7 @@ String decodedS;
 //pin define
 int sensorPin = A0;    // select the input pin for the potentiometer
 int throttle = 0; //
-int steer=0;
+int steer=60;
 int control =512;
 void setup() {
   // declare the ledPin as an OUTPUT:
@@ -25,9 +24,9 @@ void loop() {
   throttle = map(control, 0, 1023, 1000, 2000); 
   //steer= map(control, 0, 1023, 1000, 2000); 
   // display value and send to servo
-  Serial.println(throttle);
-  esc.writeMicroseconds(throttle); 
-  servo.writeMicroseconds(steer);
+  Serial.println(control);
+  esc.write(throttle); 
+  servo.write(steer);
   delay(10);
 }
 
@@ -40,8 +39,8 @@ void serialEvent() {
 
     if (decodedS.length() >0) {
       Serial.println(decodedS);  //so you can see the captured string 
-      control = decodedS.substring(0, 2).toInt();  //convert a substring readString into a number
-      steer= decodedS.substring(3, 5).toInt(); //convert a substring readString into a number
+      control = decodedS.substring(0, 3).toInt();  //convert a substring readString into a number
+      steer= decodedS.substring(3, 6).toInt(); //convert a substring readString into a number
     }
     decodedS="";
     c="";
@@ -63,4 +62,3 @@ String decodedNetstring(String netstring){
   if (command.length() != controlDigits) return "error"; //if string's length isn't equal with the control digits, it's an invalid Netstring
   return command;
 }
-
