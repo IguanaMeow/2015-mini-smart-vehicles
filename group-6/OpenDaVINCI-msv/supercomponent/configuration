@@ -14,10 +14,12 @@
 
 #
 # GLOBAL CONFIGURATION
+#Parking-sideways.scnx
+#ObstacleOnStraightRoad.scnx
 #
 global.car = Scenarios/Models/FordEscape.objx
 #global.car = Scenarios/Models/RedRocketCar.objx
-global.scenario = file://Scenarios/NoObstacles_StopLines.scnx
+global.scenario = file://Scenarios/ObstacleOnStraightRoad.scnx
 global.showGrid = 0
 
 # The following attributes define the buffer sizes for recording and replaying.
