@@ -347,10 +347,10 @@ namespace msv {
 			Container c(Container::USER_DATA_2, spd);
 			getConference().send(c);
 			intersect = true;
-			sleep(5);
+		//	sleep(5);
 
 			sd.setExampleData(0);
-			spd.setSpeedData(1);
+		//	spd.setSpeedData(1);
 			ldd.setLongDistanceData(dist[0]);
 			sdd.setShortDistanceData(dist[1]);
 
