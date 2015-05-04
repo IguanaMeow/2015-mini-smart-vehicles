@@ -168,15 +168,15 @@ namespace msv {
 
 		for (i= 0; i<2; i++){
 			diff_1[i] = abs(diff[i] - diff[i+1]);
+			//if (diff_1[i]>7) return false;
 		}
 
-		if (abs(diff_1[0] - diff_1[1]) > 5) return false;
-		return true;
+		return (abs(diff_1[0] - diff_1[1])> 5 || diff_1[0]*diff_1[1] < 0) ? false : true;
 
 	}
 
 	double getAngle (int *x_pos, int *y_pos, int w){
-		//Get angle (use when the lanne is not fully detected))
+		//Get angle (use when the lane is not fully detected))
 		int new_x_pos[4], new_y_pos[4];
 		int i, j=0;
 
@@ -317,7 +317,7 @@ namespace msv {
 		ShortDistanceData sdd_old = containerShortDistanceData.getData<ShortDistanceData>();
 		dist[1] = sdd_old.getShortDistanceData();
 
-		cout << "Old Steering Data " << steer<< endl;
+		cout << "Old Steering Data " << steer * Constants::RAD2DEG<< endl;
 		//cout << "Old distance Data " << dist[0]<<" "<<dist[1]<<endl;
 		cout<<"Right: "<<right[0]<<" "<<right[1]<<" "<<right[2]<<" "<<right[3]<<endl;
 
@@ -347,6 +347,7 @@ namespace msv {
 			Container c(Container::USER_DATA_2, spd);
 			getConference().send(c);
 			intersect = true;
+			sleep(5);
 
 			sd.setExampleData(0);
 			spd.setSpeedData(1);
@@ -358,7 +359,10 @@ namespace msv {
 		} else if(checkLane(left,w) == 3 && checkLane(right,w) != 2) {
 			//When left is not detected and we can only get some data from right
 
-			if (abs(steer) < 0.02) {
+			Container containerIntersection = getKeyValueDataStore().get(Container::USER_DATA_6);
+			Intersection id_old = containerIntersection.getData<Intersection>();
+			bool inter = id_old.getIntersection();
+			if (inter || abs(steer) < 0.001 ) {
 				//If car is going quite straight, it probably in the middle of intersection
 				sd.setExampleData(0);
 				cout << "Mode 11: Middle of intersection" << endl;
@@ -370,7 +374,7 @@ namespace msv {
 					sd.setExampleData(steer);
 				} else {
 					cout << "Angle: " << angle << endl;
-					sd.setExampleData(abs(angle) > 1.5 ? steer : angle / 4.2);
+					sd.setExampleData(abs(angle) > 1.5 ? steer : angle / 4);
 				}
 				cout << "Mode 12: Follow left side" << endl;
 			}
@@ -416,7 +420,7 @@ namespace msv {
 					//else balance itself
 					int diff = right[3] - dist[1];
 					sd.setExampleData(diff /(abs(diff) < 70? 30: 15) * Constants::DEG2RAD);
-					spd.setSpeedData(1);
+					spd.setSpeedData(1.5);
 					ldd.setLongDistanceData(dist[0]);
 					sdd.setShortDistanceData(dist[1]);
 					cout << "Mode 9: Balancing on the right" << endl;
@@ -441,7 +445,7 @@ namespace msv {
 					//Balance the car
 					int diff = dist[1] - abs(left[3]);
 					sd.setExampleData(diff /(abs(diff) < 70? 30: 15) * Constants::DEG2RAD);
-					spd.setSpeedData(1);
+					spd.setSpeedData(1.5);
 					ldd.setLongDistanceData(dist[0]);
 					sdd.setShortDistanceData(dist[1]);
 					cout << "Mode 5: Balancing on the left" << endl;
@@ -476,6 +480,7 @@ namespace msv {
 				} else {
 					//else do what it did before
 					sd.setExampleData(steer);
+					laneDetected = false;
 					cout << "Mode 13: Do what it did before" << endl;
 				}
 
@@ -504,6 +509,7 @@ namespace msv {
 					cout << "Mode 15: Turn" << endl;
 				} else {
 					sd.setExampleData(steer);
+					laneDetected = false;
 					cout << "Mode 16: Do what it did before" << endl;
 				}
 
