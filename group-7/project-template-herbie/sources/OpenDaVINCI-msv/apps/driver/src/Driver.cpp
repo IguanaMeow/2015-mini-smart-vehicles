@@ -25,7 +25,6 @@
 #include "core/data/Constants.h"
 #include "core/data/control/VehicleControl.h"
 #include "core/data/environment/VehicleData.h"
-#include "generated/msv/SensorBoardData.h" 
 
 #include "GeneratedHeaders_Data.h"
 
@@ -40,38 +39,23 @@ namespace msv {
         using namespace core::data::environment;
 
         Driver::Driver(const int32_t &argc, char **argv) :
-            ConferenceClientModule(argc, argv, "Driver") {
+	        ConferenceClientModule(argc, argv, "Driver") {
         }
 
         Driver::~Driver() {}
 
         void Driver::setUp() {
-            // This method will be call automatically _before_ running body().
+	        // This method will be call automatically _before_ running body().
         }
 
         void Driver::tearDown() {
-            // This method will be call automatically _after_ return from body().
+	        // This method will be call automatically _after_ return from body().
         }
-
-       
 
         // This method will do the main data processing job.
         ModuleState::MODULE_EXITCODE Driver::body() {
-                int state = 0;
-                double US_Front;
-                double US_FR;
-               // double US_RR;
-                double IF_FR;
-                double IF_RR;
-                double IF_Rear;
-                 // Create vehicle control data.
-                VehicleControl vc;
-                 double desiredSteeringWheelAngle = 0; 
-                 double speed = 0;
 
-                 double distance_1, distance_2, distance_3;
-                 const double car_length = 5;
-            while (getModuleState() == ModuleState::RUNNING) {
+	        while (getModuleState() == ModuleState::RUNNING) {
                 // In the following, you find example for the various data sources that are available:
 
                 // 1. Get most recent vehicle data:
@@ -94,134 +78,21 @@ namespace msv {
                 SteeringData sd = containerSteeringData.getData<SteeringData> ();
                 cerr << "Most recent steering data: '" << sd.toString() << "'" << endl;
 
-                //5. Get most recent 
-                Container containerSpeedData = getKeyValueDataStore().get(Container::USER_DATA_2);
-                SpeedData spd_old = containerSpeedData.getData<SpeedData> ();
-                cerr << "Most recent speed data: '" << spd_old.toString() << "'" << endl;
 
 
                 // Design your control algorithm here depending on the input data from above.
 
 
-                US_Front = sbd.getValueForKey_MapOfDistances(3);
-                US_FR = sbd.getValueForKey_MapOfDistances(4);
-               // US_RR = sbd.getValueForKey_MapOfDistances(5);
-                IF_FR = sbd.getValueForKey_MapOfDistances(0);
-                IF_RR = sbd.getValueForKey_MapOfDistances(2);
-                IF_Rear = sbd.getValueForKey_MapOfDistances(1);
-                
-                //  //chack if the using sensors is found
-                // if((sbd.containsKey_MapOfDistances(IF_FR)==true)&&(sbd.containsKey_MapOfDistances(IF_Rear)==true)
-                //         &&(sbd.containsKey_MapOfDistances(IF_RR)==true)&&(sbd.containsKey_MapOfDistances(US_RR)==true)
-                //         &&(sbd.containsKey_MapOfDistances(US_FR)==true)&&(sbd.containsKey_MapOfDistances(US_Front)==true)){
-                            
- /***Start Parking***/
-                        switch(state){ // using switch-case to change state
 
-                            case 1:
-                                speed = spd_old.getSpeedData();
-                                desiredSteeringWheelAngle = sd.getExampleData();
+                // Create vehicle control data.
+                VehicleControl vc;
 
-                                if((US_FR <0||US_FR > (car_length*1.1))&& IF_FR <0 && IF_RR <0){
-            
-                                    state = 2; //state gap enough
-                                    distance_1 = vd.getAbsTraveledPath();
-                                }
-
-                                if(US_FR >0&&US_FR < (car_length*1.1))state = 0;
-                                break;
-                            
-                            case 2: //gap enough sate, then drive more around 2 times of the car length to find appropriate distance to park to start parking state
-                                speed = 1;
-                                desiredSteeringWheelAngle = 0;
-                                
-                                if(vd.getAbsTraveledPath() >= distance_1+(car_length*2.096)){
-                               
-                                    state = 3;
-                                    distance_2 = vd.getAbsTraveledPath();
-                                }
-                                break;
-
-                            case 3: // start parking state, drive backward.
-                                speed=-1.5;
-                                desiredSteeringWheelAngle = 16;
-                                if(vd.getAbsTraveledPath()>= distance_2+(car_length*1.5)){
-                                    state = 4;
-                                    distance_3 = vd.getAbsTraveledPath();
-                                }
-                                break;
-
-                            case 4: // parking state 3 (The car detect behind object or drive more 1.5 times of the car length)
-                                speed = -1;
-                                desiredSteeringWheelAngle = -26;
-
-                                if(vd.getAbsTraveledPath()>= distance_3+(car_length*1.5)//if it doesn't detect any car behind after drive 10 meters more.
-                                    && IF_Rear <0){
-
-                                    state = 7;
-                                }
-
-                                if(IF_Rear <= 2.6 && IF_Rear >0){
-                                    speed = 0;
-                                    desiredSteeringWheelAngle = 0;
-                                    state = 5;
-
-                                } 
-                                break;
-
-                            case 5:// move 1 to make the car park right
-                                speed = 1;
-                                desiredSteeringWheelAngle = 25;
-                                //if IF_Rear doesn't detect any object Or US_Front detect any object
-                             if(IF_Rear <0 ||(US_Front < (car_length*0.44)&& US_Front >0)){
-                                    speed = 0;
-                                    desiredSteeringWheelAngle = 0;
-                                    state = 6;
-                                  
-                                }
-                                break;
-
-                            case 6: // finding the appropriated position of the car
-                                speed = -0.4;
-                                desiredSteeringWheelAngle = -26;
-                               
-                                if(IF_Rear<=(car_length*0.48)&& IF_Rear>0){
-                                
-                                    state = 7;
-                                } 
-                                break;
-
-                            case 7:
-                                speed = 0;
-                                desiredSteeringWheelAngle = 0;
-                                break;
-
-                            case 0: // find space for parking and right place to park (found the obstacle)
-                               
-                               //get speed data and wheelangle from the lane detector through container
-                                speed = spd_old.getSpeedData();
-                                desiredSteeringWheelAngle = sd.getExampleData();
-
-                                //make sure that it is not curve, before going to the next state.
-                                if((US_FR <0 || US_FR > (car_length*1.6))
-                                  &&desiredSteeringWheelAngle<=0.02 && desiredSteeringWheelAngle>=0{ 
-                                  
-                                    state = 1; //state gap enough
-                                    
-                                }
-                                break;
-                        }
-                            
-                //}
-                /*********************End parking**********************/
-
-                /****************************/
                 // With setSpeed you can set a desired speed for the vehicle in the range of -2.0 (backwards) .. 0 (stop) .. +2.0 (forwards)
-               vc.setSpeed(speed);
+                vc.setSpeed(0.4);
 
                 // With setSteeringWheelAngle, you can steer in the range of -26 (left) .. 0 (straight) .. +25 (right)
-             //   double desiredSteeringWheelAngle = -20; // 4 degree but SteeringWheelAngle expects the angle in radians!
-               vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
+                double desiredSteeringWheelAngle = 4; // 4 degree but SteeringWheelAngle expects the angle in radians!
+                vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
 
                 // You can also turn on or off various lights:
                 vc.setBrakeLights(false);
@@ -232,8 +103,9 @@ namespace msv {
                 Container c(Container::VEHICLECONTROL, vc);
                 // Send container.
                 getConference().send(c);
-            }
+	        }
 
-            return ModuleState::OKAY;
+	        return ModuleState::OKAY;
         }
 } // msv
+
