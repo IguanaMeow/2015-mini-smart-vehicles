@@ -108,27 +108,34 @@ namespace msv {
                 //INTERSECTION HANDLING//
 
                  switch(state){ 
-                    case 0:         //from lane following
+                    case 0:         //normal lane following
+                        cout << "state 0: normal" << endl;
                         speed = spd.getSpeedData();
                         steerAngle = sd.getExampleData();
 
                         if(intersect == true){   //check for intersection
-                            sleep (10);
+                            speed = 0;
                             state = 1; //at intersection state
                         }
                         break;
 
                     case 1: //at intersection, check if clear
                         
+                        sleep(5);
+                        cout << "state 1: at intersection" << endl;
+                        
                         if(US_Front <0 && US_FR <0){   //nothing detected in intersection
-                            state = 2;     //move through intersection state
+                            state = 2;                //move through intersection state
                         } else {
-                            speed = 0;          //WHY NO STOPPY?!
-                            steerAngle = 0;
+                            //speed = 0;          //WHY NO STOPPY?!
+                            //steerAngle = 0;
+                            sleep(5);               //wait, then go through. 
+                            state = 2;              //else will stop forever if non-moving obstacle
                         }
                         break;
 
                     case 2:
+                        cout << "state 2: drive through intersection" << endl;
                         speed = 1;          //drive through intersection
                         steerAngle = 0;
 
