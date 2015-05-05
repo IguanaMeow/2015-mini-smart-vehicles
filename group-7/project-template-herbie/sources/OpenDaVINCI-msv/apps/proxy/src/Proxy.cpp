@@ -24,7 +24,7 @@
 #include "core/base/KeyValueConfiguration.h"
 #include "core/data/Container.h"
 #include "core/data/TimeStamp.h"
-#include "core/data/control/VehicleControl.h" 
+#include "core/data/control/VehicleControl.h"
 #include "OpenCVCamera.h"
 
 #include "GeneratedHeaders_Data.h"
@@ -110,7 +110,7 @@ namespace msv {
     }
 
     double front_us, fr_ir, rr_ir, fr_us, rear_ir; // values to pass to HLB
-    double speed, steeringAngle; // values to pass to LLB 
+    double speed, steeringAngle; // values to pass to LLB
 
     SensorBoardData sbd;
     VehicleControl vc;
@@ -127,7 +127,7 @@ namespace msv {
                 distribute(c);
                 captureCounter++;
             }
-           
+
             // TODO: Here, you need to implement the data links to the embedded system
             // to read data from IR/US.
 
@@ -149,8 +149,35 @@ namespace msv {
             sbd.putTo_MapOfDistances(3, front_us);
             sbd.putTo_MapOfDistances(4, fr_us);
 
-            Container containerSensorBoardData = Container(Container::USER_DATA_0, sbd);       
+            Container containerSensorBoardData = Container(Container::USER_DATA_0, sbd);
             distribute(containerSensorBoardData);
+
+            // Serial communication
+
+            // port, baudrate, timeout in milliseconds
+
+
+            string port = "/dev/ttyACM0";
+            unsigned long baud = 9600;
+
+
+            serial::Serial my_serial(port, baud, serial::Timeout::simpleTimeout(1000));
+            if(my_serial.isOpen())
+               cout << " Serial port is open" <<endl;
+
+            else
+               cout << " Serial port is not open" <<endl;
+
+            // Write to serial
+                //while (count )
+                //size_t bytes_wrote = my_serial.write(test_string);
+
+
+
+            // Read from serial
+
+
+            }
 
         }
 
@@ -160,4 +187,3 @@ namespace msv {
     }
 
 } // msv
-
