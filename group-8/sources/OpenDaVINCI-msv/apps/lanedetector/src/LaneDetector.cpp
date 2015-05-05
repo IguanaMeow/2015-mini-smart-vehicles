@@ -252,12 +252,12 @@ namespace msv {
         // Get two valid lines to base steering on
         //vector<Lines> valid = validateLines(&leftList);
         // Steer to the right
-        if (valid.begin()->getXPos() < valid.begin()->getCritical() - 2) {
+        if (valid.begin()->getXPos() < valid.begin()->getCritical() - 4) {
           sd.setHeadingData(-measureAngle(m_image->height - valid.end()->getYPos(), valid.end()->getXPos(), m_image->height - valid.begin()->getYPos(), valid.begin()->getXPos()));
           std::cout<<-measureAngle(m_image->height - valid.end()->getYPos(), valid.end()->getXPos(), m_image->height - valid.begin()->getYPos(), valid.begin()->getXPos())<< std::endl;
         } 
         // Steer to the left
-        else if (valid.begin()->getXPos() > valid.begin()->getCritical() + 2) {
+        else if (valid.begin()->getXPos() > valid.begin()->getCritical() + 4) {
           sd.setHeadingData(measureAngle(m_image->height - valid.end()->getYPos(), valid.end()->getXPos(), m_image->height - valid.begin()->getYPos(), valid.begin()->getXPos()));
           std::cout<<measureAngle(m_image->height - valid.end()->getYPos(), valid.end()->getXPos(), m_image->height - valid.begin()->getYPos(), valid.begin()->getXPos())<<std::endl;
         } 
@@ -271,12 +271,12 @@ namespace msv {
       {
        
         // Steer to the left
-        if (rightLine1.getXPos() < rightLine1.getCritical() - 2) {
+        if (rightLine1.getXPos() < rightLine1.getCritical() - 4) {
             sd.setHeadingData(-adjustAngle(m_image->height - 70, rightLine2.getXPos(), m_image->height - 50, rightLine1.getXPos()));
             std::cout<<-adjustAngle(m_image->height - 70, rightLine2.getXPos(), m_image->height - 50, rightLine1.getXPos())<<std::endl;
         } 
         // Steer to the right
-        else if (rightLine1.getXPos() > rightLine1.getCritical() + 2) {
+        else if (rightLine1.getXPos() > rightLine1.getCritical() + 4) {
             sd.setHeadingData(adjustAngle(m_image->height - 70, rightLine2.getXPos(), m_image->height - 50, rightLine1.getXPos()));
             std::cout<<adjustAngle(m_image->height - 70, rightLine2.getXPos(), m_image->height - 50, rightLine1.getXPos())<<std::endl;
         } 
@@ -435,9 +435,11 @@ double LaneDetector::measureAngle(int yPos1, int xPos1, int yPos2, int xPos2) {
   double deltaY = yPos2 - yPos1;
   double deltaX = xPos2 - xPos1;
 
-  double angle = atan2(deltaY, deltaX)/2;
+  double angle = (atan2(deltaY, deltaX) * Constants::RAD2DEG) - 90;
 
-  return angle;
+  cout << "angle " << angle << endl;
+
+  return angle * Constants::DEG2RAD;
 }
 
 double LaneDetector::adjustAngle(int yPos1, int xPos1, int yPos2, int xPos2){
@@ -445,15 +447,15 @@ double LaneDetector::adjustAngle(int yPos1, int xPos1, int yPos2, int xPos2){
   inputAngle2 = inputAngle3;
   inputAngle3 = measureAngle(yPos1, xPos1, yPos2, xPos2);
   if((inputAngle3-inputAngle2)<0.00005 && (inputAngle2-inputAngle1)<0.00005){
-    return 0.1*inputAngle3;
+     inputAngle3 *= 0.2;
   }
   else if ((inputAngle3 - inputAngle2) < (inputAngle2 - inputAngle1)){
-    return 0.3*inputAngle3;
+     inputAngle3 *= 0.4;
   }else if ((inputAngle3 - inputAngle2)> (inputAngle2 - inputAngle1)){
-    return 3*inputAngle3;
-  }else {
-    return inputAngle3;
+     inputAngle3 *= 3;
   }
+  cout << "inputAngle " << inputAngle3 << endl;
+  return inputAngle3;
 }
 
 double LaneDetector::measureDistance(int yPos, int dir, IplImage* image) {
