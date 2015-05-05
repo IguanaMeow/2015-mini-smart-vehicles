@@ -258,7 +258,7 @@ namespace msv {
                                 speed = -1;
                                 desiredSteeringWheelAngle = -26;
                                 //if it doesn't detect any car behind after drive 10 meters more.
-                                if(vd.getAbsTraveledPath() >= distance_3 + (car_length * 1.5) && rear_ir < 0) pMode = 7;
+                                if(vd.getAbsTraveledPath() >= distance_3 + (car_length * 0.81) && rear_ir < 0) pMode = 7;
                                 if(rear_ir <= 2.6 && rear_ir > 0){
                                     speed = 0;
                                     desiredSteeringWheelAngle = 0;
