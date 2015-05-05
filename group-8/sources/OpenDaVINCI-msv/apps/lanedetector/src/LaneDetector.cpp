@@ -264,10 +264,10 @@ namespace msv {
       // Follow the lower right lines
       else
       {
-       
+        cout << "Follow right" << endl;
         // Steer to the left
         if (rightLine1.getXPos() < rightLine1.getCritical()) {
-            sd.setHeadingData(-adjustAngle(m_image->height - 70, rightLine2.getXPos(), m_image->height - 50, rightLine1.getXPos()));
+            sd.setHeadingData(adjustAngle(m_image->height - 70, rightLine2.getXPos(), m_image->height - 50, rightLine1.getXPos()));
         } 
         // Steer to the right
         else if (rightLine1.getXPos() > rightLine1.getCritical()) {
@@ -427,7 +427,7 @@ double LaneDetector::measureAngle(int yPos1, int xPos1, int yPos2, int xPos2) {
   double deltaY = yPos2 - yPos1;
   double deltaX = xPos2 - xPos1;
 
-  double angle = (atan2(deltaY, deltaX) * Constants::RAD2DEG) - 90;
+  double angle = (atan2(deltaY, deltaX) * Constants::RAD2DEG) - 46.4688;
 
   cout << "angle " << angle << endl;
 
@@ -439,12 +439,12 @@ double LaneDetector::adjustAngle(int yPos1, int xPos1, int yPos2, int xPos2){
   inputAngle2 = inputAngle3;
   inputAngle3 = measureAngle(yPos1, xPos1, yPos2, xPos2);
   if((inputAngle3-inputAngle2)<0.00005 && (inputAngle2-inputAngle1)<0.00005){
-     inputAngle3 *= 0.2;
+     inputAngle3 *= 1; //0.2;
   }
   else if ((inputAngle3 - inputAngle2) < (inputAngle2 - inputAngle1)){
-     inputAngle3 *= 0.4;
+     inputAngle3 *= 1; //0.4;
   }else if ((inputAngle3 - inputAngle2)> (inputAngle2 - inputAngle1)){
-     inputAngle3 *= 3;
+     inputAngle3 *= 1; //3;
   }
   cout << "inputAngle " << inputAngle3 << endl;
   return inputAngle3;
