@@ -55,6 +55,8 @@ namespace msv {
         // This method will do the main data processing job.
         ModuleState::MODULE_EXITCODE Driver::body() {
                 int front_us, fr_ir, rr_ir, fr_us, rear_ir;
+                bool intersect = false;
+                int intersectionState = 0;
                 bool obstacleFound = false;
                 double speed = 0.8;
                 bool laneFollow = true;
@@ -107,6 +109,10 @@ namespace msv {
                 Container containerLaneFollowing = getKeyValueDataStore().get(Container::USER_DATA_5);
                 LaneDetected ld = containerLaneFollowing.getData<LaneDetected>();
 
+                 Container containerIntersection = getKeyValueDataStore().get(Container::USER_DATA_6);
+                Intersection id = containerIntersection.getData<Intersection> ();
+                intersect = id.getIntersection();
+
                 canFollowLane = ld.getLaneDetected();
                 canFollowLane ? cerr << "canFollowLane = true" << endl : cerr << "canFollowLane = false" << endl;
                 
@@ -130,7 +136,42 @@ namespace msv {
                     rightTurnSteerAngle = 23; 
                 }
 
+                // intersection control
 
+                switch(intersectionState){ 
+                    case 0:         //normal lane following
+                        cout << "state 0: normal" << endl;
+                        if(intersect == true){   //check for intersection
+                            laneFollow = false;
+                            speed = 0;
+                            intersectionState = 1; //at intersection state
+                        }
+                        break;
+
+                    case 1: //at intersection, check if clear
+                        
+                        sleep(5);
+                        cout << "state 1: at intersection" << endl;
+                        
+                        if(front_us <0 && fr_us <0){   //nothing detected in intersection
+                            intersectionState = 2;                //move through intersection state
+                        } else { 
+                            sleep(5);               //wait, then go through. 
+                            intersectionState = 2;              //else will stop forever if non-moving obstacle
+                        }
+                        break;
+
+                    case 2:
+                        cout << "state 2: drive through intersection" << endl;
+                        speed = 1;          //drive through intersection
+                        desiredSteeringWheelAngle = 0;
+
+                        if(canFollowLane == true){    //lane is detected
+                            intersectionState = 0;    // startlane following state
+                            laneFollow = true;
+                        }
+                        break;
+                }
                 // Create vehicle control data.
                 switch(otMode){
                     case 0:
