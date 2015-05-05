@@ -30,6 +30,7 @@
 #include "GeneratedHeaders_Data.h"
 
 #include "Proxy.h"
+#include "../serial/include/serial/serial.h"
 
 namespace msv {
 
@@ -175,7 +176,7 @@ namespace msv {
 
 
             // Read from serial
-
+            if(my_serial.isAvailable())
 
             }
 
