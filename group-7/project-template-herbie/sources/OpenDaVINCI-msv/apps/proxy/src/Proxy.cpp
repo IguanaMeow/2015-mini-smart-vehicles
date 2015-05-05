@@ -24,7 +24,7 @@
 #include "core/base/KeyValueConfiguration.h"
 #include "core/data/Container.h"
 #include "core/data/TimeStamp.h"
-
+#include "core/data/control/VehicleControl.h" 
 #include "OpenCVCamera.h"
 
 #include "GeneratedHeaders_Data.h"
@@ -36,6 +36,7 @@ namespace msv {
     using namespace std;
     using namespace core::base;
     using namespace core::data;
+    using namespace core::data::control;
     using namespace tools::recorder;
 
     Proxy::Proxy(const int32_t &argc, char **argv) :
@@ -108,6 +109,12 @@ namespace msv {
         getConference().send(c);
     }
 
+    double front_us, fr_ir, rr_ir, fr_us, rear_ir; // values to pass to HLB
+    double speed, steeringAngle; // values to pass to LLB 
+
+    SensorBoardData sbd;
+    VehicleControl vc;
+
     // This method will do the main data processing job.
     ModuleState::MODULE_EXITCODE Proxy::body() {
         uint32_t captureCounter = 0;
@@ -120,9 +127,31 @@ namespace msv {
                 distribute(c);
                 captureCounter++;
             }
-
+           
             // TODO: Here, you need to implement the data links to the embedded system
             // to read data from IR/US.
+
+            Container containerVehicleControl = getKeyValueDataStore().get(Container::VEHICLECONTROL);
+            vc = containerVehicleControl.getData<VehicleControl> ();
+            speed = vc.getSpeed();
+            steeringAngle = vc.getSteeringWheelAngle();
+
+            // hardcoded to test
+            // sbd.putTo_MapOfDistances(0, 2);
+            // sbd.putTo_MapOfDistances(1, 2);
+            // sbd.putTo_MapOfDistances(2, 0);
+            // sbd.putTo_MapOfDistances(3, 20);
+            // sbd.putTo_MapOfDistances(4, 2);
+
+            sbd.putTo_MapOfDistances(0, fr_ir);
+            sbd.putTo_MapOfDistances(1, rear_ir);
+            sbd.putTo_MapOfDistances(2, rr_ir);
+            sbd.putTo_MapOfDistances(3, front_us);
+            sbd.putTo_MapOfDistances(4, fr_us);
+
+            Container containerSensorBoardData = Container(Container::USER_DATA_0, sbd);       
+            distribute(containerSensorBoardData);
+
         }
 
         cout << "Proxy: Captured " << captureCounter << " frames." << endl;
