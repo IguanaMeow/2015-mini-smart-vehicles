@@ -170,26 +170,27 @@ namespace msv {
                cout << " Serial port is not open" <<endl;
 
             // Write to serial
-      	    // int count = 0; 
-		string test_string = "5:hello,"; 
+      	    // int count = 0;
+		string test_string = "5:hello,";
 
                 while (1) {
                // size_t bytes_wrote =
 		my_serial.write(test_string);
-		
-		string result = my_serial.readline(test_string.length()+1);
+
+    // string result = my_serial.readline(test_string.length()+1); // Jasons code
+		string result = my_serial.readline(33, ","); // Janis code. The arguments are size_t (size in bytes = amount of characters to read) and what the delimiter is.
 
 //		cout << "Iteration: " << count << ", Bytes written: ";
 //	    	cout << bytes_wrote << ", Bytes read: ";
 //  		cout << result.length() << ", String read: " << result << endl;
-		
-		cout << result << endl; 
+
+		cout << result << endl;
 		}
 
 
             // Read from serial
 //            if(my_serial.available()) {
-//		my_serial.read(bytes_wrote); 
+//		my_serial.read(bytes_wrote);
   //          }
 
         }
