@@ -170,15 +170,27 @@ namespace msv {
                cout << " Serial port is not open" <<endl;
 
             // Write to serial
-                //while (count )
-                //size_t bytes_wrote = my_serial.write(test_string);
+      	    // int count = 0; 
+		string test_string = "5:hello,"; 
 
+                while (1) {
+               // size_t bytes_wrote =
+		my_serial.write(test_string);
+		
+		string result = my_serial.readline(test_string.length()+1);
+
+//		cout << "Iteration: " << count << ", Bytes written: ";
+//	    	cout << bytes_wrote << ", Bytes read: ";
+//  		cout << result.length() << ", String read: " << result << endl;
+		
+		cout << result << endl; 
+		}
 
 
             // Read from serial
-            if(my_serial.isAvailable())
-
-            }
+//            if(my_serial.available()) {
+//		my_serial.read(bytes_wrote); 
+  //          }
 
         }
 
