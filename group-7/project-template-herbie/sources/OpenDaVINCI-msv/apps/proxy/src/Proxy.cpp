@@ -21,6 +21,7 @@
 #include <cstring>
 #include <cmath>
 #include <unistd.h>
+#include <sstream> 
 
 #include "core/base/KeyValueConfiguration.h"
 #include "core/data/Container.h"
@@ -163,8 +164,7 @@ namespace msv {
             // port, baudrate, timeout in milliseconds
 
 
-            string port = "/dev/ttyACM0";
-	    decodeNetstring(port); 
+            string port = "/dev/ttyACM1";
             unsigned long baud = 9600;
 
 
@@ -177,24 +177,24 @@ namespace msv {
             }
             // Write to serial
       	    // int count = 0;
-		string test_string = "5:hello,";
+	    string test_string = "Steering:-23";
+	    
         
             while (1) {
             // size_t bytes_wrote = my_serial.write(test_string); 
-    	    my_serial.write(test_string);
+	    stringstream ss;
+	    ss << steeringAngle;
+            string wheelAngle = ss.str(); 
+    	    my_serial.write(encodeNetstring(wheelAngle));
+
             usleep(100 * 1000); // Sleep for 100 milliseconds (100 microseconds * 1000 = 100 milliseconds)
 
 
-
- 	    // string result = my_serial.readline(test_string.length()+1); // Jasons code
-	    string result = my_serial.readline(33, ","); // Janis code. The arguments are size_t (size in bytes = amount of characters to read) and what the delimiter is.
+//string result = my_serial.readline(33, ","); // Janis code. The arguments are size_t (size in bytes = amount of characters to read) and what the delimiter is.
 	    usleep(100 * 1000);
 
-//	    cout << "Iteration: " << count << ", Bytes written: ";
-//	    cout << bytes_wrote << ", Bytes read: ";
-//  	    cout << result.length() << ", String read: " << result << endl;
 
-	    cout << result << endl;
+//cout << result << endl;
 	    }
 
 
