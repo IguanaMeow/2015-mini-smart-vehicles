@@ -114,16 +114,23 @@ void WheelEncoderInterrupt() { //if pinA is high and pinB is low ticks ++ else t
 
 // Functions
 //Regine
-void serialEvent() {
-  unsigned int integerValue = 0; // Max value is 65535
-  char inByte;
+  void serialEvent() {
+    unsigned int integerValue = 0; // Max value is 65535
+    char inByte;
 
-  if (Serial.available() > 0) {   // something came across serial
-    integerVal = 0;         // throw away previous integerValue
-    while (1) {           // force into a loop until 'n' is received
-      inByte = Serial.read();
-      if (inByte == '\n') break;   // exit the while(1), we're done receiving
-      if (inByte == -1) continue;  // if no characters are in the buffer read() returns -1
+    if (Serial.available() > 0) {   // something came across serial
+    
+      integerVal = 0;         // throw away previous integerValue
+    
+      while (1) {           // force into a loop until ',' is received
+      
+        static char buffer[34];
+        if (readline(Serial.read(), buffer, 34) > 0) {
+          Serial.print("You entered: >");
+          Serial.print(buffer);
+          Serial.println("<");
+        }
+      }
       integerVal *= 10;  // shift left 1 decimal place
       // convert ASCII to integer, add, and shift left 1 decimal place
       integerVal = ((inByte - 48) + integerVal);
@@ -148,11 +155,9 @@ void serialEvent() {
       if (integerVal == 90) {
         angle = 90;
       }
-
     }
   }
 
-}
 
 
 //Jani
@@ -188,6 +193,30 @@ String decodeNetstring(String netstring) {
 
   return payload;
 
+}
+
+//nicole! haha
+int readline(int readch, char *buffer, int len){
+  static int pos = 0;
+  int rpos;
+
+  if (readch > 0) {
+    switch (readch) {
+      case '\n': // Ignore new-lines
+        break;
+      case ',': // Return on CR
+        rpos = pos;
+        pos = 0;  // Reset position index ready for next time
+        return rpos;
+      default:
+        if (pos < len-1) {
+          buffer[pos++] = readch;
+          buffer[pos] = 0;
+        }
+    }
+  }
+  // No end of line has been found, so return -1.
+  return -1;
 }
 
 
