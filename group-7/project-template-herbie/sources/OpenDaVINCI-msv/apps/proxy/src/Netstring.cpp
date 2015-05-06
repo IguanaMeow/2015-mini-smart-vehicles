@@ -1,11 +1,18 @@
 #include <iostream>
 #include <string>
+#include <stdint.h> 
+#include <sstream> 
+
+#include "Netstring.h"
+
 using namespace::std;
 
 string encodeNetstring(string payload) {
     unsigned long len = payload.length();
     if(!len) return "ERROR_EMPTY_STRING";
-    string s = to_string(len);
+    std::stringstream ss;   //Convert len to string
+    ss << len;
+    string s= ss.str(); 	
     string netstring = s + ":" + payload + ",";
     
     return netstring;
@@ -20,7 +27,12 @@ string decodeNetstring(string netstring) {
     if (semicolonIndex < 0) return "NETSTRING_ERROR_NO_COLON";
     
     string getLength = netstring.substr(0, semicolonIndex);
-    int payloadLength = atoi(getLength.c_str());            //Convert string to int
+    unsigned int payloadLength; 
+    stringstream convert(getLength.c_str()); //Convert string to int
+    if (! (convert >>payloadLength)  )       //give the value to payloadLength using the values in the string
+    	payloadLength = 0;  		     // if fails set value to zero 	
+
+    //    unsigned int payloadLength = atoi(getLength.c_str());            //Convert string to int
     if (payloadLength < 1) return "NETSTRING_ERROR_LEADING_ZERO";
     
     string payload = netstring.substr(semicolonIndex+1);
@@ -31,6 +43,7 @@ string decodeNetstring(string netstring) {
     
     return payload;
 }
+/*
 int main(int argc, const char * argv[]) {
 
     string payload = "awesomeData" 
@@ -42,3 +55,4 @@ int main(int argc, const char * argv[]) {
     return 0;
     
 }
+*/ 
