@@ -342,8 +342,25 @@ namespace msv {
 				   && abs(steer) < 0.02){
 
 			//Try to detect intersection
-			intersect = true;
-			spd.setSpeedData(0);
+			//Try to detect intersection line
+			int check;
+
+			//check for intersection line
+			//If they appears in this state, it gonna have to be between gap[1] and[2]
+			for (i = gap[1]; i<gap[2]; i++){
+
+				check = count(0,i,m_image,w);
+
+				if (check < 5){
+					//because the red line is 2 pixel, check is 2 when it detects a white spot
+					//then car go to intersection mode
+					intersect = true;
+					break;
+				}
+			}
+		
+			//If intersection mode, car stops, else just go straight
+			spd.setSpeedData(intersect? 0 : 1);
 			sd.setExampleData(0);
 			ldd.setLongDistanceData(dist[0]);
 			sdd.setShortDistanceData(dist[1]);
