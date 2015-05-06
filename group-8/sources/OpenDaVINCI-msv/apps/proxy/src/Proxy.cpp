@@ -246,7 +246,7 @@ namespace msv {
 
             //cerr << "checksum: " << (uint16_t)outSer[6] << endl;
             int sentnum = (int)this_serial->write(outSer, 7);
-            //cerr << "sent bytes: " << sentnum << endl;
+            cerr << "sent bytes: " << sentnum << endl;
         }
         cerr << "Speed sent to Arduino: " << speedOut << endl;
         cerr << "Steering sent to Arduino: " << steeringOut << endl;
