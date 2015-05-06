@@ -115,6 +115,9 @@ namespace msv {
         	int counter;
         	int critCounter;
 
+        	int imgWidth;
+        	int imgHeight;
+
         	double const SPEED;
 
         	double critAngleRight;

@@ -71,7 +71,11 @@ namespace msv {
         counter(0),
         critCounter(0),
 
-        SPEED(5),
+        imgWidth(0),
+        imgHeight(0),
+
+        SPEED(2),
+        
 
         critAngleRight(0.0)
          {
@@ -181,6 +185,8 @@ namespace msv {
           retVal = true;
         }
       }
+      imgWidth = m_image->width;
+      imgHeight = m_image->height;
       return retVal;
     }
 
@@ -242,24 +248,24 @@ namespace msv {
           sd.setSpeedData(SPEED);
           
           // Following upper right lines
-          if(rightLine1.getXPos() > 280 && rightLine2.getXPos() > 280 && leftLine1.getXPos() > 280 && leftLine2.getXPos() > 280)
+          if(rightLine1.getXPos() > imgWidth - 5 && rightLine2.getXPos() > imgWidth - 5 && leftLine1.getXPos() > imgWidth - 5 && leftLine2.getXPos() > imgWidth - 5)
       {
         state = 3;
         break;
       }
       // Follow left lines
-      else if (rightLine1.getXPos() > 280 && rightLine2.getXPos() > 280)
+      else if (rightLine1.getXPos() > imgWidth - 5 && rightLine2.getXPos() > imgWidth - 5)
       {
      
         // Get two valid lines to base steering on
         //vector<Lines> valid = validateLines(&leftList);
         // Steer to the right
         if (valid.begin()->getXPos() < valid.begin()->getCritical()) {
-          sd.setHeadingData(-measureAngle(m_image->height - valid.end()->getYPos(), valid.end()->getXPos(), m_image->height - valid.begin()->getYPos(), valid.begin()->getXPos(), 0));
+          sd.setHeadingData(-measureAngle(imgHeight - valid.end()->getYPos(), valid.end()->getXPos(), imgHeight - valid.begin()->getYPos(), valid.begin()->getXPos(), 0));
         } 
         // Steer to the left
         else if (valid.begin()->getXPos() > valid.begin()->getCritical()) {
-          sd.setHeadingData(measureAngle(m_image->height - valid.end()->getYPos(), valid.end()->getXPos(), m_image->height - valid.begin()->getYPos(), valid.begin()->getXPos(), 0));
+          sd.setHeadingData(measureAngle(imgHeight - valid.end()->getYPos(), valid.end()->getXPos(), imgHeight - valid.begin()->getYPos(), valid.begin()->getXPos(), 0));
         } 
         // Steer straight
         else {
@@ -272,11 +278,11 @@ namespace msv {
         cout << "Follow right" << endl;
         // Steer to the left
         if (rightLine1.getXPos() < rightLine1.getCritical()) {
-            sd.setHeadingData(measureAngle(m_image->height - 70, rightLine2.getXPos(), m_image->height - 50, rightLine1.getXPos(), error));
+            sd.setHeadingData(measureAngle(imgHeight - 70, rightLine2.getXPos(), imgHeight - 50, rightLine1.getXPos(), error));
         } 
         // Steer to the right
         else if (rightLine1.getXPos() > rightLine1.getCritical()) {
-            sd.setHeadingData(measureAngle(m_image->height - 70, rightLine2.getXPos(), m_image->height - 50, rightLine1.getXPos(), error));
+            sd.setHeadingData(measureAngle(imgHeight - 70, rightLine2.getXPos(), imgHeight - 50, rightLine1.getXPos(), error));
         } 
         // Steer straight
         else {
