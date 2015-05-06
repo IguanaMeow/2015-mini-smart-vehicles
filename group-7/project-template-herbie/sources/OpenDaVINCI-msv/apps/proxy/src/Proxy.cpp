@@ -20,6 +20,7 @@
 #include <ctype.h>
 #include <cstring>
 #include <cmath>
+#include <unistd.h>
 
 #include "core/base/KeyValueConfiguration.h"
 #include "core/data/Container.h"
@@ -112,7 +113,7 @@ namespace msv {
 
     double front_us, fr_ir, rr_ir, fr_us, rear_ir; // values to pass to HLB
     double speed, steeringAngle; // values to pass to LLB
-
+    bool leftFlashingLights, rightFlashingLights, brakeLights = false;
     SensorBoardData sbd;
     VehicleControl vc;
 
@@ -136,6 +137,9 @@ namespace msv {
             vc = containerVehicleControl.getData<VehicleControl> ();
             speed = vc.getSpeed();
             steeringAngle = vc.getSteeringWheelAngle();
+            leftFlashingLights = vc.getLeftFlashingLights();
+            rightFlashingLights = vc.getRightFlashingLights();
+            brakeLights = vc.getBrakeLights();
 
             // hardcoded to test
             // sbd.putTo_MapOfDistances(0, 2);
@@ -163,33 +167,38 @@ namespace msv {
 
 
             serial::Serial my_serial(port, baud, serial::Timeout::simpleTimeout(1000));
-            if(my_serial.isOpen())
+            if(my_serial.isOpen()) {
                cout << " Serial port is open" <<endl;
 
-            else
+            } else {
                cout << " Serial port is not open" <<endl;
-
+            }
             // Write to serial
-      	    // int count = 0; 
-		string test_string = "5:hello,"; 
-
+      	    // int count = 0;
+		string test_string = "5:hello,";
+        
                 while (1) {
                // size_t bytes_wrote =
-		my_serial.write(test_string);
-		
-		string result = my_serial.readline(test_string.length()+1);
+    	my_serial.write(test_string);
+        usleep(100 * 1000); // Sleep for 100 milliseconds (100 microseconds * 1000 = 100 milliseconds)
+
+
+
+ //   string result = my_serial.readline(test_string.length()+1); // Jasons code
+		string result = my_serial.readline(33, ","); // Janis code. The arguments are size_t (size in bytes = amount of characters to read) and what the delimiter is.
+        usleep(100 * 1000);
 
 //		cout << "Iteration: " << count << ", Bytes written: ";
 //	    	cout << bytes_wrote << ", Bytes read: ";
 //  		cout << result.length() << ", String read: " << result << endl;
-		
-		cout << result << endl; 
+
+		cout << result << endl;
 		}
 
 
             // Read from serial
 //            if(my_serial.available()) {
-//		my_serial.read(bytes_wrote); 
+//		my_serial.read(bytes_wrote);
   //          }
 
         }
