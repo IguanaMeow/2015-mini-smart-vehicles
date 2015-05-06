@@ -129,7 +129,7 @@ namespace msv {
         for(int i = 0; i < OUTSERIAL-1; i++){
             outSer[OUTSERIAL - 1] ^= outSer[i];
         } 
-        for (int i = 0; i < 20; ++i){
+        for (int i = 0; i < 100; ++i){
             this_serial->write(outSer, 7);
         }
         OPENDAVINCI_CORE_DELETE_POINTER(m_recorder);
@@ -193,9 +193,9 @@ namespace msv {
         VehicleControl vdata = containerVehicleControl.getData<VehicleControl> ();
         double speedSetting = vdata.getSpeed();
         double steeringSetting = vdata.getSteeringWheelAngle();
-        cerr << "speedSetting: " << speedSetting << endl;
-        cerr << "steeringSetting: " << steeringSetting << endl;
-        cerr << "RAD2DEG: " << Constants::RAD2DEG << endl;
+        //cerr << "speedSetting: " << speedSetting << endl;
+        //cerr << "steeringSetting: " << steeringSetting << endl;
+        //cerr << "RAD2DEG: " << Constants::RAD2DEG << endl;
         
         uint16_t speedOutTemp;
         uint16_t steeringOutTemp;
@@ -214,7 +214,7 @@ namespace msv {
         }else if ((int)speedSetting == 0){
             speedOutTemp = 1520; 
         }else{
-            speedOutTemp = 1570 + speedSetting;
+            speedOutTemp = 1560 + speedSetting;
         }
         steeringOutTemp = 90 - (uint16_t)(steeringSetting * Constants::RAD2DEG);
         if(steeringOutTemp < 65) steeringOutTemp = 65;
@@ -244,14 +244,12 @@ namespace msv {
                 outSer[OUTSERIAL - 1] ^= outSer[i];
             } 
 
-            cerr << "checksum: " << (uint16_t)outSer[6] << endl;
+            //cerr << "checksum: " << (uint16_t)outSer[6] << endl;
             int sentnum = (int)this_serial->write(outSer, 7);
-            cerr << "sent bytes: " << sentnum << endl;
+            //cerr << "sent bytes: " << sentnum << endl;
         }
-        cerr << "speedOutTemp: " << speedOutTemp << endl;
-        cerr << "steeringOutTemp: " << steeringOutTemp << endl;
-        cerr << "speedOut: " << speedOut << endl;
-        cerr << "steeringOut: " << steeringOut << endl;
+        cerr << "Speed sent to Arduino: " << speedOut << endl;
+        cerr << "Steering sent to Arduino: " << steeringOut << endl;
     }
 
     void Proxy::distSerial() {
@@ -298,11 +296,8 @@ namespace msv {
 
 
 
-        cerr << "Speed: " << speed << endl;
-        cerr << "Steering: " << steering << endl;
-
-        cerr << "Speed: " << vd.getSpeed() << endl;
-        cerr << "Steering: " << vd.getHeading() << endl;
+        cerr << "SPEED RECEIVED from Arduino: " << speed << endl;
+        cerr << "STEERING RECEIVED from Arduino: " << steering << endl;
 
         cerr << "Sensor 0 IR Front-Right: " << sbd.getValueForKey_MapOfDistances(0) << endl;
         cerr << " Sensor 1 IR Back: " << sbd.getValueForKey_MapOfDistances(1) << endl;
@@ -362,13 +357,13 @@ namespace msv {
             // Capture frame.
             if (m_camera != NULL) {
 
-                cerr << "Capturing frame" << endl;
+                //cerr << "Capturing frame" << endl;
                 
                 core::data::image::SharedImage si = m_camera->capture();
                 
 
                 Container c(Container::SHARED_IMAGE, si);
-                cerr << "Distributing Frame" << endl;
+                //cerr << "Distributing Frame" << endl;
                 distribute(c);
                 captureCounter++;
                 // cumduration = ( clock() - start ) / (double) CLOCKS_PER_SEC;
