@@ -20,22 +20,25 @@
 #include <ctype.h>
 #include <cstring>
 #include <cmath>
+#include <unistd.h>
 
 #include "core/base/KeyValueConfiguration.h"
 #include "core/data/Container.h"
 #include "core/data/TimeStamp.h"
-
+#include "core/data/control/VehicleControl.h"
 #include "OpenCVCamera.h"
 
 #include "GeneratedHeaders_Data.h"
 
 #include "Proxy.h"
+#include "../serial/include/serial/serial.h"
 
 namespace msv {
 
     using namespace std;
     using namespace core::base;
     using namespace core::data;
+    using namespace core::data::control;
     using namespace tools::recorder;
 
     Proxy::Proxy(const int32_t &argc, char **argv) :
@@ -108,6 +111,12 @@ namespace msv {
         getConference().send(c);
     }
 
+    double front_us, fr_ir, rr_ir, fr_us, rear_ir; // values to pass to HLB
+    double speed, steeringAngle; // values to pass to LLB
+    bool leftFlashingLights, rightFlashingLights, brakeLights = false;
+    SensorBoardData sbd;
+    VehicleControl vc;
+
     // This method will do the main data processing job.
     ModuleState::MODULE_EXITCODE Proxy::body() {
         uint32_t captureCounter = 0;
@@ -123,6 +132,75 @@ namespace msv {
 
             // TODO: Here, you need to implement the data links to the embedded system
             // to read data from IR/US.
+
+            Container containerVehicleControl = getKeyValueDataStore().get(Container::VEHICLECONTROL);
+            vc = containerVehicleControl.getData<VehicleControl> ();
+            speed = vc.getSpeed();
+            steeringAngle = vc.getSteeringWheelAngle();
+            leftFlashingLights = vc.getLeftFlashingLights();
+            rightFlashingLights = vc.getRightFlashingLights();
+            brakeLights = vc.getBrakeLights();
+
+            // hardcoded to test
+            // sbd.putTo_MapOfDistances(0, 2);
+            // sbd.putTo_MapOfDistances(1, 2);
+            // sbd.putTo_MapOfDistances(2, 0);
+            // sbd.putTo_MapOfDistances(3, 20);
+            // sbd.putTo_MapOfDistances(4, 2);
+
+            sbd.putTo_MapOfDistances(0, fr_ir);
+            sbd.putTo_MapOfDistances(1, rear_ir);
+            sbd.putTo_MapOfDistances(2, rr_ir);
+            sbd.putTo_MapOfDistances(3, front_us);
+            sbd.putTo_MapOfDistances(4, fr_us);
+
+            Container containerSensorBoardData = Container(Container::USER_DATA_0, sbd);
+            distribute(containerSensorBoardData);
+
+            // Serial communication
+
+            // port, baudrate, timeout in milliseconds
+
+
+            string port = "/dev/ttyACM0";
+            unsigned long baud = 9600;
+
+
+            serial::Serial my_serial(port, baud, serial::Timeout::simpleTimeout(1000));
+            if(my_serial.isOpen()) {
+               cout << " Serial port is open" <<endl;
+
+            } else {
+               cout << " Serial port is not open" <<endl;
+            }
+            // Write to serial
+      	    // int count = 0;
+		string test_string = "5:hello,";
+        
+                while (1) {
+               // size_t bytes_wrote =
+    	my_serial.write(test_string);
+        usleep(100 * 1000); // Sleep for 100 milliseconds (100 microseconds * 1000 = 100 milliseconds)
+
+
+
+ //   string result = my_serial.readline(test_string.length()+1); // Jasons code
+		string result = my_serial.readline(33, ","); // Janis code. The arguments are size_t (size in bytes = amount of characters to read) and what the delimiter is.
+        usleep(100 * 1000);
+
+//		cout << "Iteration: " << count << ", Bytes written: ";
+//	    	cout << bytes_wrote << ", Bytes read: ";
+//  		cout << result.length() << ", String read: " << result << endl;
+
+		cout << result << endl;
+		}
+
+
+            // Read from serial
+//            if(my_serial.available()) {
+//		my_serial.read(bytes_wrote);
+  //          }
+
         }
 
         cout << "Proxy: Captured " << captureCounter << " frames." << endl;
@@ -131,4 +209,3 @@ namespace msv {
     }
 
 } // msv
-
