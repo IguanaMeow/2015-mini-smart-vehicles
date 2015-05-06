@@ -57,19 +57,20 @@ namespace msv {
         m_image(NULL),
         merge_image(NULL),
         m_debug(false),
-        rightLine1(0, 50, 0),
-        rightLine2(0, 70, 0),
+        rightLine1(0, 0, 0),
+        rightLine2(0, 0, 0),
 
-        leftLine1(0, 90, 0),
-        leftLine2(0, 115, 0),
-        leftLine3(0, 140, 0),
-        leftLine4(0, 165, 0),
+        leftLine1(0, 0, 0),
+        leftLine2(0, 0, 0),
+        leftLine3(0, 0, 0),
+        leftLine4(0, 0, 0),
         
         upline1(0, 0, 130),
         upline2(0, 0, 130),
         state(1),
         counter(0),
         critCounter(0),
+        yCount(0),
 
         imgWidth(0),
         imgHeight(0),
@@ -191,16 +192,36 @@ namespace msv {
     }
 
     void LaneDetector::processImage() {
+
+      if(yCount < 1) {
+        rightLine1.setYPos(round(imgHeight * 0.104));
+        rightLine2.setYPos(round(imgHeight * 0.146));
+        
+        leftLine1.setYPos(round(imgHeight * 0.187));
+        leftLine2.setYPos(round(imgHeight * 0.24));
+        leftLine3.setYPos(round(imgHeight * 0.292));
+        leftLine4.setYPos(round(imgHeight * 0.344));
+
+        rightList[0].setYPos(rightLine1.getYPos());
+        rightList[1].setYPos(rightLine2.getYPos());
+
+        leftList[0].setYPos(leftLine1.getYPos());
+        leftList[1].setYPos(leftLine2.getYPos());
+        leftList[2].setYPos(leftLine3.getYPos());
+        leftList[3].setYPos(leftLine4.getYPos());
+
+        yCount = 1;
+      }
       
       upline1.setYPos(measureDistance((imgWidth / 2) - 20, 2, m_image));
       upline2.setYPos(measureDistance((imgWidth / 2) + 20, 2, m_image));
 
-      rightLine1.setXPos(measureDistance(50, 1, m_image));
-      rightLine2.setXPos(measureDistance(70, 1, m_image));
-      leftLine1.setXPos(measureDistance(90, 0, m_image));
-      leftLine2.setXPos(measureDistance(115, 0, m_image));
-      leftLine3.setXPos(measureDistance(140, 0, m_image));
-      leftLine4.setXPos(measureDistance(165, 0, m_image));
+      rightLine1.setXPos(measureDistance(rightLine1.getYPos(), 1, m_image));
+      rightLine2.setXPos(measureDistance(rightLine2.getYPos(), 1, m_image));
+      leftLine1.setXPos(measureDistance(leftLine1.getYPos(), 0, m_image));
+      leftLine2.setXPos(measureDistance(leftLine2.getYPos(), 0, m_image));
+      leftLine3.setXPos(measureDistance(leftLine3.getYPos(), 0, m_image));
+      leftLine4.setXPos(measureDistance(leftLine4.getYPos(), 0, m_image));
 
        if (critCounter < 6) {
         for(vector<Lines>::iterator it = rightList.begin(); it != rightList.end(); it++) {

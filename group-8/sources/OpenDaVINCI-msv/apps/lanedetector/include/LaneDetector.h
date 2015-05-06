@@ -114,6 +114,7 @@ namespace msv {
         	int state;
         	int counter;
         	int critCounter;
+        	int yCount;
 
         	int imgWidth;
         	int imgHeight;
