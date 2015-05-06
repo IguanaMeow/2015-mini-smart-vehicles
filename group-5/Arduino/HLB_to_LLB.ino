@@ -1,7 +1,7 @@
 #include <Servo.h>
 Servo esc, servo;
 int spd = 1500;
-int str = 1500;
+int str = 90;
 String input;
 
 void setup() { 
@@ -14,7 +14,7 @@ void setup() {
 
 void loop() {
    esc.writeMicroseconds(spd); 
-   servo.writeMicroseconds(str);
+   servo.write(str);
    Serial.println("Speed= "+String(spd)+", steering= "+String(str));
    delay(10);
   
