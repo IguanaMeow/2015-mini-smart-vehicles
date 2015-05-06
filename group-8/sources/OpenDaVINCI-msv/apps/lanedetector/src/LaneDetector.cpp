@@ -210,11 +210,14 @@ namespace msv {
         leftList[2].setYPos(leftLine3.getYPos());
         leftList[3].setYPos(leftLine4.getYPos());
 
+        upline1.setXPos((imgWidth / 2) - (imgWidth * 0.04));
+        upline2.setXPos((imgWidth / 2) + (imgWidth * 0.04));
+
         yCount = 1;
       }
       
-      upline1.setYPos(measureDistance((imgWidth / 2) - 20, 2, m_image));
-      upline2.setYPos(measureDistance((imgWidth / 2) + 20, 2, m_image));
+      upline1.setYPos(measureDistance(upline1.getXPos(), 2, m_image));
+      upline2.setYPos(measureDistance(upline2.getXPos(), 2, m_image));
 
       rightLine1.setXPos(measureDistance(rightLine1.getYPos(), 1, m_image));
       rightLine2.setXPos(measureDistance(rightLine2.getYPos(), 1, m_image));
@@ -460,8 +463,9 @@ double LaneDetector::measureAngle(int yPos1, int xPos1, int yPos2, int xPos2, do
   double deltaX = xPos1 - xPos2;
 
   double angle = (atan2(deltaY, deltaX) * Constants::RAD2DEG) - critAngleRight;
-  angle -= error * (140.8 / imgWidth); // This 
+  angle -= error * (140.8 / imgWidth);
   cout << "angle " << angle << endl;
+  
   cout << "Proxy angle: " << 90 - angle << endl;
   return angle * Constants::DEG2RAD;
 }
@@ -505,7 +509,7 @@ double LaneDetector::measureDistance(int yPos, int dir, IplImage* image) {
       }
       distance++;
     }
-    line(newImage, ptMiddle, ptRight, cvScalar(127,255,0), 3, 8);
+    line(newImage, ptMiddle, ptRight, cvScalar(51,255,102), 3, 8);
   }
   // Scans for full-white line to the left 
   else if (dir==0){
@@ -520,7 +524,7 @@ double LaneDetector::measureDistance(int yPos, int dir, IplImage* image) {
       }
       distance++;
     }
-    line(newImage, ptMiddle, ptLeft, cvScalar(139,0,139), 3, 8);
+    line(newImage, ptMiddle, ptLeft, cvScalar(204,51,255), 3, 8);
   }
   // Scans for upper full-white line
   else {
@@ -535,8 +539,8 @@ double LaneDetector::measureDistance(int yPos, int dir, IplImage* image) {
       }
       distance++;
     }
-    
-    line(newImage, ptDown, ptUp, cvScalar(0,133,0), 1, 8);
+    ptDown.y -= rightLine1.getYPos();
+    line(newImage, ptDown, ptUp, cvScalar(0,184,245), 1, 8);
   }
   return distance;
 }
