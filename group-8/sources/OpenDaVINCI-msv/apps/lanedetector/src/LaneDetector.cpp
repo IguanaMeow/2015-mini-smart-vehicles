@@ -460,7 +460,7 @@ double LaneDetector::measureAngle(int yPos1, int xPos1, int yPos2, int xPos2, do
   double deltaX = xPos1 - xPos2;
 
   double angle = (atan2(deltaY, deltaX) * Constants::RAD2DEG) - critAngleRight;
-  angle -= error * 0.22;
+  angle -= error * (imgWidth * 0.00034375);
   cout << "angle " << angle << endl;
 
   return angle * Constants::DEG2RAD;
