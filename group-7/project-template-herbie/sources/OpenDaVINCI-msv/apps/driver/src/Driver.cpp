@@ -58,7 +58,8 @@ namespace msv {
                 bool intersect = false;
                 int intersectionState = 0;
                 bool obstacleFound = false;
-                double speed = 0.8;
+                bool inSimulator = false;
+                double speed = 1;
                 bool laneFollow = true;
                 bool canFollowLane = false;
                 double desiredSteeringWheelAngle = 0;
@@ -68,16 +69,20 @@ namespace msv {
                 string state = "start";
                 int rightTurnSteerAngle = 0;
                 int menuChoice = 0;
-                int pMode = 0;
-                int otMode = 0;
+                int parkingState = 0;
+                int overtakingState = 0;
                 const double car_length = 5;
                 double distance_1, distance_2, distance_3;
+                int counter = 0;
                 
-                // menu here, needs improving!
-                
+                // menu 
+                cout << "Enter 1 if using simulator, any key for real car." << endl;
+                cin >> menuChoice;
+                if(menuChoice == 1) inSimulator = true;
+
                 cout << "Enter 1 for parking mode, any key for normal mode." << endl;
                 cin >> menuChoice;
-                cout << "Choice: " << menuChoice << endl;
+                
             
 
             while (getModuleState() == ModuleState::RUNNING) {
@@ -120,13 +125,19 @@ namespace msv {
                 laneFollowAngle = (sd.getExampleData() * Constants::RAD2DEG);
                 cerr << "laneFollowAngle = " << laneFollowAngle << endl;
                 cerr << "rightTurnSteerAngle = " << rightTurnSteerAngle << endl;
+                fr_ir = sbd.getValueForKey_MapOfDistances(0);
                 rear_ir = sbd.getValueForKey_MapOfDistances(1);
+                rr_ir = sbd.getValueForKey_MapOfDistances(2);
                 front_us = sbd.getValueForKey_MapOfDistances(3);
                 fr_us = sbd.getValueForKey_MapOfDistances(4);
-                fr_ir = sbd.getValueForKey_MapOfDistances(0);
-                rr_ir = sbd.getValueForKey_MapOfDistances(2);
+                
+                
                 // Design your control algorithm here depending on the input data from above.
+
+                /* Normal driving mode, car handles ovetaking and intersections */
                 if(menuChoice != 1){
+
+                /* changes steering angle used when overtaking based on the current angle */
                 if((laneFollowAngle < -2 || laneFollowAngle > 2) && !obstacleFound){
                     distToObject = 8;
                     rightTurnSteerAngle = 15; 
@@ -139,71 +150,68 @@ namespace msv {
                 // intersection control
 
                 switch(intersectionState){ 
-                    case 0:         //normal lane following
+
+                /* if intersection detected disable lane following and stop car */
+                    case 0:         
                         cout << "state 0: normal" << endl;
-                        if(intersect == true){   //check for intersection
-                            laneFollow = false;
+                        if(intersect){   
+                            laneFollow = false;  
                             speed = 0;
-                            intersectionState = 1; //at intersection state
+                            intersectionState = 1;                
                         }
                         break;
 
                     case 1: //at intersection, check if clear
-                        
-                        sleep(5);
-                        cout << "state 1: at intersection" << endl;
-                        
-                        if(front_us <0 && fr_us <0){   //nothing detected in intersection
-                            intersectionState = 2;                //move through intersection state
-                        } else { 
-                            sleep(5);               //wait, then go through. 
-                            intersectionState = 2;              //else will stop forever if non-moving obstacle
+                        if(counter < 50){
+                            counter ++;
+                           cout << "state 1: at intersection, counter = " << counter << endl; 
                         }
+                        else if(front_us <0 && fr_us <0) intersectionState = 2;                
                         break;
 
                     case 2:
                         cout << "state 2: drive through intersection" << endl;
                         speed = 1;          //drive through intersection
                         desiredSteeringWheelAngle = 0;
-
-                        if(canFollowLane == true){    //lane is detected
-                            intersectionState = 0;    // startlane following state
-                            laneFollow = true;
+                        if(canFollowLane){ 
+                            counter = 0; 
+                            intersectionState = 0;    
+                            laneFollow = true; // enable lane following
                         }
                         break;
                 }
-                // Create vehicle control data.
-                switch(otMode){
+                /* Overtaking control */
+                switch(overtakingState){
                     case 0:
                     if(!obstacleFound && front_us > -1 && front_us < distToObject && laneFollow){  
                     desiredSteeringWheelAngle = -25;   
                     obstacleFound = true; 
                     laneFollow = false; 
                     speed = 0.4;  
-                    state = "toLHLane"; 
-                    otMode = 1;                                               
+                    state = "to LHLane"; 
+                    overtakingState = 1;                                               
                 }
                 break;
                     case 1:
                      if(fr_ir > -1 && fr_ir < 3){
                     desiredSteeringWheelAngle = rightTurnSteerAngle;
                     speed = 1;
-                    state = "inLHLane"; 
-                    otMode = 2;                  
+                    state = "in LHLane"; 
+                    overtakingState = 2;                  
                 }
                 break;
                      case 2:
                     if(rr_ir < 3 && rr_ir > 0){
                         desiredSteeringWheelAngle = 0;
                         state = "follow LHLane";
-                        otMode = 3; 
+                        overtakingState = 3; 
                }
                break;
                     case 3:
                     if(fr_ir < 0){
                     desiredSteeringWheelAngle = rightTurnSteerAngle;
-                    state = "toRHLane";  
-                    otMode = 4;               
+                    state = "to RHLane";  
+                    overtakingState = 4;               
                 }
                 break;
                     case 4:
@@ -211,28 +219,28 @@ namespace msv {
                     desiredSteeringWheelAngle = -25;  
                     laneFollow = true;
                     obstacleFound = false;
-                    state = "inRHLane";  
-                    otMode = 0;                
+                    state = "in RHLane";  
+                    overtakingState = 0;                
                 }
 
                 }
                 }                
 
                 if(menuChoice == 1){
-                    switch(pMode){ // using switch-case to change state
+                    switch(parkingState){ // using switch-case to change state
                             case 0: // find space for parking and right place to park (found the obstacle)
                                //get speed data and wheelangle from the lane detector through container
                                 speed = spd.getSpeedData();
                                 //make sure that it is not curve, before going to the next state.
-                                if((fr_us < 0 || fr_us > (car_length * 1.6)) && laneFollowAngle <= 0.02 && laneFollowAngle >= 0) pMode = 1; 
+                                if((fr_us < 0 || fr_us > (car_length * 1.6)) && laneFollowAngle <= 0.02 && laneFollowAngle >= 0) parkingState = 1; 
                                 break;
                             case 1:
                                 laneFollow = false;
                                 if((fr_us <0 || fr_us > (car_length * 1.1)) && fr_ir < 0 && rr_ir < 0){
-                                    pMode = 2; //state gap enough
+                                    parkingState = 2; //state gap enough
                                     distance_1 = vd.getAbsTraveledPath();
                                 }
-                                if(fr_us > 0 && fr_us < (car_length * 1.1)) pMode = 0;
+                                if(fr_us > 0 && fr_us < (car_length * 1.1)) parkingState = 0;
                                 break;
                             
                             case 2: //gap enough sate, then drive more around 2 times of the car length to find appropriate distance to park to start parking state
@@ -240,7 +248,7 @@ namespace msv {
                                 desiredSteeringWheelAngle = 0;
                                 
                                 if(vd.getAbsTraveledPath() >= distance_1 + (car_length * 2.096)){
-                                    pMode = 3;
+                                    parkingState = 3;
                                     distance_2 = vd.getAbsTraveledPath();
                                 }
                                 break;
@@ -249,7 +257,7 @@ namespace msv {
                                 speed = -1.5;
                                 desiredSteeringWheelAngle = 16;
                                 if(vd.getAbsTraveledPath() >= distance_2 + (car_length * 1.5)){
-                                    pMode = 4;
+                                    parkingState = 4;
                                     distance_3 = vd.getAbsTraveledPath();
                                 }
                                 break;
@@ -258,11 +266,11 @@ namespace msv {
                                 speed = -1;
                                 desiredSteeringWheelAngle = -26;
                                 //if it doesn't detect any car behind after drive 10 meters more.
-                                if(vd.getAbsTraveledPath() >= distance_3 + (car_length * 0.81) && rear_ir < 0) pMode = 7;
+                                if(vd.getAbsTraveledPath() >= distance_3 + (car_length * 0.81) && rear_ir < 0) parkingState = 7;
                                 if(rear_ir <= 2.6 && rear_ir > 0){
                                     speed = 0;
                                     desiredSteeringWheelAngle = 0;
-                                    pMode = 5;
+                                    parkingState = 5;
                                 } 
                                 break;
 
@@ -273,14 +281,14 @@ namespace msv {
                              if(rear_ir < 0 ||(fr_us < (car_length * 0.44) && fr_us > 0)){
                                     speed = 0;
                                     desiredSteeringWheelAngle = 0;
-                                    pMode = 6;
+                                    parkingState = 6;
                                 }
                                 break;
 
                             case 6: // finding the appropriated position of the car
                                 speed = -0.4;
                                 desiredSteeringWheelAngle = -26;                   
-                                if(rear_ir <= (car_length * 0.48) && rear_ir > 0) pMode = 7;                         
+                                if(rear_ir <= (car_length * 0.48) && rear_ir > 0) parkingState = 7;                         
                                 break;
 
                             case 7:
@@ -290,16 +298,19 @@ namespace msv {
                         }
                 } 
                 
-                // With setSpeed you can set a desired speed for the vehicle in the range of -2.0 (backwards) .. 0 (stop) .. +2.0 (forwards)
                 
 
              
                if(laneFollow && canFollowLane){
                     desiredSteeringWheelAngle = laneFollowAngle;
-                   // speed = spd.getSpeedData();
+                    speed = spd.getSpeedData();
                     state = "normal driving";
                } 
+               if(inSimulator){
                 vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
+                }else{
+                vc.setSteeringWheelAngle(desiredSteeringWheelAngle);
+                }
                 vc.setSpeed(speed);
 
                 // You can also turn on or off various lights:
