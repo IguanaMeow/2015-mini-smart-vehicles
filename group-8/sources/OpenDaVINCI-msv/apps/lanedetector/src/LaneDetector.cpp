@@ -65,8 +65,8 @@ namespace msv {
         leftLine3(0, 140, 0),
         leftLine4(0, 165, 0),
         
-        upline1(300, 0, 130),
-        upline2(340, 0, 130),
+        upline1(0, 0, 130),
+        upline2(0, 0, 130),
         state(1),
         counter(0),
         critCounter(0),
@@ -192,8 +192,8 @@ namespace msv {
 
     void LaneDetector::processImage() {
       
-      upline1.setYPos(measureDistance(300, 2, m_image));
-      upline2.setYPos(measureDistance(340, 2, m_image));
+      upline1.setYPos(measureDistance((imgWidth / 2) - 20, 2, m_image));
+      upline2.setYPos(measureDistance((imgWidth / 2) + 20, 2, m_image));
 
       rightLine1.setXPos(measureDistance(50, 1, m_image));
       rightLine2.setXPos(measureDistance(70, 1, m_image));
@@ -248,15 +248,14 @@ namespace msv {
           //std::cout << "state 1" << std::endl;
           sd.setSpeedData(SPEED);
           
-          // Following upper right lines
-          if(rightLine1.getXPos() > imgWidth - 5 && rightLine2.getXPos() > imgWidth - 5 && leftLine1.getXPos() > imgWidth - 5 && leftLine2.getXPos() > imgWidth - 5)
-      {
-        state = 3;
-        break;
-      }
-      // Follow left lines
-      else if (rightLine1.getXPos() > imgWidth - 5 && rightLine2.getXPos() > imgWidth - 5)
-      {
+          if(rightLine1.getXPos() > (imgWidth / 2) - 5 && rightLine2.getXPos() > (imgWidth / 2) - 5 && leftLine1.getXPos() > (imgWidth / 2) - 5 && leftLine2.getXPos() > (imgWidth / 2) - 5)
+        {
+          state = 3;
+          break;
+        }
+        // Follow left lines
+        else if (rightLine1.getXPos() > imgWidth - 5 && rightLine2.getXPos() > imgWidth - 5)
+        {
      
         // Get two valid lines to base steering on
         //vector<Lines> valid = validateLines(&leftList);
