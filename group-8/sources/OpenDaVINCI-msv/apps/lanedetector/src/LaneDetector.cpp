@@ -71,9 +71,9 @@ namespace msv {
         counter(0),
         critCounter(0),
 
-        inputAngle1(0.0),
-        inputAngle2(0.0),
-        inputAngle3(0.0)
+        SPEED(5),
+
+        critAngleRight(0.0)
          {
           rightList.push_back(rightLine1);
           rightList.push_back(rightLine2);
@@ -215,14 +215,19 @@ namespace msv {
         leftLine3.setCritical(leftList[2].getCritical());
         leftLine4.setCritical(leftList[3].getCritical());
         
+        critAngleRight = (atan2(rightLine2.getYPos() - rightLine1.getYPos(), rightLine2.getCritical() - rightLine1.getCritical()) * Constants::RAD2DEG) - 90;
       }
-      cout << "crit distance " << rightLine1.getCritical();
+      cout << "crit distance: " << rightLine1.getCritical() << "critAngle: " << critAngleRight << endl;
 
 
       vector<Lines> valid = validateLines(&leftList);
 
       SteeringData sd;
-      LaneData ld;      
+      LaneData ld;
+
+      double error;
+      cout << "Crit: " << rightLine1.getCritical() << " xPos: " << rightLine1.getXPos() << endl;
+      error = rightLine1.getCritical() - rightLine1.getXPos();      
       if(rightLine1.getXPos() > 250 || rightLine1.getXPos() < 160 || rightLine2.getXPos() > 250 || rightLine2.getXPos() < 160)
       {
         ld.setRightLine1(0);
@@ -234,27 +239,27 @@ namespace msv {
       switch (state) {
         case 1: // Lanedetection state
           //std::cout << "state 1" << std::endl;
-          sd.setSpeedData(2);
+          sd.setSpeedData(SPEED);
           
           // Following upper right lines
-          if(rightLine1.getXPos() > 270 && rightLine2.getXPos() > 270 && leftLine1.getXPos() > 270 && leftLine2.getXPos() > 270)
+          if(rightLine1.getXPos() > 280 && rightLine2.getXPos() > 280 && leftLine1.getXPos() > 280 && leftLine2.getXPos() > 280)
       {
         state = 3;
         break;
       }
       // Follow left lines
-      else if (rightLine1.getXPos() > 270 && rightLine2.getXPos() > 270)
+      else if (rightLine1.getXPos() > 280 && rightLine2.getXPos() > 280)
       {
      
         // Get two valid lines to base steering on
         //vector<Lines> valid = validateLines(&leftList);
         // Steer to the right
         if (valid.begin()->getXPos() < valid.begin()->getCritical()) {
-          sd.setHeadingData(-measureAngle(m_image->height - valid.end()->getYPos(), valid.end()->getXPos(), m_image->height - valid.begin()->getYPos(), valid.begin()->getXPos()));
+          sd.setHeadingData(-measureAngle(m_image->height - valid.end()->getYPos(), valid.end()->getXPos(), m_image->height - valid.begin()->getYPos(), valid.begin()->getXPos(), 0));
         } 
         // Steer to the left
         else if (valid.begin()->getXPos() > valid.begin()->getCritical()) {
-          sd.setHeadingData(measureAngle(m_image->height - valid.end()->getYPos(), valid.end()->getXPos(), m_image->height - valid.begin()->getYPos(), valid.begin()->getXPos()));
+          sd.setHeadingData(measureAngle(m_image->height - valid.end()->getYPos(), valid.end()->getXPos(), m_image->height - valid.begin()->getYPos(), valid.begin()->getXPos(), 0));
         } 
         // Steer straight
         else {
@@ -267,11 +272,11 @@ namespace msv {
         cout << "Follow right" << endl;
         // Steer to the left
         if (rightLine1.getXPos() < rightLine1.getCritical()) {
-            sd.setHeadingData(adjustAngle(m_image->height - 70, rightLine2.getXPos(), m_image->height - 50, rightLine1.getXPos()));
+            sd.setHeadingData(measureAngle(m_image->height - 70, rightLine2.getXPos(), m_image->height - 50, rightLine1.getXPos(), error));
         } 
         // Steer to the right
         else if (rightLine1.getXPos() > rightLine1.getCritical()) {
-            sd.setHeadingData(adjustAngle(m_image->height - 70, rightLine2.getXPos(), m_image->height - 50, rightLine1.getXPos()));
+            sd.setHeadingData(measureAngle(m_image->height - 70, rightLine2.getXPos(), m_image->height - 50, rightLine1.getXPos(), error));
         } 
         // Steer straight
         else {
@@ -296,7 +301,7 @@ namespace msv {
       case 3:
         //std::cout << "state 3" << std::endl;
         
-        sd.setSpeedData(2);
+        sd.setSpeedData(SPEED);
         if (upline1.getYPos()>upline1.getCritical()){
           state = 1;
         }
@@ -400,7 +405,7 @@ std::vector<Lines> LaneDetector::validateLines(std::vector<Lines>* lines)
   for(std::vector<Lines>::iterator it = lines->begin(); it != lines->end() && j < 2; it++ )
   {
     // As long as the lines X-position isn't extremely out of bounds...
-    if(it->getXPos() < 270)
+    if(it->getXPos() < 280)
     {
       // ...add it to the vector.
       line.push_back(*it);
@@ -416,38 +421,22 @@ void LaneDetector::calculateCritical(const vector<Lines>::iterator& line, int di
 
   result = measureDistance(line->getYPos(), dir, image);
 
-  if (result < 270) {
+  if (result < 280) {
     line->setCritical(result);
     critCounter++;
   }
   
 }
 
-double LaneDetector::measureAngle(int yPos1, int xPos1, int yPos2, int xPos2) {
+double LaneDetector::measureAngle(int yPos1, int xPos1, int yPos2, int xPos2, double error) {
   double deltaY = yPos2 - yPos1;
   double deltaX = xPos2 - xPos1;
 
-  double angle = (atan2(deltaY, deltaX) * Constants::RAD2DEG) - 46.4688;
-
+  double angle = (atan2(deltaY, deltaX) * Constants::RAD2DEG) - critAngleRight;
+  angle -= error * 0.22;
   cout << "angle " << angle << endl;
 
   return angle * Constants::DEG2RAD;
-}
-
-double LaneDetector::adjustAngle(int yPos1, int xPos1, int yPos2, int xPos2){
-  inputAngle1 = inputAngle2;
-  inputAngle2 = inputAngle3;
-  inputAngle3 = measureAngle(yPos1, xPos1, yPos2, xPos2);
-  if((inputAngle3-inputAngle2)<0.00005 && (inputAngle2-inputAngle1)<0.00005){
-     inputAngle3 *= 1; //0.2;
-  }
-  else if ((inputAngle3 - inputAngle2) < (inputAngle2 - inputAngle1)){
-     inputAngle3 *= 1; //0.4;
-  }else if ((inputAngle3 - inputAngle2)> (inputAngle2 - inputAngle1)){
-     inputAngle3 *= 1; //3;
-  }
-  cout << "inputAngle " << inputAngle3 << endl;
-  return inputAngle3;
 }
 
 double LaneDetector::measureDistance(int yPos, int dir, IplImage* image) {

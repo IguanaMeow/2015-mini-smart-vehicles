@@ -91,9 +91,7 @@ namespace msv {
 			double measureDistance(int yPos, int dir, IplImage* image);
 
 			/* Measures the angle between delta X and delta Y */
-			double measureAngle(int yPos1, int xPos1, int yPos2, int xPos2);
-
-			double adjustAngle(int yPos1, int xPos1, int yPos2, int xPos2);
+			double measureAngle(int yPos1, int xPos1, int yPos2, int xPos2, double error);
 
 			void calculateCritical(const vector<Lines>::iterator& line, int dir, IplImage* image);
 
@@ -117,10 +115,9 @@ namespace msv {
         	int counter;
         	int critCounter;
 
+        	double const SPEED;
 
-        	double inputAngle1;
-        	double inputAngle2;
-        	double inputAngle3;
+        	double critAngleRight;
 
 			vector<Lines> rightList;
       		vector<Lines> leftList;
