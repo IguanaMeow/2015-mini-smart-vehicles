@@ -196,56 +196,6 @@ namespace msv {
         //cerr << "speedSetting: " << speedSetting << endl;
         //cerr << "steeringSetting: " << steeringSetting << endl;
         //cerr << "RAD2DEG: " << Constants::RAD2DEG << endl;
-        
-        uint16_t speedOutTemp;
-        uint16_t steeringOutTemp;
-
-        // if(countcounter == 50){
-        //     speedOut = 1;
-        //     steeringOut = 34;
-        // }
-
-        // countcounter++;
-
-
-        cerr << "start: " << (uint16_t)outSer[0] << endl;
-        if(speedSetting < 0){
-            speedOutTemp = 1200;
-        }else if ((int)speedSetting == 0){
-            speedOutTemp = 1520; 
-        }else{
-            speedOutTemp = 1560 + speedSetting;
-        }
-        steeringOutTemp = 90 - (uint16_t)(steeringSetting * Constants::RAD2DEG);
-        if(steeringOutTemp < 65) steeringOutTemp = 65;
-        if(steeringOutTemp > 115) steeringOutTemp = 115;
-        // if(countcounter < 1000 || countcounter > 500){
-        //     speedOut = 1600;
-        // }
-
-        // countcounter++;
-        // cerr << "countcounter" << countcounter << endl;
-
-        if(steeringOut != steeringOutTemp || speedOut != speedOutTemp){
-            steeringOut = steeringOutTemp;
-            speedOut = speedOutTemp;
-
-
-
-            outSer[6] = 0;
-            outSer[0] = startByte;
-            outSer[1] = speedOut & 0xFF;
-            outSer[2] = (speedOut >> 8) & 0xFF;
-            outSer[3] = steeringOut & 0xFF;
-            outSer[4] = (steeringOut >> 8) & 0xFF;
-            outSer[5] = endByte;
-
-            for(int i = 0; i < OUTSERIAL-1; i++){
-                outSer[OUTSERIAL - 1] ^= outSer[i];
-            } 
-
-            //cerr << "checksum: " << (uint16_t)outSer[6] << endl;
-            int sentnum = (int)this_serial->write(outSer, 7);
         uint16_t speedOutTemp;
         uint16_t steeringOutTemp;
 
