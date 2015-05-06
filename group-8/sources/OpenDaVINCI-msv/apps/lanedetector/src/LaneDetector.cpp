@@ -221,9 +221,10 @@ namespace msv {
         leftLine3.setCritical(leftList[2].getCritical());
         leftLine4.setCritical(leftList[3].getCritical());
         
-        critAngleRight = (atan2(rightLine2.getYPos() - rightLine1.getYPos(), rightLine2.getCritical() - rightLine1.getCritical()) * Constants::RAD2DEG) - 90;
+        critAngleRight = (atan2(rightLine2.getYPos() - rightLine1.getYPos(), rightLine1.getXPos() - rightLine2.getXPos()) * Constants::RAD2DEG);
       }
       cout << "crit distance: " << rightLine1.getCritical() << "critAngle: " << critAngleRight << endl;
+      cout << "x1: " << rightLine1.getXPos() << " x2: " << rightLine2.getXPos() << " y1: " << rightLine1.getYPos() << " y2: " << rightLine2.getYPos() << endl;
 
 
       vector<Lines> valid = validateLines(&leftList);
@@ -278,11 +279,11 @@ namespace msv {
         cout << "Follow right" << endl;
         // Steer to the left
         if (rightLine1.getXPos() < rightLine1.getCritical()) {
-            sd.setHeadingData(measureAngle(imgHeight - 70, rightLine2.getXPos(), imgHeight - 50, rightLine1.getXPos(), error));
+            sd.setHeadingData(measureAngle(rightLine1.getYPos(), rightLine1.getXPos(), rightLine2.getYPos(), rightLine2.getXPos(), error));
         } 
         // Steer to the right
         else if (rightLine1.getXPos() > rightLine1.getCritical()) {
-            sd.setHeadingData(measureAngle(imgHeight - 70, rightLine2.getXPos(), imgHeight - 50, rightLine1.getXPos(), error));
+            sd.setHeadingData(measureAngle(rightLine1.getYPos(), rightLine1.getXPos(), rightLine2.getYPos(), rightLine2.getXPos(), error));
         } 
         // Steer straight
         else {
@@ -436,7 +437,7 @@ void LaneDetector::calculateCritical(const vector<Lines>::iterator& line, int di
 
 double LaneDetector::measureAngle(int yPos1, int xPos1, int yPos2, int xPos2, double error) {
   double deltaY = yPos2 - yPos1;
-  double deltaX = xPos2 - xPos1;
+  double deltaX = xPos1 - xPos2;
 
   double angle = (atan2(deltaY, deltaX) * Constants::RAD2DEG) - critAngleRight;
   angle -= error * 0.22;
