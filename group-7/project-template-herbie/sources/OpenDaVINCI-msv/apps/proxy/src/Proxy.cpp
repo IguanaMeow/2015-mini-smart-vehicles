@@ -113,7 +113,7 @@ namespace msv {
 
     double front_us, fr_ir, rr_ir, fr_us, rear_ir; // values to pass to HLB
     double speed, steeringAngle; // values to pass to LLB
-
+    bool leftFlashingLights, rightFlashingLights, brakeLights = false;
     SensorBoardData sbd;
     VehicleControl vc;
 
@@ -137,6 +137,9 @@ namespace msv {
             vc = containerVehicleControl.getData<VehicleControl> ();
             speed = vc.getSpeed();
             steeringAngle = vc.getSteeringWheelAngle();
+            leftFlashingLights = vc.getLeftFlashingLights();
+            rightFlashingLights = vc.getRightFlashingLights();
+            brakeLights = vc.getBrakeLights();
 
             // hardcoded to test
             // sbd.putTo_MapOfDistances(0, 2);
