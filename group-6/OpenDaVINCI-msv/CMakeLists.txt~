@@ -20,7 +20,7 @@ IF(UNIX)
 
     # Additionally, test for Effective C++ warnings except on OpenBSD.
     IF(NOT "${CMAKE_SYSTEM_NAME}" STREQUAL "OpenBSD")
-        SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wmissing-format-attribute -Wredundant-decls -Wno-error=effc++ -Weffc++")
+#        SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wmissing-format-attribute -Wredundant-decls -Wno-error=effc++ -Weffc++")
     ENDIF(NOT "${CMAKE_SYSTEM_NAME}" STREQUAL "OpenBSD")
 ENDIF(UNIX)
 
@@ -65,8 +65,8 @@ SET (DATA_LIBS data)
 IF(UNIX)
     # Don't build the graphical environment and the vehiclecontext on Darwin.
     IF((NOT "${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin") AND (NOT "${CMAKE_SYSTEM_NAME}" STREQUAL "FreeBSD") AND (NOT "${CMAKE_SYSTEM_NAME}" STREQUAL "NetBSD") AND (NOT "${CMAKE_SYSTEM_NAME}" STREQUAL "OpenBSD"))
-        ADD_SUBDIRECTORY (hesperia)
-        ADD_SUBDIRECTORY (libvehiclecontext)
+       # ADD_SUBDIRECTORY (hesperia)
+       # ADD_SUBDIRECTORY (libvehiclecontext)
     ENDIF()
 ENDIF(UNIX)
 

@@ -38,7 +38,7 @@ TARGET_LINK_LIBRARIES (lanedetector lanedetectorlib ${DATA_LIBS} ${OPENDAVINCI_L
 # Recipe for installing "lanedetector".
 INSTALL(TARGETS lanedetector RUNTIME DESTINATION bin)
 
-IF(NOT "${PANDABOARD}" STREQUAL "YES")
+IF("${PANDABOARD}" STREQUAL "YES")
 # Enable CxxTest for all available testsuites.
 IF(CXXTEST_FOUND)
     FILE(GLOB lanedetector-testsuites "${CMAKE_CURRENT_SOURCE_DIR}/testsuites/*.h")
