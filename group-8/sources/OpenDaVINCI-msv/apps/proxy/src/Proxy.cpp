@@ -215,7 +215,7 @@ namespace msv {
         }else{
             speedOutTemp = 1560 + speedSetting;
         }
-        steeringOutTemp = 90 - (uint16_t)(steeringSetting * Constants::RAD2DEG);
+        steeringOutTemp = 90 - (int16_t)(steeringSetting * Constants::RAD2DEG);
         if(steeringOutTemp < 65) steeringOutTemp = 65;
         if(steeringOutTemp > 115) steeringOutTemp = 115;
         // if(countcounter < 1000 || countcounter > 500){
