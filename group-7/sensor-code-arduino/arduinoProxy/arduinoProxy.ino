@@ -36,7 +36,7 @@ void setup()
   pinMode(encoderPinA, INPUT);
   pinMode(encoderPinB, INPUT);
   attachInterrupt(4, WheelEncoderInterrupt, CHANGE);
-  Serial.begin(115200);    // start serial communication at 9600bps
+  Serial.begin(9600);    // start serial communication at 9600bps
 }
 
 
@@ -65,23 +65,24 @@ void loop()
   String WE = String(encoderTicks);
   String speedValue = String(integerVal);
 
+
   //Concatanate Sensor name with values
-  Serial.println(encodeNetstring("US1=" + (U1)));
+  Serial.println(encodeNetstring("US1 = " + (U1)));
 
-  Serial.println(encodeNetstring("US2=" + (U2)));
+  Serial.println(encodeNetstring("US2 = " + (U2)));
 
-  Serial.println(encodeNetstring("IR1=" + (IR1)));
+  Serial.println(encodeNetstring("IR1 = " + (IR1)));
 
-  Serial.println(encodeNetstring("IR2=" + (IR2)));
+  Serial.println(encodeNetstring("IR2 = " + (IR2)));
 
-  Serial.println(encodeNetstring("IR3=" + (IR3)));
+  Serial.println(encodeNetstring("IR3 = " + (IR3)));
 
-  Serial.println(encodeNetstring("WE=" + (WE)));
+  Serial.println(encodeNetstring("WE = " + (WE)));
 
-  Serial.println(encodeNetstring("SPEED" + (speedValue)));
+  Serial.println(encodeNetstring("SPEED = " + (speedValue)));
 
   delay(100);       
-
+ 
 }
 //Setup Ultrasonic to read cm 
 int range(int ADDRESS_) {
@@ -131,30 +132,39 @@ void serialEvent() {
   
     if (Serial.available() > 0) {   // something came across serial
     
+    Serial.println("Serial starts here.."); 
+      //test_string  = "Steering:-24"       
       String value;  
       int integerVal = 0;   
       
-      while (1) {           // force into a loop until ',' is received
         static char buffer[34];
         if (readline(Serial.read(), buffer, 34) > 0) {
             value = decodeNetstring(buffer);
-        } 
-        if(value.startsWith("Steering")){ 
-           int semicolonIndex = value.indexOf(':');
-           String getData = value.substring(semicolonIndex + 1);
+            Serial.println("Value: " + value); 
+        }
+         if(value.startsWith("WA")){ 
+           int equalsIndex = value.indexOf('=');
+           String getData = value.substring(equalsIndex + 1);
            integerVal = getData.toInt(); 
            angle = integerVal + 90; 
-           Serial.println(angle);         
+           Serial.println("Angle:" + angle);         
          }   
-         
-         if(value.startsWith("Speed")) {
-           int semicolonIndex = value.indexOf(':');
-           String getData = value.substring(semicolonIndex + 1);
-           throttle = getData.toInt();  
-         }
-      }
+      
     }
-  }
+}
+       
+       
+         
+//         if(value.startsWith("Speed")) {
+//           int semicolonIndex = value.indexOf(':');
+//           String getData = value.substring(semicolonIndex + 1);
+//           throttle = getData.toInt();  
+//           Serial.print("Speed: " + throttle); 
+//         }
+      
+    
+  
+  
   
 
 //*****   FUNCTIONS   *********//
@@ -171,7 +181,7 @@ String encodeNetstring(String value) {
 }
 
 String decodeNetstring(String netstring) {
- 
+   
   if (netstring.length() < 3) return "NETSTRING_ERROR_TOO_SHORT";
 
   //if (netstring.length() > ?) return "NETSTRING_ERROR_TOO_LONG";
@@ -188,7 +198,8 @@ String decodeNetstring(String netstring) {
 
   if (payload.substring(payload.length() - 1) == ",") payload.remove(payload.length() - 1); //remove the comma
   if (payload.length() != payloadLength) return "NETSTRING_ERROR_INVALID_LENGTH";
-
+  
+  //Serial.println("payload is: " + payload); 
   return payload;
 
 }

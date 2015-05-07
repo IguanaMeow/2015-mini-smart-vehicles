@@ -118,8 +118,15 @@ namespace msv {
     bool leftFlashingLights, rightFlashingLights, brakeLights = false;
     SensorBoardData sbd;
     VehicleControl vc;
+    
+    string port = "/dev/ttyACM0";
+    unsigned long baud = 9600;
 
-    // This method will do the main data processing job.
+ 
+    serial::Serial my_serial(port, baud, serial::Timeout::simpleTimeout(1000));
+    
+
+ // This method will do the main data processing job.
     ModuleState::MODULE_EXITCODE Proxy::body() {
         uint32_t captureCounter = 0;
         while (getModuleState() == ModuleState::RUNNING) {
@@ -159,49 +166,42 @@ namespace msv {
             Container containerSensorBoardData = Container(Container::USER_DATA_0, sbd);
             distribute(containerSensorBoardData);
 
-            // Serial communication
-
             // port, baudrate, timeout in milliseconds
 
-
-            string port = "/dev/ttyACM1";
-            unsigned long baud = 9600;
-
-
-            serial::Serial my_serial(port, baud, serial::Timeout::simpleTimeout(1000));
             if(my_serial.isOpen()) {
-               cout << " Serial port is open" <<endl;
-
-            } else {
-               cout << " Serial port is not open" <<endl;
+                cout << " Serial port is open" <<endl;
+            } 
+	       else {
+             cout << "ERROR: port closed" <<endl;
             }
-            // Write to serial
-      	    // int count = 0;
-	    string test_string = "Steering:-23";
 	    
-        
-            while (1) {
-            // size_t bytes_wrote = my_serial.write(test_string); 
+	    //Write to serial
+	    //string test_string = "Steering:-23";
+	    
+            //Convert steering angle(double) to string
 	    stringstream ss;
 	    ss << steeringAngle;
             string wheelAngle = ss.str(); 
+	    
+	    wheelAngle = "WA=" + wheelAngle; 
     	    my_serial.write(encodeNetstring(wheelAngle));
 
-            usleep(100 * 1000); // Sleep for 100 milliseconds (100 microseconds * 1000 = 100 milliseconds)
+	
+		// Test a netstring
+	//	string testnetstring = "5:hello,";
+	//	cout << "Sending netstring" << endl;
+	//	my_serial.write(encodeNetstring(testnetstring));
 
+            usleep(100 * 2000); // Sleep for 100 milliseconds (100 microseconds * 1000 = 100 milliseconds)
 
-//string result = my_serial.readline(33, ","); // Janis code. The arguments are size_t (size in bytes = amount of characters to read) and what the delimiter is.
-	    usleep(100 * 1000);
+            
+	    // Read from serial
+	    //size_t bytes_wrote; 
 
-
-//cout << result << endl;
-	    }
-
-
-            // Read from serial
-//          if(my_serial.available()) {
-//          my_serial.read(bytes_wrote);
-//          }
+        //    if(my_serial.available()) {
+        //        string result =  my_serial.readline(1024, "\n");
+	//        cout << result << endl; 
+        // }
 
         }
 
