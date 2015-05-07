@@ -225,7 +225,7 @@ namespace msv {
         // countcounter++;
         // cerr << "countcounter" << countcounter << endl;
 
-        //if(steeringOut != steeringOutTemp || speedOut != speedOutTemp){
+        if(steeringOut != steeringOutTemp || speedOut != speedOutTemp){
             steeringOut = steeringOutTemp;
             speedOut = speedOutTemp;
 
@@ -250,7 +250,7 @@ namespace msv {
             cerr << "sent bytes: " << sentnum << endl;
             cerr << "Speed sent to Arduino: " << speedToArduino << endl;
             cerr << "Steering sent to Arduino: " << steeringToArduino << endl;
-       // }
+        }
     }
 
     void Proxy::distSerial() {

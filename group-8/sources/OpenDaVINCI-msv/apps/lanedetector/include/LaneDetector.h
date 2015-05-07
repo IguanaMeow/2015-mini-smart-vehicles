@@ -122,6 +122,7 @@ namespace msv {
         	double const SPEED;
 
         	double critAngleRight;
+        	double critAngleLeft;
 
 			vector<Lines> rightList;
       		vector<Lines> leftList;
