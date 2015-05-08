@@ -18,7 +18,7 @@
  */
 
 #include <ctype.h>
-#include <cstring>
+#include <string>
 #include <cmath>
 #include <unistd.h>
 #include <sstream> 
@@ -34,6 +34,8 @@
 #include "Proxy.h"
 #include "Netstring.h" 
 #include "../serial/include/serial/serial.h"
+
+ double extractData(string, string);
 
 namespace msv {
 
@@ -114,17 +116,15 @@ namespace msv {
     }
 
     double front_us, fr_ir, rr_ir, fr_us, rear_ir; // values to pass to HLB
-    double speed, steeringAngle; // values to pass to LLB
     bool leftFlashingLights, rightFlashingLights, brakeLights = false;
     SensorBoardData sbd;
     VehicleControl vc;
-    
-    string port = "/dev/ttyACM0";
-    unsigned long baud = 9600;
+    string vcDataString, sensorData;
+    serial::Serial my_serial("/dev/ttyACM0", 9600, serial::Timeout::simpleTimeout(1000));
+    stringstream ss;
+   // bool dataSent = false;
+             
 
- 
-    serial::Serial my_serial(port, baud, serial::Timeout::simpleTimeout(1000));
-    
 
  // This method will do the main data processing job.
     ModuleState::MODULE_EXITCODE Proxy::body() {
@@ -144,64 +144,42 @@ namespace msv {
 
             Container containerVehicleControl = getKeyValueDataStore().get(Container::VEHICLECONTROL);
             vc = containerVehicleControl.getData<VehicleControl> ();
-            speed = vc.getSpeed();
-            steeringAngle = vc.getSteeringWheelAngle();
+          
             leftFlashingLights = vc.getLeftFlashingLights();
             rightFlashingLights = vc.getRightFlashingLights();
             brakeLights = vc.getBrakeLights();
-
-            // hardcoded to test
-            // sbd.putTo_MapOfDistances(0, 2);
-            // sbd.putTo_MapOfDistances(1, 2);
-            // sbd.putTo_MapOfDistances(2, 0);
-            // sbd.putTo_MapOfDistances(3, 20);
-            // sbd.putTo_MapOfDistances(4, 2);
-
-            sbd.putTo_MapOfDistances(0, fr_ir);
-            sbd.putTo_MapOfDistances(1, rear_ir);
-            sbd.putTo_MapOfDistances(2, rr_ir);
-            sbd.putTo_MapOfDistances(3, front_us);
-            sbd.putTo_MapOfDistances(4, fr_us);
-
             Container containerSensorBoardData = Container(Container::USER_DATA_0, sbd);
             distribute(containerSensorBoardData);
 
-            // port, baudrate, timeout in milliseconds
 
             if(my_serial.isOpen()) {
                 cout << " Serial port is open" <<endl;
             } 
 	       else {
              cout << "ERROR: port closed" <<endl;
-            }
-	    
-	    //Write to serial
-	    //string test_string = "Steering:-23";
-	    
-            //Convert steering angle(double) to string
-	    stringstream ss;
-	    ss << steeringAngle;
-            string wheelAngle = ss.str(); 
-	    
-	    wheelAngle = "WA=" + wheelAngle; 
-    	    my_serial.write(encodeNetstring(wheelAngle));
+            }   
+        
+	    ss << vc.getSteeringWheelAngle();
+        vcDataString = "WA=" + ss.str(); 
+        ss.str("");
+        ss << vc.getSpeed();
+        vcDataString += "|SP=";
+        vcDataString += ss.str();
+        ss.str("");
+        my_serial.write(encodeNetstring(vcDataString));
+      
 
-	
-		// Test a netstring
-	//	string testnetstring = "5:hello,";
-	//	cout << "Sending netstring" << endl;
-	//	my_serial.write(encodeNetstring(testnetstring));
+        if(my_serial.available()) {
+            string result =  my_serial.readline(1024, ","); 
+            sensorData = decodeNetstring(result); 
+       
+            sbd.putTo_MapOfDistances(0, extractData("IR1", sensorData)); // IR front right
+            sbd.putTo_MapOfDistances(1, extractData("IR2", sensorData)); // IR rear
+            sbd.putTo_MapOfDistances(2, extractData("IR3", sensorData)); //IR rear right
+            sbd.putTo_MapOfDistances(3, extractData("US1", sensorData)); // US front
+            sbd.putTo_MapOfDistances(4, extractData("US2", sensorData)); // US front right
 
-            usleep(100 * 2000); // Sleep for 100 milliseconds (100 microseconds * 1000 = 100 milliseconds)
-
-            
-	    // Read from serial
-	    //size_t bytes_wrote; 
-
-        //    if(my_serial.available()) {
-        //        string result =  my_serial.readline(1024, "\n");
-	//        cout << result << endl; 
-        // }
+        }
 
         }
 
@@ -211,3 +189,12 @@ namespace msv {
     }
 
 } // msv
+
+double extractData(string label, string sbData){
+     
+    double sensorValue;
+    int stringPos = sbData.find(label);
+    stringstream convert(sbData.substr(stringPos + 4));
+    convert >> sensorValue;
+    return sensorValue;
+}
