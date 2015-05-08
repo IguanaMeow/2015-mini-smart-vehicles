@@ -23,13 +23,15 @@ int angle = 90;
 int reading = 0;
 
 
-//Instantiate Objects
+ String inputString;
+ 
 Servo esc;
 Servo servo;
 
 
 void setup()
 {
+   inputString.reserve(10);//Instantiate Objects
   Wire.begin();
   esc.attach(9);
   servo.attach(10);
@@ -42,46 +44,41 @@ void setup()
 
 void loop()
 {
-  esc.writeMicroseconds(throttle);
-  servo.write(angle);
-  
-  val1 = analogRead(IR_1);  // reads the value of the sharp sensor
-  val2 = analogRead(IR_2);
-  val3 = analogRead(IR_3);
-  
-  IR_rightFront = ((2914 / (val1 + 5) - 1));
-  IR_rightRear =  ((2914 / (val2 + 5) - 1)); //converts to cm
-  IR_rear = ((2914 / (val3 + 5) - 1));
-  
-  US1 = range(ADDRESS);
-  US2 = range(ADDRESS2);
-  
+ 
+ 
+ IR_rightFront = 3;
+ IR_rightRear = -1;
+ IR_rear = 2;
+  US1 = 20;
+ US2 = 10;
   //Convert Integers to Strings
   String U1 = String(US1);
   String U2 = String(US2);
   String IR1 = String(IR_rightFront);
-  String IR2 = String(IR_rightRear);
-  String IR3 = String(IR_rear);
+  String IR2 = String(IR_rear);
+  String IR3 = String(IR_rightRear);
   String WE = String(encoderTicks);
   String speedValue = String(integerVal);
 
-
+  String sensorData = "";
+  sensorData += "IR1=";
+  sensorData += IR1;
+  sensorData += "IR2=";
+  sensorData += IR2;
+  sensorData += "IR3=";
+  sensorData += IR3;
+  sensorData += "US1=";
+  sensorData += U1;
+  sensorData += "US2=";
+  sensorData += U2;
+  
+  
+  
   //Concatanate Sensor name with values
-  Serial.println(encodeNetstring("US1 = " + (U1)));
+  Serial.println(encodeNetstring(sensorData));
 
-  Serial.println(encodeNetstring("US2 = " + (U2)));
 
-  Serial.println(encodeNetstring("IR1 = " + (IR1)));
-
-  Serial.println(encodeNetstring("IR2 = " + (IR2)));
-
-  Serial.println(encodeNetstring("IR3 = " + (IR3)));
-
-  Serial.println(encodeNetstring("WE = " + (WE)));
-
-  Serial.println(encodeNetstring("SPEED = " + (speedValue)));
-
-  delay(100);       
+  //delay(100);       
  
 }
 //Setup Ultrasonic to read cm 
@@ -129,38 +126,38 @@ void WheelEncoderInterrupt() {      //if pinA is high and pinB is low ticks ++ e
 
 
 void serialEvent() {
-  
-    if (Serial.available() > 0) {   // something came across serial
+  char inChar;
+   while(Serial.available() > 0) {   // something came across serial
     
-    Serial.println("Serial starts here.."); 
-      //test_string  = "Steering:-24"       
+              
       String value;  
-      int integerVal = 0;   
-      
+    int integerVal = 0;   
+     float speedOfCar;
         static char buffer[34];
         if (readline(Serial.read(), buffer, 34) > 0) {
-            value = decodeNetstring(buffer);
-            Serial.println("Value: " + value); 
-        }
+           value = decodeNetstring(buffer);
+        //   Serial.println("Value: " + value); 
+       }
          if(value.startsWith("WA")){ 
            int equalsIndex = value.indexOf('=');
            String getData = value.substring(equalsIndex + 1);
            integerVal = getData.toInt(); 
            angle = integerVal + 90; 
-           Serial.println("Angle:" + angle);         
-         }   
+//Serial.print("Angle:");         
+       //    Serial.println(angle);
+           equalsIndex = getData.indexOf('=');
+           String speedData = getData.substring(equalsIndex + 1);
+       //    Serial.print("Speed:");         
+         //  Serial.println(speedData);
       
     }
+     inputString = "";
+   }
 }
        
        
          
-//         if(value.startsWith("Speed")) {
-//           int semicolonIndex = value.indexOf(':');
-//           String getData = value.substring(semicolonIndex + 1);
-//           throttle = getData.toInt();  
-//           Serial.print("Speed: " + throttle); 
-//         }
+
       
     
   
