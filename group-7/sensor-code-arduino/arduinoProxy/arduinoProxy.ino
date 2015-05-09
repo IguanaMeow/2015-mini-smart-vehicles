@@ -10,7 +10,7 @@
 
 
 //Global Variables
-int IR_rightFront, IR_rightRear, IR_rear, val1, val2, val3;
+int IR_rightFront, IR_rightRear, IR_rear, val1, val2, val3 = 0;
 int sensorReading = 0;
 int sensorReading2 = 0;
 const int encoderPinA = 19;
@@ -21,7 +21,7 @@ int US1, US2;
 int throttle = 1500; 
 int angle = 90;
 int reading = 0;
-
+bool dataReceived = true;
 
  String inputString;
  
@@ -45,7 +45,7 @@ void setup()
 void loop()
 {
  
- 
+ if(dataReceived == true){
  IR_rightFront = 3;
  IR_rightRear = -1;
  IR_rear = 2;
@@ -71,12 +71,10 @@ void loop()
   sensorData += U1;
   sensorData += "US2=";
   sensorData += U2;
-  
-  
-  
-  //Concatanate Sensor name with values
-  Serial.println(encodeNetstring(sensorData));
 
+  Serial.println(encodeNetstring(sensorData));
+  dataReceived = false;
+ }
 
   //delay(100);       
  
@@ -151,18 +149,11 @@ void serialEvent() {
          //  Serial.println(speedData);
       
     }
+    
      inputString = "";
    }
-}
-       
-       
-         
-
-      
-    
-  
-  
-  
+   dataReceived = true;
+} 
 
 //*****   FUNCTIONS   *********//
 
@@ -196,7 +187,7 @@ String decodeNetstring(String netstring) {
   if (payload.substring(payload.length() - 1) == ",") payload.remove(payload.length() - 1); //remove the comma
   if (payload.length() != payloadLength) return "NETSTRING_ERROR_INVALID_LENGTH";
   
-  //Serial.println("payload is: " + payload); 
+ 
   return payload;
 
 }

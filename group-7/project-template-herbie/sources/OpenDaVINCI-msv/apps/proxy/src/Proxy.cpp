@@ -122,7 +122,8 @@ namespace msv {
     string vcDataString, sensorData;
     serial::Serial my_serial("/dev/ttyACM0", 9600, serial::Timeout::simpleTimeout(1000));
     stringstream ss;
-   // bool dataSent = false;
+    bool dataReceived = true;  
+    int syncTest = 0; 
              
 
 
@@ -152,35 +153,43 @@ namespace msv {
             distribute(containerSensorBoardData);
 
 
-            if(my_serial.isOpen()) {
-                cout << " Serial port is open" <<endl;
-            } 
-	       else {
-             cout << "ERROR: port closed" <<endl;
-            }   
-        
+          
+        if(dataReceived){
 	    ss << vc.getSteeringWheelAngle();
         vcDataString = "WA=" + ss.str(); 
         ss.str("");
         ss << vc.getSpeed();
-        vcDataString += "|SP=";
+        vcDataString += "SP=";
+        vcDataString += ss.str();
+        ss.str("");
+        ss << vc.getLeftFlashingLights();
+        vcDataString += "LFL=";
+        vcDataString += ss.str();
+        ss.str("");
+        ss << vc.getRightFlashingLights();
+        vcDataString += "RFL=";
+        vcDataString += ss.str();
+        ss.str("");
+        ss << vc.getBrakeLights();
+        vcDataString += "BL=";
         vcDataString += ss.str();
         ss.str("");
         my_serial.write(encodeNetstring(vcDataString));
-      
+        cerr << vcDataString << endl;
+        dataReceived = false;
+    }   
 
         if(my_serial.available()) {
             string result =  my_serial.readline(1024, ","); 
             sensorData = decodeNetstring(result); 
-       
+            cerr << result << endl;
             sbd.putTo_MapOfDistances(0, extractData("IR1", sensorData)); // IR front right
             sbd.putTo_MapOfDistances(1, extractData("IR2", sensorData)); // IR rear
-            sbd.putTo_MapOfDistances(2, extractData("IR3", sensorData)); //IR rear right
+            sbd.putTo_MapOfDistances(2, extractData("IR3", sensorData)); // IR rear right
             sbd.putTo_MapOfDistances(3, extractData("US1", sensorData)); // US front
             sbd.putTo_MapOfDistances(4, extractData("US2", sensorData)); // US front right
-
-        }
-
+            dataReceived = true;
+            }
         }
 
         cout << "Proxy: Captured " << captureCounter << " frames." << endl;
