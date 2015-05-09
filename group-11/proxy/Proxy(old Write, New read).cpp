@@ -268,6 +268,7 @@ namespace msv {
     // This method will do the main data processing job.
     ModuleState::MODULE_EXITCODE Proxy::body() 
     {
+    	openSerial();
         uint32_t captureCounter = 0;
         while (getModuleState() == ModuleState::RUNNING) 
         {
@@ -313,10 +314,10 @@ namespace msv {
  	    }
 
 
-            if (counter == 0) {
+          /*  if (counter == 0) {
 		    openSerial();
 		    counter++;
-            }
+            } */
          
             writeByte(z, fd);  
             /* End of Sending Data to LLB */
