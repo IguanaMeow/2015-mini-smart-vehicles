@@ -55,8 +55,12 @@ void Overtaker::tearDown() {
 // This method will do the main data processing job.
 ModuleState::MODULE_EXITCODE Overtaker::body() {
         int followLane = 1;
-        int turnOut = 2;
-        int turnBack = 3;
+        int turnOutStra = 2;
+        int turnBackStra = 3;
+        int curve = 0;
+        // int turnBackLCur = 5;
+        // int turnOutRCur = 6;
+        // int turnBackRCur = 7;
         int state = followLane;
         int counter = 0;
         double steering = 25;
@@ -108,15 +112,34 @@ ModuleState::MODULE_EXITCODE Overtaker::body() {
         cerr << "follow lane" << endl;
                 if(sbd.getValueForKey_MapOfDistances(3) < 6 && sbd.getValueForKey_MapOfDistances(3) > 0){
 
-                        state = turnOut;
+                   // cerr << "heading = " << sd.getHeadingData() << endl;
+                    
+                    if(sd.getHeadingData() > 0.12)
+                    {
+                        curve = 2;
+                    }
+                    else if(sd.getHeadingData() < -0.12)
+                    {
+                        curve = 3;
+                    }
+                        state = turnOutStra;
                 }
                 vc.setSteeringWheelAngle(sd.getHeadingData());
                 break;
         case 2 :
-        cerr << "Turn out" << endl;
+        cerr << "Turn out straight" << endl;
                 if(sbd.getValueForKey_MapOfDistances(0) > 0 )
                 {
-                        state = turnBack;
+                    if(curve > 2)
+                    {
+                        counter = counter/2;
+                    }
+                    else if(curve > 1)
+                    {
+                        counter = counter + (counter/2);
+                    }
+                        state = turnBackStra;
+                        curve = 0;
                         break;
                 }
                 ++counter;
@@ -124,7 +147,7 @@ ModuleState::MODULE_EXITCODE Overtaker::body() {
                 vc.setSteeringWheelAngle(-steering);
                 break;
         case 3 :
-        cerr << "turnBack" << endl;
+       cerr << "turnBack straight" << endl;
                // std::cout << "distance " << sbd.getValueForKey_MapOfDistances(4) << std::endl;
                 if(sbd.getValueForKey_MapOfDistances(4) > 5 || sbd.getValueForKey_MapOfDistances(4) < 0)
                 {
