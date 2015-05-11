@@ -280,11 +280,10 @@ void LaneDetector::processImage() {
 			break;
 		}
 		// Follow left lines
-		else if (rightLine1.getXPos() > imgWidth - 5 && rightLine2.getXPos() > imgWidth - 5)
+		else if (rightLine1.getXPos() > (imgWidth / 2) - 5 && rightLine2.getXPos() > (imgWidth / 2) - 5)
 		{
 			cout << "Follow left" << endl;
 			// Get two valid lines to base steering on
-			//vector<Lines> valid = validateLines(&leftList);
 			// Steer to the right
 			if (valid.begin()->getXPos() < valid.begin()->getCritical()) {
 				sd.setHeadingData(-measureAngle(imgHeight - valid.end()->getYPos(), valid.end()->getXPos(), imgHeight - valid.begin()->getYPos(), valid.begin()->getXPos(), 0));
