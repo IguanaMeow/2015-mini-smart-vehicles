@@ -104,6 +104,10 @@ namespace msv {
     void Driver::tearDown() {
             
             // This method will be call automatically _after_ return from body().
+            vc.setSpeed(0);
+            vc.setSteeringWheelAngle(0);
+            Container c(Container::VEHICLECONTROL, vc);
+            getConference().send(c);
     }
 
     bool Driver::find_gapStart(bool is_measure,float* oldValue,float* newValue){

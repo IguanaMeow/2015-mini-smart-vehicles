@@ -135,11 +135,9 @@ namespace msv {
         // Total value exponent
         const float exp = 1.05;
         // Total value to turning degrees ratio
-        const float ratio = 0.06;
+        const float ratio = 0.12;
         // Increased weight of each row (1 + weight * row#)
         const float weight = 0.25;
-        // Max turn degrees per update
-        const float maxturn = 4;
         // Minimum row length
         const int minLength = 10;
 
@@ -159,14 +157,21 @@ namespace msv {
         const int rows = 32 - (abs(prevAngle * 0.6) > 6 ? 6 : floor(abs(prevAngle * 0.6)));
         const int rowdist = src.rows * 0.025;
         const int center = src.cols / 2;
-        const int lnull = -1;
-        const int rnull = src.cols + 1;
+        const int wbot = center * 16 / 20;
+        const int wtop = center * 6 / 20;
+        int lnull[rows];
+        int rnull[rows];
+        for(int i = 0; i < rows; i++)
+        {
+            const int y = src.rows - ((i + 1) * rowdist);
+            lnull[i] = ((center - wtop) - (center - wbot)) * ((src.rows - y) / (float)src.rows) + (center - wbot);
+            rnull[i] = ((center + wtop) - (center + wbot)) * ((src.rows - y) / (float)src.rows) + (center + wbot);
+        }
         int lcount = 0;
+        int rcount = 0;
         int total = 0;
         int left[rows];
         int right[rows];
-        int prevl = lnull;
-        int prevr = rnull;
         float totalWeight = 0;
 
         // Edge detection
@@ -201,29 +206,11 @@ namespace msv {
             if(angle < 0)
                 angle = 180 + angle;
 
-            if((l[0] <= center && l[2] >= center) || (l[0] >= center && l[2] <= center))
+            if(angle < 15 || angle > 165)
             {
                 line(cdst, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0, 0, 64), 1, CV_AA);
                 lines.erase(lines.begin() + i);
                 i--;
-            }
-            else if(l[0] < center)
-            {
-                if(angle < 25 - prevAngle * 2.5 || angle > 75 - prevAngle * 2.5)
-                {
-                    line(cdst, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0, 0, 64), 1, CV_AA);
-                    lines.erase(lines.begin() + i);
-                    i--;
-                }
-            }
-            else if(l[0] > center)
-            {
-                if(angle < 115 - prevAngle * 2.5 || angle > 165 - prevAngle * 2.5)
-                {
-                    line(cdst, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0, 0, 64), 1, CV_AA);
-                    lines.erase(lines.begin() + i);
-                    i--;
-                }
             }
         }
 
@@ -238,14 +225,20 @@ namespace msv {
 
             // Draw center line
             line(cdst, Point(center, 0), Point(center, src.rows), Scalar(255,0,0), 1, CV_AA);
+
+            // Draw filter limit
+            int wi = 320 * 16 / 20;
+            int wi2 = 320 * 6 / 20;
+            line(cdst, Point(320 - wi, 240), Point(320 - wi2, 0), Scalar(255, 192, 0), 1, CV_AA);
+            line(cdst, Point(320 + wi, 240), Point(320 + wi2, 0), Scalar(255, 192, 0), 1, CV_AA);
         }
 
         // Calculate distance to lines
         for(int i = 0; i < rows; i++)
         {
-            int lx = lnull;
-            int rx = rnull;
-            int y = src.rows - ((i + 1) * rowdist);
+            const int y = src.rows - ((i + 1) * rowdist);
+            int lx = lnull[i];
+            int rx = rnull[i];
             for(size_t j = 0; j < lines.size(); j++)
             {
                 Vec4i l = lines[j];
@@ -260,14 +253,14 @@ namespace msv {
 
                     if(x < center)
                     {
-                        if(x > lx && x < center - minLength && (prevl == lnull || (prevl - src.cols * 0.2 < x && prevl + src.cols * 0.2 > x)))
+                        if(x > lx && x < center - minLength)
                         {
                             lx = x;
                         }
                     }
                     else
                     {
-                        if(x < rx && x > center + minLength && (prevr == rnull || (prevr + src.cols * 0.1 > x && prevr - src.cols * 0.1 < x)))
+                        if(x < rx && x > center + minLength)
                         {
                             rx = x;
                         }
@@ -276,44 +269,43 @@ namespace msv {
             }
             left[i] = lx;
             right[i] = rx;
-            if(lx != lnull)
+            if(lx != lnull[i])
             {
                 lcount++;
-                prevl = lx;
             }
-            if(rx != rnull)
+            if(rx != rnull[i])
             {
-                prevr = rx;
+                rcount++;
             }
         }
 
         // Predict rows forwards
         for(int i = 1; i < rows; i++)
         {
-            if(left[i] == lnull && left[i - 1] != lnull)
+            if(left[i] == lnull[i] && left[i - 1] != lnull[i - 1] && lcount > 2)
             {
                 int j = i;
-                while(++j < rows && left[j] == lnull);
+                while(++j < rows && left[j] == lnull[j]);
                 if(j != rows)
                 {
-                    left[i] = left[i - 1] + (left[j] - left[i - 1]) / (j - (i - 1));
+                    left[i] = max(left[i - 1] + (left[j] - left[i - 1]) / (j - (i - 1)), lnull[i]);
                 }
                 else
                 {
-                    left[i] = left[i - 1] + (left[i - 1] - left[i - 2]);
+                    left[i] = max(left[i - 1] + (left[i - 1] - left[i - 2]), lnull[i]);
                 }
             }
-            if(right[i] == rnull && right[i - 1] != rnull)
+            if(right[i] == rnull[i] && right[i - 1] != rnull[i - 1] && rcount > 2)
             {
                 int j = i;
-                while(++j < rows && right[j] == rnull);
+                while(++j < rows && right[j] == rnull[j]);
                 if(j != rows)
                 {
-                    right[i] = right[i - 1] + (right[j] - right[i - 1]) / (j - (i - 1));
+                    right[i] = min(right[i - 1] + (right[j] - right[i - 1]) / (j - (i - 1)), rnull[i]);
                 }
                 else
                 {
-                    right[i] = right[i - 1] + (right[i - 1] - right[i - 2]);
+                    right[i] = min(right[i - 1] + (right[i - 1] - right[i - 2]), rnull[i]);
                 }
             }
         }
@@ -321,30 +313,30 @@ namespace msv {
         // Predict rows backwards
         for(int i = rows - 2; i >= 0; i--)
         {
-            if(left[i] == lnull && left[i + 1] != lnull)
+            if(left[i] == lnull[i] && left[i + 1] != lnull[i + 1] && lcount > 2)
             {
                 int j = i;
-                while(--j < rows && left[j] == lnull);
+                while(--j >= 0 && left[j] == lnull[j]);
                 if(j != -1)
                 {
-                    left[i] = left[i + 1] + (left[j] - left[i + 1]) / (j - (i + 1));
+                    left[i] = max(left[i + 1] + (left[j] - left[i + 1]) / (j - (i + 1)), lnull[i]);
                 }
                 else
                 {
-                    left[i] = left[i + 1] + (left[i + 1] - left[i + 2]);
+                    left[i] = max(left[i + 1] + (left[i + 1] - left[i + 2]), lnull[i]);
                 }
             }
-            if(right[i] == rnull && right[i + 1] != rnull)
+            if(right[i] == rnull[i] && right[i + 1] != rnull[i + 1] && rcount > 2)
             {
                 int j = i;
-                while(--j < rows && right[j] == rnull);
+                while(--j >= 0 && right[j] == rnull[j]);
                 if(j != -1)
                 {
-                    right[i] = right[i + 1] + (right[j] - right[i + 1]) / (j - (i + 1));
+                    right[i] = min(right[i + 1] + (right[j] - right[i + 1]) / (j - (i + 1)), rnull[i]);
                 }
                 else
                 {
-                    right[i] = right[i + 1] + (right[i + 1] - right[i + 2]);
+                    right[i] = min(right[i + 1] + (right[i + 1] - right[i + 2]), rnull[i]);
                 }
             }
         }
@@ -352,40 +344,33 @@ namespace msv {
         // Calculate sum of distances
         for(int i = 0; i < rows; i++)
         {
-            if(lcount > 3)
+            //if(right[i] < center + minLength || left[i] > center - minLength)
+            //    continue;
+
+            const int y = src.rows - ((i + 1) * rowdist);
+            int value = (-left[i] + center - (right[i] - center)) * (i * weight + 1);
+            total += value;
+            totalWeight += (i * weight + 1);
+
+            if (m_debug)
             {
-                if(right[i] < center + minLength || left[i] > center - minLength)
-                    continue;
-
-                const int y = src.rows - ((i + 1) * rowdist);
-                int value = (-left[i] + center - (right[i] - center)) * (i * weight + 1);
-                total += value;
-                totalWeight += (i * weight + 1);
-
-                if (m_debug)
-                {
-                    line(cdst, Point(left[i], y), Point(center, y), Scalar(0, 255, 255), 1, CV_AA);
-                    line(cdst, Point(right[i], y), Point(center, y), Scalar(0, 255, 0), 1, CV_AA);
-                }
+                line(cdst, Point(left[i], y), Point(center, y), Scalar(0, 255, 255), 1, CV_AA);
+                line(cdst, Point(right[i], y), Point(center, y), Scalar(0, 255, 0), 1, CV_AA);
             }
         }
 
-        if(totalWeight > 0)
+        // Calculate new angle
+        double newAngle = prevAngle;
+        //if(lcount > 2 || rcount > 2)
         {
             total /= totalWeight;
-            //printf("Bef: %i\n", total);
             const int sign = (total < 0) ? -1 : 1;
             total *= sign;
             total = pow(total, exp);
             total *= sign;
-            //printf("Aft: %i\n", total);
+            double diff = (total * -ratio) - prevAngle;
+            newAngle += diff;
         }
-
-        // Calculate new angle
-        double diff = (total * -ratio) - prevAngle;
-        diff = fmin(maxturn, diff);
-        diff = fmax(-maxturn, diff);
-        const double newAngle = prevAngle + diff;
 
         // Create SteeringData
         SteeringData sd;
@@ -394,10 +379,11 @@ namespace msv {
         // Show image
         if (m_debug)
         {
+            imshow("Source", src);
             imshow("Canny", dst);
             imshow("Lane Detection", cdst);
-            printf("Total: %i, Angle: %f, Diff: %f\n", total, prevAngle, diff);
         }
+        printf("Total: %i, Angle: %f\n", total, newAngle);
 
         // Create container for sending the data
         Container c(Container::USER_DATA_1, sd);
