@@ -58,7 +58,8 @@ ModuleState::MODULE_EXITCODE Overtaker::body() {
         int turnOut = 2;
         int turnBack = 3;
         int state = followLane;
-        double steering = 0.5;
+        int counter = 0;
+        double steering = 25;
        // int turning = 0;
 
         while (getModuleState() == ModuleState::RUNNING) {
@@ -71,7 +72,7 @@ ModuleState::MODULE_EXITCODE Overtaker::body() {
 
         Container containerLaneData = getKeyValueDataStore().get(Container::USER_DATA_3);
         LaneData ld = containerLaneData.getData<LaneData> ();
-        cerr << "Most recent Lane data: '" << ld.toString() << "'" << endl;
+       // cerr << "Most recent Lane data: '" << ld.toString() << "'" << endl;
 
         // 2. Get most recent sensor board data:
         Container containerSensorBoardData = getKeyValueDataStore().get(Container::USER_DATA_0);
@@ -109,26 +110,32 @@ ModuleState::MODULE_EXITCODE Overtaker::body() {
 
                         state = turnOut;
                 }
-                // With setSteeringWheelAngle, you can steer in the range of -26 (left) .. 0 (straight) .. +25 (right)
-                //double desiredSteeringWheelAngle = 4; // 4 degree but SteeringWheelAngle expects the angle in radians!
                 vc.setSteeringWheelAngle(sd.getHeadingData());
                 break;
         case 2 :
         cerr << "Turn out" << endl;
-                if(sbd.getValueForKey_MapOfDistances(0) > 0 && sbd.getValueForKey_MapOfDistances(3) < 0)
+                if(sbd.getValueForKey_MapOfDistances(0) > 0 )
                 {
                         state = turnBack;
                         break;
                 }
+                ++counter;
+                //std::cout << "counter " << counter << std::endl;
                 vc.setSteeringWheelAngle(-steering);
                 break;
         case 3 :
         cerr << "turnBack" << endl;
-                if(sbd.getValueForKey_MapOfDistances(0) < 0 && sbd.getValueForKey_MapOfDistances(2) < 0 && sbd.getValueForKey_MapOfDistances(4) < 0)
+               // std::cout << "distance " << sbd.getValueForKey_MapOfDistances(4) << std::endl;
+                if(sbd.getValueForKey_MapOfDistances(4) > 5 || sbd.getValueForKey_MapOfDistances(4) < 0)
                 {
-                        vc.setSteeringWheelAngle(steering);
-
-                        if(ld.getRightLine1() > 0)
+                        if(counter > 0)
+                        {
+                               // std::cout << "counter out " << counter << std::endl;
+                                vc.setSteeringWheelAngle(steering);
+                                --counter;
+                                break;
+                        }
+                        else 
                         {
                                 state = followLane;
                                 break;   
