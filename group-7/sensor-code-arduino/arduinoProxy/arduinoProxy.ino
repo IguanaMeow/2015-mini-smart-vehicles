@@ -18,68 +18,81 @@ const int encoderPinB = 25;
 volatile long encoderTicks = 0;
 unsigned int integerVal = 0;
 int US1, US2;
-int throttle = 1500; 
+int throttle = 1500;
 int angle = 90;
 int reading = 0;
 bool dataReceived = true;
 
- String inputString;
- 
+String inputString;
+
 Servo esc;
 Servo servo;
 
-
 void setup()
 {
-   inputString.reserve(10);//Instantiate Objects
+  inputString.reserve(10); // Instatiate Objects
   Wire.begin();
   esc.attach(9);
   servo.attach(10);
   pinMode(encoderPinA, INPUT);
   pinMode(encoderPinB, INPUT);
   attachInterrupt(4, WheelEncoderInterrupt, CHANGE);
-  Serial.begin(9600);    // start serial communication at 9600bps
+  Serial.begin(115200);          // start serial communication at 9600bps
 }
+
 
 
 void loop()
 {
- 
- if(dataReceived == true){
-// IR_rightFront = 3;
- //IR_rightRear = -1;
- //IR_rear = 2;
- // US1 = 20;
-// US2 = 10;
-  //Convert Integers to Strings
-  String U1 = String(US1);
-  String U2 = String(US2);
-  String IR1 = String(IR_rightFront);
-  String IR2 = String(IR_rear);
-  String IR3 = String(IR_rightRear);
-  String WE = String(encoderTicks);
-  String speedValue = String(integerVal);
+  if (dataReceived == true) {
+    //IR_rightFront = 3;
+    //IR_rightRear = -1;
+    //IR_rear = 2;
+    // US1 = 20;
+    // US2 = 10;
+    esc.writeMicroseconds(throttle);
+    servo.write(angle);
+    val1 = analogRead(IR_1);  // reads the value of the sharp sensor
+    val2 = analogRead(IR_2);
+    val3 = analogRead(IR_3);
 
-  String sensorData = "";
-  sensorData += "IR1=";
-  sensorData += IR1;
-  sensorData += "IR2=";
-  sensorData += IR2;
-  sensorData += "IR3=";
-  sensorData += IR3;
-  sensorData += "US1=";
-  sensorData += U1;
-  sensorData += "US2=";
-  sensorData += U2;
+    //read infrared sensors
+    IR_rightFront = ((2914 / (val1 + 5) - 1));
+    IR_rightRear =  ((2914 / (val2 + 5) - 1)); //converts to cm
+    IR_rear = ((2914 / (val3 + 5) - 1));
+    US1 = range(ADDRESS);
+    US2 = range(ADDRESS2);
 
-  Serial.println(encodeNetstring(sensorData));
-  dataReceived = false;
- }
+    //convert int to strings
+    String U1 = String(US1);
+    String U2 = String(US2);
+    String IR1 = String( IR_rightFront);
+    String IR2 = String(IR_rightRear);
+    String IR3 = String( IR_rear);
+    String WE = String(encoderTicks);
+    String speedValue = String(integerVal);
 
-  //delay(100);       
- 
+    String sensorData = "";
+    sensorData += "IR1=";
+    sensorData += IR1;
+    sensorData += "IR2=";
+    sensorData += IR2;
+    sensorData += "IR3=";
+    sensorData += IR3;
+    sensorData += "US1=";
+    sensorData += U1;
+    sensorData += "US2=";
+    sensorData += U2;
+
+    //prints on serial monitor
+    Serial.println(encodeNetstring(sensorData));
+    dataReceived = false;
+
+  }
+  //delay(100);               // wait for this much time before printing next value
+
 }
-//Setup Ultrasonic to read cm 
+//function that gets the range and read the sensor values
 int range(int ADDRESS_) {
   int range = 0;
   Wire.beginTransmission(ADDRESS_); // transmit to device
@@ -102,17 +115,15 @@ int range(int ADDRESS_) {
   // step 5: receive reading from sensor
   if (2 <= Wire.available())   // if two bytes were received
   {
-    range = Wire.read();   // receive high byte (overwrites previous reading)
+    range = Wire.read();  // receive high byte (overwrites previous reading)
     range = range << 8;    // shift high byte to be high 8 bits
-    range |= Wire.read();  // receive low byte as lower 8 bits
+    range |= Wire.read(); // receive low byte as lower 8 bits
   }
   return range;
   delay(250);                  // wait a bit since people have to read the output :)
 }
-
-
-void WheelEncoderInterrupt() {      //if pinA is high and pinB is low ticks ++ else ticks
-                                    //if pinA is low and pinB is low ticks -- else ticks ++
+void WheelEncoderInterrupt() { //if pinA is high and pinB is low ticks ++ else ticks
+  //if pinA is low and pinB is low ticks -- else ticks ++
   if (digitalRead(encoderPinA)) {
     !(digitalRead(encoderPinB)) ? encoderTicks -- : encoderTicks ++;
   }
@@ -121,43 +132,36 @@ void WheelEncoderInterrupt() {      //if pinA is high and pinB is low ticks ++ e
   }
 }
 
-
-
 void serialEvent() {
   char inChar;
-   while(Serial.available() > 0) {   // something came across serial
-    
-              
-      String value;  
-    int integerVal = 0;   
-     float speedOfCar;
-        static char buffer[34];
-        if (readline(Serial.read(), buffer, 34) > 0) {
-           value = decodeNetstring(buffer);
-        //   Serial.println("Value: " + value); 
-       }
-         if(value.startsWith("WA")){ 
-           int equalsIndex = value.indexOf('=');
-           String getData = value.substring(equalsIndex + 1);
-           integerVal = getData.toInt(); 
-           angle = integerVal + 90; 
-//Serial.print("Angle:");         
-       //    Serial.println(angle);
-           equalsIndex = getData.indexOf('=');
-           String speedData = getData.substring(equalsIndex + 1);
-       //    Serial.print("Speed:");         
-         //  Serial.println(speedData);
-      
+  while (Serial.available() > 0) {  // something came across serial
+
+    String value;
+    int integerVal = 0;
+    static char buffer[34];
+    if (readline(Serial.read(), buffer, 34) > 0) {
+      value = decodeNetstring(buffer);
     }
-    
-     inputString = "";
-   }
-   dataReceived = true;
-} 
+    if (value.startsWith("WA")) {
+      int equalsIndex = value.indexOf('=');
+      String getData = value.substring(equalsIndex + 1);
+      integerVal = getData.toInt();
+      throttle = 1600;
+      angle = integerVal + 90;
 
-//*****   FUNCTIONS   *********//
+      equalsIndex = getData.indexOf('=');
+      String speedData = getData.substring(equalsIndex + 1);
+      
+
+    }
+
+    inputString = "";
+  }
+  dataReceived = true;
+}
 
 
+//Jani
 String encodeNetstring(String value) {
 
   int len = value.length();
@@ -168,8 +172,9 @@ String encodeNetstring(String value) {
 
 }
 
+
+// Needs to be tested to insure that decoding works. // Jani
 String decodeNetstring(String netstring) {
-   
   if (netstring.length() < 3) return "NETSTRING_ERROR_TOO_SHORT";
 
   //if (netstring.length() > ?) return "NETSTRING_ERROR_TOO_LONG";
@@ -186,26 +191,25 @@ String decodeNetstring(String netstring) {
 
   if (payload.substring(payload.length() - 1) == ",") payload.remove(payload.length() - 1); //remove the comma
   if (payload.length() != payloadLength) return "NETSTRING_ERROR_INVALID_LENGTH";
-  
- 
+
   return payload;
 
 }
 
-int readline(int readch, char *buffer, int len){
+int readline(int readch, char *buffer, int len) {
   static int pos = 0;
   int rpos;
 
   if (readch > 0) {
     switch (readch) {
       case '\n': // Ignore new-lines
-      break;
+        break;
       case ',': // Return on CR
         rpos = pos;
         pos = 0;  // Reset position index ready for next time
         return rpos;
       default:
-        if (pos < len-1) {
+        if (pos < len - 1) {
           buffer[pos++] = readch;
           buffer[pos] = 0;
         }

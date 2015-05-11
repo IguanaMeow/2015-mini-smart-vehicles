@@ -120,7 +120,7 @@ namespace msv {
     SensorBoardData sbd;
     VehicleControl vc;
     string vcDataString, sensorData;
-    serial::Serial my_serial("/dev/ttyACM0", 9600, serial::Timeout::simpleTimeout(1000));
+    serial::Serial my_serial("/dev/ttyACM0", 115200, serial::Timeout::simpleTimeout(1000));
     stringstream ss;
     bool dataReceived = true;  
     int syncTest = 0; 
@@ -155,7 +155,7 @@ namespace msv {
 
           
         if(dataReceived){
-	    ss << vc.getSteeringWheelAngle();
+	ss << (vc.getSteeringWheelAngle() *-1);
         vcDataString = "WA=" + ss.str(); 
         ss.str("");
         ss << vc.getSpeed();
@@ -186,8 +186,11 @@ namespace msv {
             sbd.putTo_MapOfDistances(0, extractData("IR1", sensorData)); // IR front right
             sbd.putTo_MapOfDistances(1, extractData("IR2", sensorData)); // IR rear
             sbd.putTo_MapOfDistances(2, extractData("IR3", sensorData)); // IR rear right
-            sbd.putTo_MapOfDistances(3, extractData("US1", sensorData)); // US front
-            sbd.putTo_MapOfDistances(4, extractData("US2", sensorData)); // US front right
+            sbd.putTo_MapOfDistances(3, -1); // US front
+            sbd.putTo_MapOfDistances(4, -1); // US front right
+	   
+ 	   // sbd.putTo_MapOfDistances(3, extractData("US1", sensorData)); // US front
+           // sbd.putTo_MapOfDistances(4, extractData("US2", sensorData)); // US front right
             dataReceived = true;
             }
         }
