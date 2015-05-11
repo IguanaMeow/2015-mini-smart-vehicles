@@ -28,35 +28,47 @@ bool dataReceived = true;
 Servo esc;
 Servo servo;
 
-
 void setup()
 {
-   inputString.reserve(10);//Instantiate Objects
+  inputString.reserve(10); // Instatiate Objects
   Wire.begin();
   esc.attach(9);
   servo.attach(10);
   pinMode(encoderPinA, INPUT);
   pinMode(encoderPinB, INPUT);
   attachInterrupt(4, WheelEncoderInterrupt, CHANGE);
-  Serial.begin(9600);    // start serial communication at 9600bps
+  Serial.begin(9600);          // start serial communication at 9600bps
 }
+
 
 
 void loop()
 {
- 
  if(dataReceived == true){
-// IR_rightFront = 3;
+ //IR_rightFront = 3;
  //IR_rightRear = -1;
  //IR_rear = 2;
- // US1 = 20;
+// US1 = 20;
 // US2 = 10;
-  //Convert Integers to Strings
+  esc.writeMicroseconds(throttle);
+  servo.write(angle);
+  val1 = analogRead(IR_1);  // reads the value of the sharp sensor
+  val2 = analogRead(IR_2);
+  val3 = analogRead(IR_3);
+  
+  //read infrared sensors
+ IR_rightFront = ((2914 / (val1 + 5) - 1));
+ IR_rightRear =  ((2914 / (val2 + 5) - 1)); //converts to cm
+  IR_rear = ((2914 / (val3 + 5) - 1));
+  US1 = range(ADDRESS);
+  US2 = range(ADDRESS2);
+  
+  //convert int to strings
   String U1 = String(US1);
   String U2 = String(US2);
-  String IR1 = String(IR_rightFront);
-  String IR2 = String(IR_rear);
-  String IR3 = String(IR_rightRear);
+  String IR1 = String( IR_rightFront);
+  String IR2 = String(IR_rightRear);
+  String IR3 = String( IR_rear);
   String WE = String(encoderTicks);
   String speedValue = String(integerVal);
 
@@ -71,15 +83,16 @@ void loop()
   sensorData += U1;
   sensorData += "US2=";
   sensorData += U2;
-
-  Serial.println(encodeNetstring(sensorData));
-  dataReceived = false;
- }
-
-  //delay(100);       
  
+//prints on serial monitor
+Serial.println(encodeNetstring(sensorData));
+  dataReceived = false;
+  
+ }
+  //delay(100);               // wait for this much time before printing next value
+
 }
-//Setup Ultrasonic to read cm 
+//function that gets the range and read the sensor values
 int range(int ADDRESS_) {
   int range = 0;
   Wire.beginTransmission(ADDRESS_); // transmit to device
@@ -102,17 +115,15 @@ int range(int ADDRESS_) {
   // step 5: receive reading from sensor
   if (2 <= Wire.available())   // if two bytes were received
   {
-    range = Wire.read();   // receive high byte (overwrites previous reading)
+    range = Wire.read();  // receive high byte (overwrites previous reading)
     range = range << 8;    // shift high byte to be high 8 bits
-    range |= Wire.read();  // receive low byte as lower 8 bits
+    range |= Wire.read(); // receive low byte as lower 8 bits
   }
   return range;
   delay(250);                  // wait a bit since people have to read the output :)
 }
-
-
-void WheelEncoderInterrupt() {      //if pinA is high and pinB is low ticks ++ else ticks
-                                    //if pinA is low and pinB is low ticks -- else ticks ++
+void WheelEncoderInterrupt() { //if pinA is high and pinB is low ticks ++ else ticks
+  //if pinA is low and pinB is low ticks -- else ticks ++
   if (digitalRead(encoderPinA)) {
     !(digitalRead(encoderPinB)) ? encoderTicks -- : encoderTicks ++;
   }
@@ -120,8 +131,6 @@ void WheelEncoderInterrupt() {      //if pinA is high and pinB is low ticks ++ e
     !(digitalRead(encoderPinB)) ? encoderTicks ++ : encoderTicks --;
   }
 }
-
-
 
 void serialEvent() {
   char inChar;
@@ -155,9 +164,8 @@ void serialEvent() {
    dataReceived = true;
 } 
 
-//*****   FUNCTIONS   *********//
 
-
+//Jani
 String encodeNetstring(String value) {
 
   int len = value.length();
@@ -168,8 +176,9 @@ String encodeNetstring(String value) {
 
 }
 
+
+// Needs to be tested to insure that decoding works. // Jani
 String decodeNetstring(String netstring) {
-   
   if (netstring.length() < 3) return "NETSTRING_ERROR_TOO_SHORT";
 
   //if (netstring.length() > ?) return "NETSTRING_ERROR_TOO_LONG";
@@ -186,8 +195,7 @@ String decodeNetstring(String netstring) {
 
   if (payload.substring(payload.length() - 1) == ",") payload.remove(payload.length() - 1); //remove the comma
   if (payload.length() != payloadLength) return "NETSTRING_ERROR_INVALID_LENGTH";
-  
- 
+
   return payload;
 
 }
