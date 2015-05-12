@@ -70,6 +70,8 @@ LaneDetector::LaneDetector(const int32_t &argc, char **argv) : ConferenceClientM
 		state(1),
 		counter(0),
 		critCounter(0),
+    critAngleCounter(0),
+    loopCounter(0),
 		yCount(0),
 
 		imgWidth(0),
@@ -78,7 +80,9 @@ LaneDetector::LaneDetector(const int32_t &argc, char **argv) : ConferenceClientM
 		SPEED(2),
 
 		critAngleRight(0.0),
-		critAngleLeft(0.0)
+		critAngleLeft(0.0),
+    rightError(0.0),
+    leftError(0.0)
 {
 	rightList.push_back(rightLine1);
 	rightList.push_back(rightLine2);
@@ -261,12 +265,27 @@ void LaneDetector::processImage() {
 
 	vector<Lines> valid = validateLines(&leftList);
 
+  if (critAngleCounter < 1 && loopCounter > 30) {
+    if (valid.begin()->getYPos() < valid.end()->getYPos()) {
+      critAngleLeft = (atan2(valid.end()->getYPos() - valid.begin()->getYPos(), valid.begin()->getXPos() - valid.end()->getXPos()) * Constants::RAD2DEG);
+    cout << "End Y "<< valid.end()->getYPos() << " Begin Y: " << valid.begin()->getYPos() << " Begin X: " << valid.begin()->getXPos() << " End X: " << valid.end()->getXPos() << endl;
+      
+    } else {
+      critAngleLeft = (atan2(valid.begin()->getYPos() - valid.end()->getYPos(), valid.end()->getXPos() - valid.end()->getXPos()) * Constants::RAD2DEG);
+    cout << "Begin Y: "<< valid.begin()->getYPos() << " End Y: " << valid.end()->getYPos() << " End X: " << valid.end()->getXPos() << " Begin X: " << valid.begin()->getXPos() << endl;
+    
+    }
+    critAngleCounter = 1;
+  }
+
 	SteeringData sd;
 	LaneData ld;
 
-	double error;
+  loopCounter += 1;
+	
 	cout << "Crit: " << rightLine1.getCritical() << " xPos: " << rightLine1.getXPos() << endl;
-	error = rightLine1.getCritical() - rightLine1.getXPos();
+	rightError = rightLine1.getCritical() - rightLine1.getXPos();
+  leftError = valid.begin()->getCritical() - valid.begin()->getXPos();
 	if(rightLine1.getXPos() > 250 || rightLine1.getXPos() < 160 || rightLine2.getXPos() > 250 || rightLine2.getXPos() < 160)
 	{
 		ld.setRightLine1(0);
@@ -289,25 +308,13 @@ void LaneDetector::processImage() {
 		else if (rightLine1.getXPos() > (imgWidth / 2) - 5 && rightLine2.getXPos() > (imgWidth / 2) - 5)
 		{
 			cout << "Follow left" << endl;
-			// Get two valid lines to base steering on
-			// Steer to the right
-			if (valid.begin()->getXPos() < valid.begin()->getCritical()) {
-				sd.setHeadingData(-measureAngle(imgHeight - valid.end()->getYPos(), valid.end()->getXPos(), imgHeight - valid.begin()->getYPos(), valid.begin()->getXPos(), 0));
-			}
-			// Steer to the left
-			else if (valid.begin()->getXPos() > valid.begin()->getCritical()) {
-				sd.setHeadingData(measureAngle(imgHeight - valid.end()->getYPos(), valid.end()->getXPos(), imgHeight - valid.begin()->getYPos(), valid.begin()->getXPos(), 0));
-			}
-			// Steer straight
-			else {
-				sd.setHeadingData(0.0);
-			}
+      sd.setHeadingData(measureAngle(imgHeight - valid.end()->getYPos(), valid.end()->getXPos(), imgHeight - valid.begin()->getYPos(), valid.begin()->getXPos(), -leftError, critAngleLeft));
 		}
 		// Follow the lower right lines
 		else
 		{
 			cout << "Follow right" << endl;
-			sd.setHeadingData(measureAngle(rightLine1.getYPos(), rightLine1.getXPos(), rightLine2.getYPos(), rightLine2.getXPos(), error));
+			sd.setHeadingData(measureAngle(rightLine1.getYPos(), rightLine1.getXPos(), rightLine2.getYPos(), rightLine2.getXPos(), rightError, critAngleRight));
 
 			if((abs(upline1.getYPos()-upline2.getYPos())<2)&& upline1.getYPos()<upline1.getCritical()){
 				state = 2;
@@ -450,13 +457,13 @@ void LaneDetector::calculateCritical(const vector<Lines>::iterator& line, int di
 
 }
 
-double LaneDetector::measureAngle(int yPos1, int xPos1, int yPos2, int xPos2, double error) {
+double LaneDetector::measureAngle(int yPos1, int xPos1, int yPos2, int xPos2, double error, double critAngle) {
 	double deltaY = yPos2 - yPos1;
 	double deltaX = xPos1 - xPos2;
 
 	double angle = (atan2(deltaY, deltaX) * Constants::RAD2DEG);
 	cout << "Angle measured: " << angle << " error: " << error << endl;
-	angle -= critAngleRight;
+	angle -= critAngle;
 	cout << "Angle relative to 0: " << angle << endl;
 	
 	// Adjust the angle depending on the difference between desired length from the line
