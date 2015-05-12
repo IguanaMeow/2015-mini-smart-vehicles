@@ -37,7 +37,7 @@ void setup() {
   pinMode(irPin2,OUTPUT);   // setup infrared pin as OUTPUT
   pinMode(irPin3,OUTPUT);   // setup infrared pin as OUTPUT
   Serial.begin(9600);       // initialize serial communication:
-  attachInterrupt(5, encoderInterrupt, CHANGE);//0 represents pin 2 on Mega
+  attachInterrupt(5, encoderInterrupt, CHANGE);//5 represents pin 18 on Mega
 }
 
 void loop()
