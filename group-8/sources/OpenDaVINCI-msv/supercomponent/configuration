@@ -17,7 +17,7 @@
 #
 global.car = Scenarios/Models/FordEscape.objx
 #global.car = Scenarios/Models/RedRocketCar.objx
-global.scenario = file://Scenarios/NoObstacles_StopLines.scnx
+global.scenario = file://Scenarios/MissingOuterLaneMarking.scnx
 global.showGrid = 0
 global.headless = 1 #show video in proxy == 0
 
@@ -36,7 +36,7 @@ supercomponent.pulsetimeack.exclude = cockpit,monitor # List of modules that wil
 #
 # CONFIGURATION FOR LANEDETECTOR
 #
-lanedetector.debug = 0      # set to 0 to disable any windows and further output
+lanedetector.debug = 1      # set to 0 to disable any windows and further output
 
 
 # CONFIGURATION FOR VCR

@@ -247,10 +247,10 @@ void LaneDetector::processImage() {
 		leftLine3.setCritical(leftList[2].getCritical());
 		leftLine4.setCritical(leftList[3].getCritical());
 
-		leftList[0].setXPos(leftLine1.setXPos());
-		leftList[1].setXPos(leftLine2.setXPos());
-		leftList[2].setXPos(leftLine3.setXPos());
-		leftList[3].setXPos(leftLine4.setXPos());
+		leftList[0].setXPos(leftLine1.getXPos());
+		leftList[1].setXPos(leftLine2.getXPos());
+		leftList[2].setXPos(leftLine3.getXPos());
+		leftList[3].setXPos(leftLine4.getXPos());
 
 
 		critAngleRight = (atan2(rightLine2.getYPos() - rightLine1.getYPos(), rightLine1.getXPos() - rightLine2.getXPos()) * Constants::RAD2DEG);
