@@ -1,52 +1,54 @@
 
+
 #include <Wire.h>
 
-#define srfAddress1 0x70                           // Address of the SRF08
-#define srfAddress2 0x73                           // Address of the SRF08
+#define srfAddress1 0x70    // Address of the SRF08
+#define srfAddress2 0x73    // Address of the SRF08
 
-#define cmdByte 0x00                              // Command byte
-#define lightByte 0x01                            // Byte to read light sensor
-#define rangeByte 0x02                            // Byte for start of ranging data
+#define cmdByte 0x00        // Command byte
+#define lightByte 0x01      // Byte to read light sensor
+#define rangeByte 0x02      // Byte for start of ranging data
 
-const int pingPin = 7;
+volatile unsigned long ticks = 0; //encoder tick intialized
 
-const int trigPinM = 42;
-const int echoPinM= 43;
+const int trigPinM = 42;    //Ultrosonic SR04 trigger
+const int echoPinM= 43;     //Ultrosonic SR04 echo
 
-const int irPin1 = 15;
-const int irPin2 = 14;
-const int irPin3 = 13;
+const int irPin1 = 15;      //Infrared defined pin
+const int irPin2 = 14;      //Infrared defined pin
+const int irPin3 = 13;      //Infrared defined pin
 
-long ir1, ir2, ir3;
-long us1, us2, us3; 
+long ir1, ir2, ir3;         //initialize infrared sensor value
+long us1, us2, us3;         //initialize ultrasonic sensor value
 
-String input, encodedS;
-String inf1;
-String inf2;
-String inf3;
-String ult1;
-String ult2;
-String ult3;
+String input;               //String of sensor inputs 
+String encodedS;            //String of sensor inputs 
+                              //after being encoded by Netstrings
+String inf1, inf2, inf3;    //initialize infrared String 
+                              //(later we transform long to String)
+
+String ult1, ult2, ult3;    //initialize ultrasonic String
+                              //(later we transform long to String)
+String encoder;
 
 void setup() {
-  Wire.begin();     
-  // initialize serial communication:
-  pinMode(irPin1,OUTPUT);
-  pinMode(irPin2,OUTPUT);
-  pinMode(irPin3,OUTPUT);
-
-  Serial.begin(9600);
+  Wire.begin();             // initialize the Wire object     
+  pinMode(irPin1,OUTPUT);   // setup infrared pin as OUTPUT
+  pinMode(irPin2,OUTPUT);   // setup infrared pin as OUTPUT
+  pinMode(irPin3,OUTPUT);   // setup infrared pin as OUTPUT
+  Serial.begin(9600);       // initialize serial communication:
+  attachInterrupt(5, encoderInterrupt, CHANGE);//5 represents pin 18 on Mega
 }
 
 void loop()
 {
-  ir1 = infraredSense(irPin1);
-  ir2 = infraredSense(irPin2);
-  ir3 = infraredSense(irPin3);
+  ir1 = infraredSense(irPin1);  // assign infraredsense function return to ir1
+  ir2 = infraredSense(irPin2);  // assign infraredsense function return to ir2
+  ir3 = infraredSense(irPin3);  // assign infraredsense function return to ir3
 
-  us1= ultrasonicSense(trigPinM, echoPinM);
-  us2= getRange(srfAddress1);                      // Calls a function to get the range data
-  us3= getRange(srfAddress2);  
+  us1= ultrasonicSense(trigPinM, echoPinM);  //assign ultrasonicsense function return to us1
+  us2= getRange(srfAddress1);   // assign getrange function return to us2
+  us3= getRange(srfAddress2);   // assign getrange function return to us3
 
   //Serial.print("Range1: ");
   //Serial.print(us1);
@@ -61,19 +63,21 @@ void loop()
   ult1=checkLength(String(us1));
   ult2=checkLength(String(us2));
   ult3=checkLength(String(us3));
+  encoder= String(ticks);
 
-  input+= inf1+ inf2+ inf3+ ult1+ ult2+ ult3;
+  input+= inf1+ inf2+ inf3 + ult1+ ult2+ ult3+ encoder;
   encodedS=encodedNetstring(input);
+
   Serial.println(encodedS);
   encodedS="";
   input="";
-  //delay(100);
+  delay(100);
 }
 
 
-
+// This function encodes a String as a netstring
 String encodedNetstring(String plainInput){
-  unsigned int len = plainInput.length();
+  unsigned int len = plainInput.length(); 
   if (!len) return "error"; //if the input string is empty, return "error"
   return len + String(":" + plainInput + ","); //return a Netstring in the form of [len]":"[string]","
 }
@@ -136,40 +140,52 @@ long microsecondsToCentimeters(long microseconds)
   return microseconds / 29 / 2;
 } 
 
-int getRange(int srfAddress){                                   // This function gets a ranging from the SRF08
+// This function gets a ranging from the SRF08
+int getRange(int srfAddress){                       
   int range = 0; 
-
   Wire.beginTransmission(srfAddress);             // Start communicating with SRF08
-  Wire.write((byte)cmdByte);                             // Send Command Byte
-  Wire.write(0x51);                                // Send 0x51 to start a ranging in cm
+  Wire.write((byte)cmdByte);                      // Send Command Byte
+  Wire.write(0x51);                               // Send 0x51 to start a ranging in cm
   Wire.endTransmission();
 
   delay(100);                                     // Wait for ranging to be complete
 
   Wire.beginTransmission(srfAddress);             // start communicating with SRFmodule
-  Wire.write(rangeByte);                           // Call the register for start of ranging data
+  Wire.write(rangeByte);                          // Call the register for start of ranging data
   Wire.endTransmission();
 
   Wire.requestFrom(srfAddress, 2);                // Request 2 bytes from SRF module
   while(Wire.available() < 2);                    // Wait for data to arrive
-  byte highByte = Wire.read();                 // Get high byte
-  byte lowByte = Wire.read();                  // Get low byte
+  byte highByte = Wire.read();                    // Get high byte
+  byte lowByte = Wire.read();                     // Get low byte
 
   range = (highByte << 8) + lowByte;              // Put them together
 
   return(range);                                  // Returns Range
 }
 
+
+//  This function checks the length of a sensor value (or any other string)
+//  and adds 0 or 00 accordingly
 String checkLength(String value){
-  if(value.length() < 3){
+    //  then if the length of the string is 2 it adds a 0 to the beginning of that string
     if(value.length()==2){
       value= "0"+ value;
-
     }
-    if(value.length()==1){
+     //  then if the length is 1 it adds two 00s to the beginning of that String
+    else if(value.length()==1){
       value="00"+ value;
     }
-    return value;
+    //  then if the length is 3 it returns the value itself.
+    else if(value.length()==3){
+    value = value;
   }
+  //  all other cases it returns the value itself. 
+  return value;
 }
-
+  
+// Interrupt service routine for the wheel encoder
+void encoderInterrupt()
+{
+  ticks++;   //increment tick
+}

@@ -52,6 +52,7 @@ namespace msv {
       
         // sensors for y with travelpath
         float esy;
+        float esz;
         float ystart;
         float yend;
         double Rs1; //first steer angle radius of curvature
@@ -63,6 +64,9 @@ namespace msv {
         float qesy;
 
         int state=0;
+        int parking1=0;
+        int parking2 =0;
+
         
 
         Driver::Driver(const int32_t &argc, char **argv) :
@@ -177,8 +181,8 @@ namespace msv {
                 aaqq = (aq2-aq1)+2.3;
                 xd = (pow((Rs1*Rs2),2)-pow((Rs1),2))+6;
 
-                double aa;  // angle of stearing wheel at trajectory b
-                aa = atan(xd/Rs1)* 180/ pi;
+                //double aa;  // angle of stearing wheel at trajectory b
+                //aa = atan(xd/Rs1)* 180/ pi;
                //double bb;
                // bb = aa;
                //double lpo;
@@ -188,9 +192,17 @@ namespace msv {
                 // double FF;   // missing allignment mismagment of car
                  // FF = atan((xd/Rs1)/d)*pi/180;
 
+                /*if(US_FR<8){
+                    parking1=1;
+                    parking2=0;
+                }
+                else 
+                    parking2=1;
+                    parking1=0;
+                }*/
 
-
-                if(IR_FR>0){	
+  
+                if(parking1 ==0 && IR_FR>0){	
                     vc.setSpeed(1.0);
                         start = vd.getAbsTraveledPath();	//start calculating the traveled path
                 }
@@ -199,7 +211,7 @@ namespace msv {
                         end = vd.getAbsTraveledPath();		//stop calculating the traveled path
                 }
                  if(IR_RR>0 && state==0 && IR_FR<0){      //state is 0 when ir_rr  and ir_fr is -1
-                    state=1;
+                  state=1; 
                     vc.setSpeed(1.0);
                 }
                 if(IR_RR<0 && state==1){                //state is 1 when is_rr is bigger than 0
@@ -208,15 +220,24 @@ namespace msv {
                         state=2;
                         vc.setSpeed(1.0);
                 }
-                if(IR_RR>0 && state==2){
+                if(IR_RR>0 && state==2 && trig ==0){
                     std::cout << "STATE 2"<< state << std::endl;
                         yend = vd.getAbsTraveledPath();      //stop calculating the traveled path
                         vc.setSpeed(1.0);
                 }
                 esy = yend - ystart;
-                if(esy >= xd && xd > parkspace && trig ==0 ){       // if travel path esy is bigger than xd path and if xd path
-                    vc.setSpeed(0.0);                   //is bigger than parking space, stop, and go to state 3.
+                 /******** change back xd(delete 30)  */ 
+               if(esy > (xd+30) && xd > parkspace && trig ==0 ){       // if travel path esy is bigger than xd path and if xd path
+                    vc.setSpeed(0.0);
+                    
                     state =3;
+                }
+                else if(xd>esy && esy > parkspace && trig ==0 && parking2==0){
+                    vc.setSpeed(0.0);
+                    trig=55; // not needed ???
+                    parking2=1;
+                    parking1=2;
+                    state=8;
                 }
                 if(state ==3  && trig ==0){                                     //in state 3,
                     std::cout << "STATE 3"<< state << std::endl;
@@ -227,14 +248,14 @@ namespace msv {
                     state =4;
                 }
                 if(state ==4  &&  qend  >= aaqq && trig ==0){
-                        std::cout << "STATE 4"<< state << std::endl;
-                        vc.setSpeed(0.0); 
-                        vc.setSteeringWheelAngle(-26 * 10);
-                        vc.setSpeed(-0.5);
-                        state =5;
-                    }
+                    std::cout << "STATE 4"<< state << std::endl;
+                    vc.setSpeed(0.0); 
+                    vc.setSteeringWheelAngle(-26 * 10);
+                    vc.setSpeed(-0.5);
+                    state =5;
+                }
                 if(state == 5 && (IR_R > 0.6 && IR_R <=1.9) && trig == 0){
-                   trig =1; // increase trigger to not go back to state less then 5
+                    trig =1; // increase trigger to not go back to state less then 5
                     std::cout << "STATE 5"<< state << std::endl; 
                     vc. setSpeed(0.0);
                     state =6;
@@ -254,35 +275,90 @@ namespace msv {
                     vc.setSpeed(-0.5);                       
                 }
                 else if(state == 7 && IR_R >2.3){
-                    std::cout << "PARKING DONE "<< aa << std::endl;
+                    std::cout << "PARKING DONE "<< state << std::endl;
                     vc.setSpeed(0.0);
-                 
-                    }
+                }
+                
+
+//Y-START 10.1442
+//Y-END 22.2443
+//Parking Distance ESY 12.1001
+//XD XD XD XD 12.0637
+//Parking Space 5.68819
+
+//Y-START 16.3954
+//Y-END 21.5377
+//Parking Distance ESY 5.14239
+//XD XD XD XD 12.0637
+//Parking Space 5.68819
+
+
+                // parking2, if parallel parking is not enough space then park backwards...
             
+               else if(parking2 == 1 && state ==8){
+                    std::cout << "PARKING state 2222 "<< state << std::endl;
+                    vc.setSpeed(0.0);
+                    parking2 =3;
+                    state =10;
+                
+                     
 
+    }   
 
-                    /*
+    // check if other sensor can be used instead ...
+    // STATE 10: Go forwared left in the if statement below
+    if (state ==10 && parking2==3 && US_RR <10){
+        vc.setSpeed(0.5);
+        vc.setSteeringWheelAngle(-0.2);
+        
+    // STATE 10: Go backwards Right in the if statement below
+    } if (state ==10 && parking2==3 && IR_RR >2.35) {
+        vc.setSpeed(-0.5);
+        vc.setSteeringWheelAngle(0.23);
+        state=11;
+    //
+    }if (state ==11 && parking2==3 && (IR_RR > 1.5 && IR_RR < 2.6)) {
+        vc.setSpeed(-0.5);
+        vc.setSteeringWheelAngle(0.3);
+       } else if( state==11 && parking2==3 && IR_RR <1.5){
+        vc.setSpeed(-0.5);
+        vc.setSteeringWheelAngle(0.5);
+
+       }if(state==11 && parking2==3 && IR_FR <1 && IR_RR <1.23 && US_FR <1){
+         vc.setSpeed(0.0);
+        state=12;
+
+       }
+        
+            
+            
+          
+
+                    
 
                 //std::cout << "START "<< start << std::endl;
                 //std::cout << "END "<< end << std::endl;
                 std::cout << "Y-START "<< ystart << std::endl;
                 std::cout << "Y-END "<< yend << std::endl;
                 std::cout << "Parking Distance ESY "<< esy << std::endl;
-                std::cout << "----------"<< xd<< std::endl;
-                std::cout << "Q-START "<< qstart << std::endl;
-                std::cout << "QESY "<< qesy << std::endl;
-                std::cout << "MMM "<< mmm << std::endl;
-                std::cout << "AAQQ "<< aaqq << std::endl;
-                std::cout << "----------"<< xd<< std::endl;
+                //std::cout << "----------"<< xd<< std::endl;
+                //std::cout << "Q-START "<< qstart << std::endl;
+                //std::cout << "QESY "<< qesy << std::endl;
+                //std::cout << "MMM "<< mmm << std::endl;
+                //std::cout << "AAQQ "<< aaqq << std::endl;
+                //std::cout << "----------"<< xd<< std::endl;
                 
                 std::cout << "XD XD XD XD "<< xd << std::endl;
 
                  
-                std::cout << "Rs1 <<<<<<<<<<<<< "<< Rs1 << std::endl;
-                std::cout << "aq1 <<<<<<<<<<<<< "<< aq1 << std::endl;              
-                std::cout << "aq2 <<<<<<<<<<<<< "<< aq2 << std::endl;
+                //std::cout << "Rs1 <<<<<<<<<<<<< "<< Rs1 << std::endl;
+                //std::cout << "aq1 <<<<<<<<<<<<< "<< aq1 << std::endl;              
+                //std::cout << "aq2 <<<<<<<<<<<<< "<< aq2 << std::endl;
                 std::cout << "Parking Space "<< parkspace << std::endl;
-                */
+                
+                std::cout << "PARKING111111 "<< parking1 << std::endl;
+               // std::cout << "PARKING222222 "<< parking2 << std::endl;
+                std::cout << "STATE "<< state << std::endl;
                 std::cout << "IR_FR "<< IR_FR << std::endl;
                 std::cout << "IR_RR "<< IR_RR << std::endl;
                 std::cout << "IR_R "<< IR_R << std::endl;
@@ -308,3 +384,4 @@ namespace msv {
 	        return ModuleState::OKAY;
         }
 } // msv
+
