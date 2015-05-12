@@ -250,19 +250,18 @@ void LaneDetector::processImage() {
 		leftLine3.setCritical(leftList[2].getCritical());
 		leftLine4.setCritical(leftList[3].getCritical());
 
+		critAngleRight = (atan2(rightLine2.getYPos() - rightLine1.getYPos(), rightLine1.getXPos() - rightLine2.getXPos()) * Constants::RAD2DEG);
+	}
+
 		leftList[0].setXPos(leftLine1.getXPos());
 		leftList[1].setXPos(leftLine2.getXPos());
 		leftList[2].setXPos(leftLine3.getXPos());
 		leftList[3].setXPos(leftLine4.getXPos());
-
-
-		critAngleRight = (atan2(rightLine2.getYPos() - rightLine1.getYPos(), rightLine1.getXPos() - rightLine2.getXPos()) * Constants::RAD2DEG);
-	}
 //	cout << "crit distance: " << rightLine1.getCritical() << "critAngle: " << critAngleRight << endl;
 //	cout << "x1: " << rightLine1.getXPos() << " x2: " << rightLine2.getXPos() << " y1: " << rightLine1.getYPos() << " y2: " << rightLine2.getYPos() << endl;
 
 
-	vector<Lines> valid = validateLines(&leftList);
+	validateLines(&leftList);
 
   if (critAngleCounter < 1 ) {
     if (valid.begin()->getYPos() < valid[1].getYPos()) {
@@ -279,7 +278,6 @@ void LaneDetector::processImage() {
   }
 
 	SteeringData sd;
-	LaneData ld;
 
 	
 	//cout << "Crit: " << rightLine1.getCritical() << " xPos: " << rightLine1.getXPos() << endl;
@@ -288,14 +286,7 @@ void LaneDetector::processImage() {
   cout<<"left valid begin xpos is" <<valid.begin()->getXPos()<<"  its critical is " << valid.begin()->getCritical()<<"    LEFT ERROR IS           "<<leftError<<endl; 
   cout<<"left valid begin xpos is" <<valid[1].getXPos()<<"  its critical is " << valid[1].getCritical()<<"    LEFT ERROR 2 IS           "<<valid[1].getXPos()-valid[1].getCritical()<<endl; 
 
-	if(rightLine1.getXPos() > 250 || rightLine1.getXPos() < 160 || rightLine2.getXPos() > 250 || rightLine2.getXPos() < 160)
-	{
-		ld.setRightLine1(0);
-	}
-	else {
-		ld.setRightLine1(1);
-	}
-
+	
 	switch (state) {
 	case 1: // Lanedetection state
 
@@ -369,11 +360,9 @@ void LaneDetector::processImage() {
 
 	// Create container for finally sending the data.
 	Container c(Container::USER_DATA_1, sd);
-	Container c1(Container::USER_DATA_3, ld);
 
 	// Send container.
 	getConference().send(c);
-	getConference().send(c1);
 
 }
 
@@ -437,9 +426,9 @@ ModuleState::MODULE_EXITCODE LaneDetector::body() {
 	return ModuleState::OKAY;
 }
 
-std::vector<Lines> LaneDetector::validateLines(std::vector<Lines>* lines)
+void LaneDetector::validateLines(std::vector<Lines>* lines)
 {
-	std::vector<Lines> line;
+	valid.clear();
 	int j = 0;
 
 	// Iterates through the vector of lines and stops when two valid lines have been found.
@@ -449,11 +438,10 @@ std::vector<Lines> LaneDetector::validateLines(std::vector<Lines>* lines)
 		if(it->getXPos() < 280)
 		{
 			// ...add it to the vector.
-			line.push_back(*it);
+			valid.push_back(*it);
 			j++;
 		}
 	}
-	return line;
 
 }
 

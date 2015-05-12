@@ -85,7 +85,7 @@ namespace msv {
             bool m_debug;
 
 			/* Scans for two valid lines in a vector of lines */
-			std::vector<Lines> validateLines(std::vector<Lines>* lines);
+			void validateLines(std::vector<Lines>* lines);
             
             /* Measures the distance to full-white lines */
 			double measureDistance(int yPos, int dir, IplImage* image);
@@ -130,6 +130,7 @@ namespace msv {
 
 			vector<Lines> rightList;
       		vector<Lines> leftList;
+      		vector<Lines> valid;
 
 
 	};
