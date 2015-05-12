@@ -24,6 +24,7 @@
 #include "core/data/environment/Point3.h"
 #include "core/data/environment/VehicleData.h"
 #include "core/data/control/VehicleControl.h"
+#include "Parking.h"
 
 
 namespace msv {
@@ -64,6 +65,12 @@ namespace msv {
                 US_RearRight
             };
 
+            Parking parking;
+            virtual void setUp();
+            virtual void tearDown();
+
+            bool findGap(float*, float*, float*);
+
         public:
             /**
              * Constructor.
@@ -77,40 +84,6 @@ namespace msv {
 
             core::base::ModuleState::MODULE_EXITCODE body();
 
-            
-
-        private:
-
-            virtual void setUp();
-
-            virtual void tearDown();
-// find suitable gap
-            bool find_gapStart(bool,float*,float*);
-            bool find_gapEnd(bool,float* oldValue,float* newValue);
-
-            void recording(float, float,float);
-            void startMeasure(Point3);
-            void finishMeasure(Point3);
-            bool pre_parking();
-            void stopforParking();
-            void defaultDriving();
-// start parking
-
-
-            void defaultParking();
-            void tureWheelToRightBack();
-            void tureWheelToLeftBack();
-
-            void tureWheelToRightForward();
-            void tureWheelToLeftForward();
-
-
-/*
-            virtual bool is_space(double oldValue, double newValue);
-            
-            virtual void findGapEnd();
-            virtual void defaultDrive();
-*/
     };
 
 } // msv
