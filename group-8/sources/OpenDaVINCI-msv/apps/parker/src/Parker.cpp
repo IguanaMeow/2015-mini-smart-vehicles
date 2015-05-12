@@ -25,6 +25,7 @@
 #include "core/data/Constants.h"
 #include "core/data/control/VehicleControl.h"
 #include "core/data/environment/VehicleData.h"
+#include "core/base/KeyValueConfiguration.h"
 
 #include "GeneratedHeaders_Data.h"
 
@@ -49,7 +50,6 @@ namespace msv {
         const int STOP = 7;
         const int ABORT = 9;
 
-        const int CAR_LENGTH = 4;
 
         Parker::Parker(const int32_t &argc, char **argv) :
 	        ConferenceClientModule(argc, argv, "Parker") {
@@ -76,6 +76,9 @@ namespace msv {
                 double initialHeading;
                 double heading;
                 double steeringWheelAngle;
+                KeyValueConfiguration kv = getKeyValueConfiguration();
+                double carLength = kv.getValue<double> ("global.carLength");
+                
 
 	        while (getModuleState() == ModuleState::RUNNING) {
                 // In the following, you find example for the various data sources that are available:
@@ -125,11 +128,11 @@ namespace msv {
                         case MEASURING:
                         vc.setSpeed(1);
                         vc.setSteeringWheelAngle(sd.getHeadingData());
-                        if((distanceBackRight > -1 && (absTraveledPath - currentTraveledPath) < CAR_LENGTH * 1.75) || (steeringWheelAngle > 1 || steeringWheelAngle < -1)){
+                        if((distanceBackRight > -1 && (absTraveledPath - currentTraveledPath) < carLength * 1.75) || (steeringWheelAngle > 10 || steeringWheelAngle < -10)){
                                 vc.setSpeed(0);
                                 mode = SCANNING;
                         }
-                        else if ((absTraveledPath - currentTraveledPath) >= CAR_LENGTH * 1.75){
+                        else if ((absTraveledPath - currentTraveledPath) >= carLength * 1.75){
                                 mode = ALIGNING;
                                 currentTraveledPath = absTraveledPath;
                         }
@@ -143,7 +146,7 @@ namespace msv {
                                 currentTraveledPath = absTraveledPath;
                                 vc.setSteeringWheelAngle(0);
                         }
-                        if(distanceRear < CAR_LENGTH * 0.25 && distanceRear > 0){
+                        if(distanceRear < carLength * 0.25 && distanceRear > 0){
                                 mode = ABORT;
                                 currentTraveledPath = absTraveledPath;
                                 vc.setSpeed(0);
@@ -154,12 +157,12 @@ namespace msv {
                         case BACK_STRAIGHT:
                         vc.setSpeed(-0.5);
                         vc.setSteeringWheelAngle(0);
-                        if((absTraveledPath - currentTraveledPath) > CAR_LENGTH * 0.4){
+                        if((absTraveledPath - currentTraveledPath) > carLength * 0.4){
                                 mode = BACK_LEFT;
                                 currentTraveledPath = absTraveledPath;
                                 vc.setSteeringWheelAngle(-26 * Constants::DEG2RAD);
                         }
-                        if(distanceRear < CAR_LENGTH * 0.25 && distanceRear > 0){
+                        if(distanceRear < carLength * 0.25 && distanceRear > 0){
                                 mode = ABORT;
                                 currentTraveledPath = absTraveledPath;
                                 vc.setSpeed(0);
@@ -167,14 +170,14 @@ namespace msv {
                         break;
 
                         case BACK_LEFT:
-                        vc.setSpeed(-0.2);
+                        vc.setSpeed(-0.5);
                         vc.setSteeringWheelAngle(-26 * Constants::DEG2RAD);
                         if(angleDifference(initialHeading, heading) < 10){
                                 vc.setSpeed(0);
                                 currentTraveledPath = absTraveledPath;
                                 mode = STRAIGHTEN;
                         }
-                        if(distanceRear < CAR_LENGTH * 0.25 && distanceRear > 0){
+                        if(distanceRear < carLength * 0.25 && distanceRear > 0){
                                 mode = ABORT;
                                 currentTraveledPath = absTraveledPath;
                                 vc.setSpeed(0);
@@ -192,7 +195,7 @@ namespace msv {
 
                         case ALIGNING:
                         vc.setSpeed(0.5);
-                        if((absTraveledPath - currentTraveledPath) > CAR_LENGTH * 0.625){
+                        if((absTraveledPath - currentTraveledPath) > carLength * 0.625){
                                 mode = STOPPING;
                                 initialHeading = heading;
                         }
@@ -214,19 +217,14 @@ namespace msv {
 
                         case ABORT:
                         vc.setSpeed(0.5);
-                        if((absTraveledPath - currentTraveledPath) > CAR_LENGTH * 0.67)
+                        if((absTraveledPath - currentTraveledPath) > carLength * 0.67)
                                 mode = SCANNING;
                         break;
 
                 }
                 cerr << "Heading: " << heading * Constants::RAD2DEG << endl;
                 cerr << "Mode: " << mode << endl;
-                cerr << "Sensor 0 IR Front-Right: " << sbd.getValueForKey_MapOfDistances(0) << endl;
-                cerr << " Sensor 1 IR Rear: " << sbd.getValueForKey_MapOfDistances(1) << endl;
-                cerr << " Sensor 2 IR Rear-Right: " << sbd.getValueForKey_MapOfDistances(2) << endl;
-                cerr << " Sensor 3 US Front-Center: " << sbd.getValueForKey_MapOfDistances(3) << endl;
-                cerr << " Sensor 4 US Front-Right: " << sbd.getValueForKey_MapOfDistances(4) << endl;
-                cerr << " Sensor 5 US Rear-Right: " << sbd.getValueForKey_MapOfDistances(5) << endl;
+                cerr << "absTraveledPath" << absTraveledPath << endl;
 
                 // Create container for finally sending the data.
                 Container c(Container::VEHICLECONTROL, vc);
