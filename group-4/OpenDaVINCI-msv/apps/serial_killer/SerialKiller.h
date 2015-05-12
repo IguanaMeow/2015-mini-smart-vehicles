@@ -1,6 +1,6 @@
 /**
- * driver - Sample application for calculating steering and acceleration commands.
- * Copyright (C) 2012 - 2015 Christian Berger
+ * OpenDaVINCI - Portable middleware for distributed components.
+ * Copyright (C) 2008 - 2015 Christian Berger, Bernhard Rumpe 
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,26 +17,21 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef DRIVER_H_
-#define DRIVER_H_
+#ifndef __SERIAL_KILLER__H__
+#define __SERIAL_KILLER__H__
 
 #include "core/base/ConferenceClientModule.h"
-#include "core/data/environment/Point3.h"
-#include "core/data/environment/VehicleData.h"
-#include "core/data/control/VehicleControl.h"
-#include "Parking.h"
-
+#include "core/base/Mutex.h"
+#include "GeneratedHeaders_Data.h"
 
 namespace msv {
 
     using namespace std;
-    using namespace core::data::environment;
-    using namespace core::data::control;
 
     /**
-     * This class is a skeleton to send driving commands to Hesperia-light's vehicle driving dynamics simulation.
+     * This class demonstrates how to receive sent data over a serial port.
      */
-    class Driver : public core::base::ConferenceClientModule {
+    class SerialKiller : public core::base::ConferenceClientModule, public core::wrapper::StringListener, public core::wrapper::ConnectionListener {
         private:
             /**
              * "Forbidden" copy constructor. Goal: The compiler should warn
@@ -45,7 +40,7 @@ namespace msv {
              *
              * @param obj Reference to an object of this class.
              */
-            Driver(const Driver &/*obj*/);
+            SerialKiller(const SerialKiller &/*obj*/);
 
             /**
              * "Forbidden" assignment operator. Goal: The compiler should warn
@@ -55,7 +50,33 @@ namespace msv {
              * @param obj Reference to an object of this class.
              * @return Reference to this instance.
              */
-            Driver& operator=(const Driver &/*obj*/);
+            SerialKiller& operator=(const SerialKiller &/*obj*/);
+
+        public:
+            /**
+             * Constructor.
+             *
+             * @param argc Number of command line arguments.
+             * @param argv Command line arguments.
+             */
+            SerialKiller(const int32_t &argc, char **argv);
+
+            virtual ~SerialKiller();
+
+            core::base::ModuleState::MODULE_EXITCODE body();
+
+            virtual void handleConnectionError();
+
+            virtual void nextString(const string &s);
+
+            std::map<uint32_t, double> sensorValues;
+            SensorBoardData sbd;
+        private:
+            virtual void setUp();
+
+            virtual void tearDown();
+            void takeAction(const string&, const string&);
+
             enum SENSOR_ID {
                 IR_FrontRight = 0,
                 IR_Rear = 1,
@@ -65,27 +86,10 @@ namespace msv {
                 US_RearRight = 5
             };
 
-            Parking parking;
-            virtual void setUp();
-            virtual void tearDown();
-
-            bool findGap(float*, float*, float*);
-
-        public:
-            /**
-             * Constructor.
-             *
-             * @param argc Number of command line arguments.
-             * @param argv Command line arguments.
-             */
-            Driver(const int32_t &argc, char **argv);
-
-            virtual ~Driver();
-
-            core::base::ModuleState::MODULE_EXITCODE body();
-
+            core::base::Mutex m_bufferMutex;
+            string m_buffer;
     };
 
-} // msv
+} // examples
 
-#endif /*DRIVER_H_*/
+#endif /*SERIAL_KILLER_H_*/
