@@ -39,11 +39,6 @@ namespace msv {
     using namespace core::data::environment;
 //        using namespace libdata::generated::msv;
 
-
-
-
-
-
     
     Driver::Driver(const int32_t &argc, char **argv) : 
             ConferenceClientModule(argc, argv, "Driver"),parking()   {
@@ -61,15 +56,12 @@ namespace msv {
     void Driver::tearDown() {
             
             // This method will be call automatically _after_ return from body().
+            VehicleControl vc;
             vc.setSpeed(0);
             vc.setSteeringWheelAngle(0);
             Container c(Container::VEHICLECONTROL, vc);
             getConference().send(c);
     }
-
-
-
-   
 
 
     // This method will do the main data processing job.
@@ -192,7 +184,6 @@ namespace msv {
 
             /* ---------------------   side way parking area END --------------------- */
 
-
             // With setSpeed you can set a desired speed for the vehicle in the range of -2.0 (backwards) .. 0 (stop) .. +2.0 (forwards)
             //vc.setSpeed(10);
             vc.setSpeed(speed);
@@ -215,3 +206,4 @@ namespace msv {
 
             return ModuleState::OKAY;
     }
+}
