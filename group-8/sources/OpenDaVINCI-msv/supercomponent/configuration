@@ -20,6 +20,7 @@ global.car = Scenarios/Models/FordEscape.objx
 global.scenario = file://Scenarios/MissingOuterLaneMarking.scnx
 global.showGrid = 0
 global.headless = 1 #show video in proxy == 0
+global.carLength = 4.0
 
 # The following attributes define the buffer sizes for recording and replaying.
 # You need to adjust these parameters depending on the camera resolution for example (640x480x3 --> 1000000 for memorySegment, 1280x720x3 --> 2800000).
