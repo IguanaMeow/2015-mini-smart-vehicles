@@ -71,7 +71,6 @@ LaneDetector::LaneDetector(const int32_t &argc, char **argv) : ConferenceClientM
 		counter(0),
 		critCounter(0),
     critAngleCounter(0),
-    loopCounter(0),
 		yCount(0),
 
 		imgWidth(0),
@@ -259,21 +258,22 @@ void LaneDetector::processImage() {
 
 		critAngleRight = (atan2(rightLine2.getYPos() - rightLine1.getYPos(), rightLine1.getXPos() - rightLine2.getXPos()) * Constants::RAD2DEG);
 	}
-	cout << "crit distance: " << rightLine1.getCritical() << "critAngle: " << critAngleRight << endl;
-	cout << "x1: " << rightLine1.getXPos() << " x2: " << rightLine2.getXPos() << " y1: " << rightLine1.getYPos() << " y2: " << rightLine2.getYPos() << endl;
+//	cout << "crit distance: " << rightLine1.getCritical() << "critAngle: " << critAngleRight << endl;
+//	cout << "x1: " << rightLine1.getXPos() << " x2: " << rightLine2.getXPos() << " y1: " << rightLine1.getYPos() << " y2: " << rightLine2.getYPos() << endl;
 
 
 	vector<Lines> valid = validateLines(&leftList);
 
-  if (critAngleCounter < 1 && loopCounter > 30) {
-    if (valid.begin()->getYPos() < valid.end()->getYPos()) {
-      critAngleLeft = (atan2(valid.end()->getYPos() - valid.begin()->getYPos(), valid.begin()->getXPos() - valid.end()->getXPos()) * Constants::RAD2DEG);
-    cout << "End Y "<< valid.end()->getYPos() << " Begin Y: " << valid.begin()->getYPos() << " Begin X: " << valid.begin()->getXPos() << " End X: " << valid.end()->getXPos() << endl;
-      
+  if (critAngleCounter < 1 ) {
+    if (valid.begin()->getYPos() < valid[1].getYPos()) {
+      critAngleLeft = (atan2(valid[1].getYPos() - valid.begin()->getYPos(), valid[1].getXPos()- valid.begin()->getXPos() ) * Constants::RAD2DEG);
+    cout << "End Y "<< valid[1].getYPos() << " Begin Y: " << valid.begin()->getYPos() << " Begin X: " << valid.begin()->getXPos() << " End X: " << valid[1].getXPos() << endl;
+    cout << "111 critical LEFT angle is"<< critAngleLeft<<endl;
     } else {
-      critAngleLeft = (atan2(valid.begin()->getYPos() - valid.end()->getYPos(), valid.end()->getXPos() - valid.end()->getXPos()) * Constants::RAD2DEG);
-    cout << "Begin Y: "<< valid.begin()->getYPos() << " End Y: " << valid.end()->getYPos() << " End X: " << valid.end()->getXPos() << " Begin X: " << valid.begin()->getXPos() << endl;
-    
+      critAngleLeft = (atan2(valid.begin()->getYPos() - valid[1].getYPos(),valid.begin()->getXPos()- valid[1].getXPos()) * Constants::RAD2DEG);
+    cout << "Begin Y: "<< valid.begin()->getYPos() << " End Y: " << valid[1].getYPos() << " End X: " << valid[1].getXPos() << " Begin X: " << valid.begin()->getXPos() << endl;
+        cout << "222critical LEFT angle is"<< critAngleLeft<<endl;
+
     }
     critAngleCounter = 1;
   }
@@ -281,11 +281,13 @@ void LaneDetector::processImage() {
 	SteeringData sd;
 	LaneData ld;
 
-  loopCounter += 1;
 	
-	cout << "Crit: " << rightLine1.getCritical() << " xPos: " << rightLine1.getXPos() << endl;
+	//cout << "Crit: " << rightLine1.getCritical() << " xPos: " << rightLine1.getXPos() << endl;
 	rightError = rightLine1.getCritical() - rightLine1.getXPos();
-  leftError = valid.begin()->getCritical() - valid.begin()->getXPos();
+  leftError = valid.begin()->getXPos()-valid.begin()->getCritical();
+  cout<<"left valid begin xpos is" <<valid.begin()->getXPos()<<"  its critical is " << valid.begin()->getCritical()<<"    LEFT ERROR IS           "<<leftError<<endl; 
+  cout<<"left valid begin xpos is" <<valid[1].getXPos()<<"  its critical is " << valid[1].getCritical()<<"    LEFT ERROR 2 IS           "<<valid[1].getXPos()-valid[1].getCritical()<<endl; 
+
 	if(rightLine1.getXPos() > 250 || rightLine1.getXPos() < 160 || rightLine2.getXPos() > 250 || rightLine2.getXPos() < 160)
 	{
 		ld.setRightLine1(0);
@@ -307,13 +309,23 @@ void LaneDetector::processImage() {
 		// Follow left lines
 		else if (rightLine1.getXPos() > (imgWidth / 2) - 5 && rightLine2.getXPos() > (imgWidth / 2) - 5)
 		{
-			cout << "Follow left" << endl;
-      sd.setHeadingData(measureAngle(imgHeight - valid.end()->getYPos(), valid.end()->getXPos(), imgHeight - valid.begin()->getYPos(), valid.begin()->getXPos(), -leftError, critAngleLeft));
-		}
+			cout << "Follow left*********************************************************" << endl;
+        if (valid.begin()->getYPos() < valid[1].getYPos()) {
+            cout << measureAngle(valid.begin()->getYPos(),valid.begin()->getXPos(),valid[1].getYPos(), valid[1].getXPos(),   leftError, critAngleLeft) << "setting heading data LEFT =================="<<endl;
+         sd.setHeadingData(measureAngle(valid.begin()->getYPos(),valid.begin()->getXPos(),valid[1].getYPos(), valid[1].getXPos(),   leftError, critAngleLeft));
+		}else{
+        cout << measureAngle(valid[1].getYPos(),valid[1].getXPos(),valid.begin()->getYPos(), valid.begin()->getXPos(),   leftError, critAngleLeft) << "setting heading data LEFT =================="<<endl;
+
+         sd.setHeadingData(measureAngle(valid[1].getYPos(),valid[1].getXPos(),valid.begin()->getYPos(), valid.begin()->getXPos(),   leftError, critAngleLeft));
+
+        }
+
+        }
 		// Follow the lower right lines
 		else
 		{
 			cout << "Follow right" << endl;
+            cout << measureAngle(rightLine1.getYPos(), rightLine1.getXPos(), rightLine2.getYPos(), rightLine2.getXPos(), rightError, critAngleRight) <<"setting heading data RIGHT =================="<<endl;
 			sd.setHeadingData(measureAngle(rightLine1.getYPos(), rightLine1.getXPos(), rightLine2.getYPos(), rightLine2.getXPos(), rightError, critAngleRight));
 
 			if((abs(upline1.getYPos()-upline2.getYPos())<2)&& upline1.getYPos()<upline1.getCritical()){
@@ -467,7 +479,7 @@ double LaneDetector::measureAngle(int yPos1, int xPos1, int yPos2, int xPos2, do
 	cout << "Angle relative to 0: " << angle << endl;
 	
 	// Adjust the angle depending on the difference between desired length from the line
-	angle -= error * 0.75; // * (140.8 / imgWidth); // 140.8
+	angle -= error *0.75; // * (140.8 / imgWidth); // 140.8
 
 	//  
 	if (angle > 25)
