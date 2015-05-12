@@ -9,16 +9,23 @@ int IR_front_right, IR_rear_right, IR_rear;
 
 // this constant won't change.  It's the pin number
 // of the sensor's output:
-const int US1 = 7;
-const int US2 = 6;
+const int USFtrig = 4;
+const int USFecho = 7;
+const int USFRecho = 6;
+const int USFRtrig = 5;
+
 int sonarFront;
 int sonarFrontRight;
 int duration1;
 int duration2;
 
 void setup() {
-  Wire.begin();
+  //Wire.begin();
   Serial.begin(9600);
+  pinMode(USFecho, INPUT); 
+  pinMode(USFtrig, OUTPUT);
+  pinMode(USFRecho, INPUT);
+  pinMode(USFRtrig, OUTPUT); 
   delay(100);
 }
 
@@ -33,43 +40,31 @@ void loop()
      // IRT, IRB & IRR
   IR_front_right = IR_Distance(FRONT_RIGHT_IR);
   IR_rear_right = IR_Distance(REAR_RIGHT_IR);
-  IR_rear = IR_Distance(REAR_IR);
+  IR_rear = IR_Distance(REAR_IR);  
 
-
-    
-      US_getRange(US1);
-      US_getRange(US2); 
-
-  duration1 = pulseIn(US1, HIGH);
-  duration2 = pulseIn(US2, HIGH);
-
-  // convert the time into a distance
-  sonarFront = microsecondsToCentimeters(duration1);
-  sonarFrontRight = microsecondsToCentimeters(duration2);
+    sonarFront = US_getRange(USFtrig, USFecho);
+    sonarFrontRight = US_getRange(USFRtrig, USFRecho); 
+   
+  
   
   // Creating temporary concatenation variables for each sensor
      String FUS = String(sonarFront);
-     String FRUS = String(sonarFrontRight);
+     String FRUS = String(sonarFrontRight); 
      String IRT = String(IR_front_right);
      String IRB = String(IR_rear_right);
      String IRR = String(IR_rear);
 
        
        format = FUS + " " + FRUS + " " + IRT + " " + IRB + " " + IRR + " ";
-       
-     
+     //  format = IRT + " " + IRB + " " + IRR + " ";
+    
      Serial.println(format);  
   
-  delay(10);
+  delay(50);
+
+
 }
 
-long microsecondsToCentimeters(long microseconds)
-{
-  // The speed of sound is 340 m/s or 29 microseconds per centimeter.
-  // The ping travels out and back, so to find the distance of the
-  // object we take half of the distance travelled.
-  return microseconds / 29 / 2;
-}
 
 // Auxiliary function to acquire IR distance: 
 int IR_Distance(int IR_sensor){
@@ -84,16 +79,15 @@ int IR_Distance(int IR_sensor){
 }
 
 // Auxiliary function to get US range:
-int US_getRange(int pingPin) {
+int US_getRange(int trigPin, int echoPin) {
 
-pinMode(pingPin, OUTPUT);
-  digitalWrite(pingPin, LOW);
-  delayMicroseconds(2);
-  digitalWrite(pingPin, HIGH);
-  delayMicroseconds(5);
-  digitalWrite(pingPin, LOW);
+  digitalWrite(trigPin, HIGH); //Trigger ultrasonic detection 
+  delayMicroseconds(10); 
+  digitalWrite(trigPin, LOW); 
+  int distance = pulseIn(echoPin, HIGH); //Read ultrasonic reflection
+  distance= distance/58; //Calculate distance 
   
-    pinMode(pingPin, INPUT);
-    
+  if(distance <= 0 ) return -1;
+  return distance;  
 }
   
