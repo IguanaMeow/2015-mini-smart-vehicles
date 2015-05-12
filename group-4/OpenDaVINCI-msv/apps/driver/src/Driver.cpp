@@ -48,7 +48,6 @@ namespace msv {
     Driver::~Driver() {}
 
     void Driver::setUp() {
-           //VehicleControl vc;
             //vc.setSpeed(0.0);
             // This method will be call automatically _before_ running body().
     }
@@ -132,11 +131,6 @@ namespace msv {
             // Design your control algorithm here depending on the input data from above.
 
 
-	    if (countOfWhileLoop > 60) {
-			countOfWhileLoop = 0;		
-		} else if (countOfWhileLoop > 30) { //frequency = 30, therefore every 30th time it executes this code
-			vc.setSpeed(0);
-		}
 
             /* ---------------------   side way parking area --------------------- */
             float speed;
@@ -186,6 +180,13 @@ namespace msv {
 
             // With setSpeed you can set a desired speed for the vehicle in the range of -2.0 (backwards) .. 0 (stop) .. +2.0 (forwards)
             //vc.setSpeed(10);
+
+            if (countOfWhileLoop > 60) {
+                countOfWhileLoop = 0;		
+            } else if (countOfWhileLoop > 30) { //frequency = 30, therefore every 30th time it executes this code
+                speed = 0;
+            }
+
             vc.setSpeed(speed);
 
             // With setSteeringWheelAngle, you can steer in the range of -26 (left) .. 0 (straight) .. +25 (right)
@@ -206,4 +207,5 @@ namespace msv {
 
             return ModuleState::OKAY;
     }
+
 }
