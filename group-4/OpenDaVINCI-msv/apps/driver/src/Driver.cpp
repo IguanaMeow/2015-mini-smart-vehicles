@@ -25,11 +25,11 @@
 #include "core/data/Constants.h"
 #include "core/data/control/VehicleControl.h"
 #include "core/data/environment/VehicleData.h"
+
 #include "GeneratedHeaders_Data.h"
 
 #include "Driver.h"
 
-//#include "generated/msv/SensorBoardData.h"
 namespace msv {
 
     using namespace std;
@@ -74,12 +74,14 @@ namespace msv {
 
     // This method will do the main data processing job.
     ModuleState::MODULE_EXITCODE Driver::body() {
+	int countOfWhileLoop = 0;
         //float back = Constants::PI + (Constants::PI/2);
         while (getModuleState() == ModuleState::RUNNING) {
             // In the following, you find example for the various data sources that are available:
 
             // 1. Get most recent vehicle data:
             VehicleData vd;
+	    VehicleControl vc;
             Container containerVehicleData = getKeyValueDataStore().get(Container::VEHICLEDATA);
             vd = containerVehicleData.getData<VehicleData> ();
             float headingAngle = vd.getHeading() * Constants :: RAD2DEG;
@@ -138,7 +140,11 @@ namespace msv {
             // Design your control algorithm here depending on the input data from above.
 
 
-
+	    if (countOfWhileLoop > 60) {
+			countOfWhileLoop = 0;		
+		} else if (countOfWhileLoop > 30) { //frequency = 30, therefore every 30th time it executes this code
+			vc.setSpeed(0);
+		}
 
             /* ---------------------   side way parking area --------------------- */
             float speed;
@@ -187,10 +193,6 @@ namespace msv {
             /* ---------------------   side way parking area END --------------------- */
 
 
- 
-            // Create vehicle control data.
-            VehicleControl vc;
-
             // With setSpeed you can set a desired speed for the vehicle in the range of -2.0 (backwards) .. 0 (stop) .. +2.0 (forwards)
             //vc.setSpeed(10);
             vc.setSpeed(speed);
@@ -213,5 +215,3 @@ namespace msv {
 
             return ModuleState::OKAY;
     }
-
-} // msv
