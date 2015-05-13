@@ -98,20 +98,20 @@ namespace msv {
             Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_1);
             SteeringData sd = containerSteeringData.getData<SteeringData> ();
 
-            cout << "----------------------" << endl;
-            cout << "Heading Angle:       |" << headingAngle << "|"<< endl;
-            cout << "current Speed:       |" << currentSpeed << "|"<< endl;
-            cout << "----------------------" << endl;
-            cout << "usFrontCentre value: |" << usFrontCentre<< "|"<< endl;
-            cout << "usFrontRight value:  |" << usFrontRight << "|"<< endl;
-            cout << "usRearRight value:   |" << usRearRight  << "|"<< endl;
-            cout << "----------------------" << endl;
-            cout << "irFrontRight value:  |" << irFrontRight << "|"<< endl;
-            cout << "irRearRight value:   |" << irRearRight  << "|"<< endl;
-            cout << "irRear value:        |" << irRear       << "|"<< endl;
-            cout << "----------------------" << endl;
-            cout << "Wheel Angle          |" << sd.getWheelAngle() << endl;
-            cout << "----------------------" << endl << endl;
+            cout << left << setfill('-') << setw(30) << "+" << "+" << endl << setfill(' ');
+            cout << setw(30) << "| VEHICLE & SENSOR DATA" << "|" << endl;
+            cout << setfill('-') << setw(22) << "+" << setw(8) << "+" << "+" << endl << setfill(' ');
+            cout << setw(22) << "| Heading Angle"       << "| " << setw(6) << headingAngle  << "|" << endl;
+            cout << setw(22) << "| current Speed"       << "| " << setw(6) << currentSpeed  << "|" << endl;
+            cout << setfill('-') << setw(22) << "+" << setw(8) << "+" << "+" << endl << setfill(' ');
+            cout << setw(22) << "| usFrontCentre value" << "| " << setw(6) << usFrontCentre << "|" << endl;
+            cout << setw(22) << "| usFrontRight value"  << "| " << setw(6) << usFrontRight  << "|" << endl;
+            cout << setw(22) << "| usRearRight value"   << "| " << setw(6) << usRearRight   << "|" << endl;
+            cout << setfill('-') << setw(22) << "+" << setw(8) << "+" << "+" << endl << setfill(' ');
+            cout << setw(22) << "| irFrontRight value"  << "| " << setw(6) << irFrontRight  << "|" << endl;
+            cout << setw(22) << "| irRearRight value"   << "| " << setw(6) << irRearRight   << "|" << endl;
+            cout << setw(22) << "| irRear value"        << "| " << setw(6) << irRear        << "|" << endl;
+            cout << setfill('-') << setw(22) << "+" << setw(8) << "+" << "+" << endl << setfill(' ');
 
             float speed = 1;
             float desiredSteeringWheelAngle = 0.0;
