@@ -27,7 +27,7 @@ void setup()
 {
   inputString.reserve(10); // Instantiate Objects
   Wire.begin();
-  Serial.begin(115200);
+  Serial.begin(9600);
 
   esc.attach(9);
   servo.attach(10);
