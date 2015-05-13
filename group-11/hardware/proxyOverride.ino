@@ -44,13 +44,17 @@ void setup()
 void loop(){
   
   override();
-  if(flag == false){
-  serialRead();
+  
+  if(flag == false)
+  {
+  	serialRead();
   }
-  else {
-    writeToEsc(512);
-    Serial.println("test");
-    }
+  
+  else 
+  {
+  	writeToEsc(512);
+   	Serial.println("test");
+  }
 }
 
 void writeToEsc(int value){
@@ -71,7 +75,6 @@ void serialRead(){
   {
         degree = inputString.toInt();
         myservo.write(degree); 
-	//("Turning Right");
 	control = 585;
 	throttle = map(control, 0, 1023, 1000, 2000); 
 	esc.writeMicroseconds(throttle);  
@@ -83,17 +86,18 @@ void serialRead(){
         Serial.flush();
         delay(2);
 }
+
 void override(){
   
-    duration = pulseIn(pin, HIGH, 10000);
+  duration = pulseIn(pin, HIGH, 10000);
 
-  if(duration <= 1400){
-    flag = true;
-    //Serial.println("Brake");
+  if(duration <= 1400)
+  {
+  	flag = true;
   }
-  else if(duration >= 1600){
-    flag = true;
-    //Serial.println("Forward");
+  else if(duration >= 1600)
+  {
+  	flag = true;
   }
   
   else flag = false;
