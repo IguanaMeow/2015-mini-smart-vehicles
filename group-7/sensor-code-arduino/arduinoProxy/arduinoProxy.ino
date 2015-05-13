@@ -4,7 +4,7 @@
 
 #define ADDRESS (0x70) //Ultrasonic_1 address
 #define ADDRESS2 (0xE4 >> 1) //Ultrasonic_2 address
-#define IR_1 7 //pin for front right 
+#define IR_1 7 //pin for front right
 #define IR_2 0 //pin for rear right IR
 #define IR_3 5 // pin for the back IR
 
@@ -37,7 +37,7 @@ void setup()
   pinMode(encoderPinA, INPUT);
   pinMode(encoderPinB, INPUT);
   attachInterrupt(4, WheelEncoderInterrupt, CHANGE);
-  Serial.begin(115200);          // start serial communication at 9600bps
+  Serial.begin(9600);          // start serial communication at 9600bps
 }
 
 
@@ -151,7 +151,7 @@ void serialEvent() {
 
       equalsIndex = getData.indexOf('=');
       String speedData = getData.substring(equalsIndex + 1);
-      
+
 
     }
 
@@ -161,7 +161,6 @@ void serialEvent() {
 }
 
 
-//Jani
 String encodeNetstring(String value) {
 
   int len = value.length();
@@ -173,7 +172,6 @@ String encodeNetstring(String value) {
 }
 
 
-// Needs to be tested to insure that decoding works. // Jani
 String decodeNetstring(String netstring) {
   if (netstring.length() < 3) return "NETSTRING_ERROR_TOO_SHORT";
 
@@ -218,8 +216,3 @@ int readline(int readch, char *buffer, int len) {
   // No end of line has been found, so return -1.
   return -1;
 }
-
-
-
-
-

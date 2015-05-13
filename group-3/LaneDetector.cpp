@@ -20,7 +20,9 @@
 #include <iostream>
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
-
+#include "opencv2/core/core.hpp"
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
 
 #include "core/macros.h"
 #include "core/base/KeyValueConfiguration.h"
@@ -28,12 +30,12 @@
 #include "core/data/image/SharedImage.h"
 #include "core/io/ContainerConference.h"
 #include "core/wrapper/SharedMemoryFactory.h"
-
 #include "tools/player/Player.h"
-
 #include "GeneratedHeaders_Data.h"
-
 #include "LaneDetector.h"
+
+using namespace cv;
+using namespace std;
 
 namespace msv {
 
@@ -50,7 +52,6 @@ namespace msv {
         m_debug(false) {}
 
     LaneDetector::~LaneDetector() {}
-
     void LaneDetector::setUp() {
 	    // This method will be call automatically _before_ running body().
 	    if (m_debug) {
@@ -65,36 +66,29 @@ namespace msv {
 	    if (m_image != NULL) {
 		    cvReleaseImage(&m_image);
 	    }
-
 	    if (m_debug) {
 		    cvDestroyWindow("WindowShowImage");
 	    }
     }
-
     bool LaneDetector::readSharedImage(Container &c) {
 	    bool retVal = false;
-
 	    if (c.getDataType() == Container::SHARED_IMAGE) {
 		    SharedImage si = c.getData<SharedImage> ();
-
 		    // Check if we have already attached to the shared memory.
 		    if (!m_hasAttachedToSharedImageMemory) {
 			    m_sharedImageMemory
 					    = core::wrapper::SharedMemoryFactory::attachToSharedMemory(
 							    si.getName());
 		    }
-
 		    // Check if we could successfully attach to the shared memory.
 		    if (m_sharedImageMemory->isValid()) {
 			    // Lock the memory region to gain exclusive access. REMEMBER!!! DO NOT FAIL WITHIN lock() / unlock(), otherwise, the image producing process would fail.
-			    m_sharedImageMemory->lock();
-			    {
+			    m_sharedImageMemory->lock();{
 				    const uint32_t numberOfChannels = 3;
 				    // For example, simply show the image.
 				    if (m_image == NULL) {
 					    m_image = cvCreateImage(cvSize(si.getWidth(), si.getHeight()), IPL_DEPTH_8U, numberOfChannels);
 				    }
-
 				    // Copying the image data is very expensive...
 				    if (m_image != NULL) {
 					    memcpy(m_image->imageData,
@@ -102,53 +96,177 @@ namespace msv {
 							   si.getWidth() * si.getHeight() * numberOfChannels);
 				    }
 			    }
-
 			    // Release the memory region so that the image produce (i.e. the camera for example) can provide the next raw image data.
 			    m_sharedImageMemory->unlock();
-
 			    // Mirror the image.
 			    cvFlip(m_image, 0, -1);
-
 			    retVal = true;
 		    }
 	    }
 	    return retVal;
     }
 
+
     // You should start your work in this method.
+    // written by Nicolas Kheirallah
     void LaneDetector::processImage() {
-        cv::Mat mat_img(m_image);  //converts mat img from Ipl
-        int rows = mat_img.rows;
-        int cols = mat_img.cols;
-        cv::Size matS = mat_img.size(); //gets rows and columns
-        rows = matS.height;// rows = widht of the image
-        cols = matS.width;// cols = lenght of the image
 
-        cv::Point center;  //initialize the startin and ending points for each arrow
-        cv::Point centerTop;
+		//http://docs.opencv.org/doc/user_guide/ug_mat.html   Handeling images
+        Mat matImg(m_image);  //IPL is so deprecated it isnt even funny 
+        Mat gray; // for converting to gray
 
-        center.x=cols/2;       //Starts from the center
-        center.y=0;
-        centerTop.x=cols/2;       //Ends at the top from the center
-        centerTop.y=rows;
+        cvtColor(matImg, gray, CV_BGR2GRAY); //Let's make the image gray 
+        Mat canny; //Canny for detecting edges ,http://docs.opencv.org/doc/tutorials/imgproc/imgtrans/canny_detector/canny_detector.html
 
-        cv::Point centerRight;
-        cv::Point Right;
-        centerRight.x=cols/2;
-        centerRight.y=348;
+        Canny(gray, canny, 50, 170, 3); //inputing Canny limits 
+        cvtColor(canny, matImg, CV_GRAY2BGR); //Converts back from gray
 
-        Right.x = centerRight.x;
-        Right.y = centerRight.y;
+		// get matrix size  http://docs.opencv.org/modules/core/doc/basic_structures.html
+        int rows = matImg.rows;
+        int cols = matImg.cols;
+
+        //Points 
+        // Needs more points
+        // currently 3 lines per side
+        Point centerPoint;             
+        Point centerPointEnd;  
+
+        Point bRightPoint;  
+        Point rightPointEnd; 
+
+        Point bRightPointmid;
+        Point rightPointMidEnd; 
+
+        Point rightPointTop;
+        Point rightPointTopEnd;
 
 
-        cv::Point CenterLeft;
-        cv::Point Left;
-        CenterLeft.x = centerRight.x;
-        CenterLeft.y = centerRight.y;
+        Point bLeftPoint;         
 
-        Left.x = 0;
-        Left.y = 382;
-        //http://docs.opencv.org/doc/tutorials/core/basic_geometric_drawing/basic_geometric_drawing.html
+        Point lMidPoint; 
+        Point lMidPointEnd;  
+
+        Point ltopPoint; 
+        Point ltopPointEnd;  
+
+        centerPoint.x=cols/2;   
+        centerPoint.y=0; 
+
+        centerPointEnd.x=cols/2;   
+        centerPointEnd.y=rows; 
+
+        bRightPoint.x = cols/2; 
+        bRightPoint.y = 350;
+
+		bRightPointmid.x=cols/2; 
+        bRightPointmid.y =325;
+
+        rightPointTop.x = cols/2; 
+        rightPointTop.y = 275; 
+
+        rightPointTopEnd.x =rightPointTop.x;
+        rightPointTopEnd.y = rightPointTop.y;
+
+        rightPointMidEnd.x = bRightPointmid.x; 
+        rightPointMidEnd.y = bRightPointmid.y;
+
+
+
+        rightPointEnd.x = bRightPoint.x; 
+        rightPointEnd.y = bRightPoint.y;
+
+        bLeftPoint.x = bRightPoint.x;
+         bLeftPoint.y = bRightPoint.y;
+
+        ltopPoint.x = bRightPoint.x; 
+        ltopPoint.y = 275;
+
+        ltopPointEnd.x = bRightPoint.x;  
+        ltopPointEnd.y = ltopPoint.y;
+
+        lMidPoint.x = bRightPoint.x; 
+         lMidPoint.y = 325;
+
+        lMidPointEnd.x = bRightPoint.x;  
+        lMidPointEnd.y = lMidPoint.y;
+
+
+
+// I really need to make a function for Vec3b...
+
+        Vec3b bottomRightLine = matImg.at<Vec3b>(rightPointEnd); //defines the color at current positions
+        while(rightPointEnd.x != cols){
+            rightPointEnd.x = rightPointEnd.x +1; //increases the line too the right
+            uchar blue = bottomRightLine.val[0];
+    		uchar green = bottomRightLine.val[1];
+    		uchar red = bottomRightLine.val[2];
+            bottomRightLine = matImg.at<cv::Vec3b>(rightPointEnd); 
+            if(blue == 255 && green == 255 && red == 255){ // quites incase white line is found
+                break; 
+            }
+        }
+
+  Vec3b midRightLine = matImg.at<Vec3b>(rightPointTopEnd); //defines the color at current positions
+        while(rightPointTopEnd.x != cols){
+            rightPointTopEnd.x = rightPointTopEnd.x +1; //increases the line too the right
+            uchar blue = midRightLine.val[0];
+    		uchar green = midRightLine.val[1];
+    		uchar red = midRightLine.val[2];
+            midRightLine = matImg.at<cv::Vec3b>(rightPointTopEnd);
+            if(blue == 255 && green == 255 && red == 255){// quites incase white line is found
+                break; 
+            }
+        }
+  Vec3b topRightLine = matImg.at<Vec3b>(bRightPointmid); //defines the color at current positions
+        while(bRightPointmid.x != cols){
+            bRightPointmid.x = bRightPointmid.x +1; //increases the line too the right
+            uchar blue = topRightLine.val[0];
+    		uchar green = topRightLine.val[1];
+    		uchar red = topRightLine.val[2];
+            topRightLine = matImg.at<cv::Vec3b>(bRightPointmid); 
+            if(blue == 255 && green == 255 && red == 255){// quites incase white line is found
+                break; 
+            }
+        }
+
+      Vec3b botLeftLine = matImg.at<Vec3b>(bLeftPoint);
+        while(bLeftPoint.x != 0){
+            bLeftPoint.x = bLeftPoint.x -1;//increases the line too the Left
+            uchar blue = botLeftLine.val[0];
+    		uchar green = botLeftLine.val[1];
+    		uchar red = botLeftLine.val[2];
+            botLeftLine = matImg.at<Vec3b>(bLeftPoint);
+            if(blue == 255 && green == 255 && red == 255){// quites incase white line is found
+                break;
+            }
+        }
+
+        Vec3b midLeftLine = matImg.at<Vec3b>(lMidPointEnd);
+        while(lMidPointEnd.x != 0){
+            lMidPointEnd.x = lMidPointEnd.x - 1;//increases the line too the Left
+            uchar blue = midLeftLine.val[0];
+    		uchar green = midLeftLine.val[1];
+    		uchar red = midLeftLine.val[2];
+            midLeftLine = matImg.at<Vec3b>(lMidPointEnd);
+            if(blue == 255 && green == 255 && red == 255){// quites incase white line is found
+                break;
+            }
+        }
+
+       Vec3b topLeftLine = matImg.at<Vec3b>(ltopPointEnd);
+        while(lMidPoint.x != 0){
+            ltopPointEnd.x = ltopPointEnd.x - 1;//increases the line too the Left
+             uchar blue = topLeftLine.val[0];
+    		uchar green = topLeftLine.val[1];
+    		uchar red = topLeftLine.val[2];
+            topLeftLine = matImg.at<Vec3b>(ltopPointEnd);
+            if(blue == 255 && green == 255 && red == 255){// quites incase white line is found
+                break;
+            }
+        }
+
+       if (m_debug) {
+       	  //http://docs.opencv.org/doc/tutorials/core/basic_geometric_drawing/basic_geometric_drawing.html
         //draws the lines
         /*
                 matImg = the img
@@ -158,48 +276,41 @@ namespace msv {
         1,// Linethickness
         8
         */
+       	       line(matImg, centerPoint,centerPointEnd,cvScalar(0, 0, 255),2, 8); //centralline
+       	       line(matImg, bRightPoint,rightPointEnd,cvScalar(0, 165, 255),1, 8); //bottom right line
+       	       line(matImg, lMidPoint,lMidPointEnd,cvScalar(255, 225, 0),1, 8); //LeftMid line
+       	       line(matImg, bRightPoint,bLeftPoint,cvScalar(255, 0, 0),1, 8);//LeftBottom line
+       	       line(matImg, ltopPoint,ltopPointEnd,cvScalar(130, 0, 75),1, 8); //TopLeft line
+       	       line(matImg, bRightPointmid,rightPointMidEnd,cvScalar(238, 130, 238),1, 8); //rightmid line
+       	       line(matImg, rightPointTop,rightPointTopEnd,cvScalar(52, 64, 76),1, 8); //TopRight line
 
-        line(mat_img,center,centerTop,cv::Scalar(255,0,0),2,8);
+         imshow("Lanedetection", matImg);
+         cvWaitKey(10);
 
-        cv::Vec3b CheckRight = mat_img.at<cv::Vec3b>(Right); //defines the color at current positions
-       do{ 
-            Right.x = Right.x +1; //extend the arrow
-            CheckRight = mat_img.at<cv::Vec3b>(Right); //checks for color at current position
-           int blue = CheckRight.val[0];
-           int green = CheckRight.val[1];
-           int red = CheckRight.val[2];
-            if(blue == 255 && green == 255 && red == 255){
-                break; //color is white at current position
-            }
-        }while(Right.x != cols);
-         line(mat_img,centerRight,Right,cv::Scalar(0,0,255),2,8);
-
-        cv::Vec3b CheckLeft = mat_img.at<cv::Vec3b>(CenterLeft);
-              do{ 
-           CenterLeft.x = CenterLeft.x -1;
-           CheckLeft = mat_img.at<cv::Vec3b>(CenterLeft);
-           int blue = CheckLeft.val[0];
-           int green = CheckLeft.val[1];
-           int red = CheckLeft.val[2];
-          if(blue == 255 && green == 255 && red == 255){
-                break;
-            }
-        }while(CenterLeft.x != 0);
-        line(mat_img,centerRight,CenterLeft,cv::Scalar(0,255,0),2,8);
-
-        imshow("Lane Detection", mat_img);
-        cvWaitKey(10);
+}
+        //Need too make dynamic steering
         SteeringData sd;
-        if(Right.x < 476 && Right.x > 337){
+        if(rightPointEnd.x < 470 && rightPointTopEnd.x>320)
+        {
         sd.setExampleData(-10);
         }
-        else if(CenterLeft.x > 176){
-        sd.setExampleData(13);
+        else if(bLeftPoint.x > 190 || lMidPointEnd.x > 190 || ltopPointEnd.x > 190)
+        {
+        sd.setExampleData(20);
         }
+
+        //TODO: Start here.
+        // 1. Do something with the image m_image here, for example: find lane marking features, optimize quality, ...
+        // 2. Calculate desired steering commands from your image features to be processed by driver.
+
+        // Here, you see an example of how to send the data structure SteeringData to the ContainerConference. This data structure will be received by all running components. In our example, it will be processed by Driver. To change this data structure, have a look at Data.odvd in the root folder of this source.
+
+
         // Create container for finally sending the data.
         Container c(Container::USER_DATA_1, sd);
         // Send container.
         getConference().send(c);
+    
 }
 
     // This method will do the main data processing job.
