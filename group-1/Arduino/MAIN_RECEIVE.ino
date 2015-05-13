@@ -1,29 +1,28 @@
-#include <Servo.h>
-Servo esc;
-Servo servo;
-String inputString;
-String c;
-String decodedS;
-//pin define
-int sensorPin = A0;    // select the input pin for the potentiometer
-int throttle = 0; //
-int steer=60;
-int control =512;
-void setup() {
-  // declare the ledPin as an OUTPUT:
-  pinMode(sensorPin, INPUT);
-  esc.attach(9);
-  servo.attach(10);
-  Serial.begin(9600);
+/*
+This code receives an encoded Netstring message and 
+decodes it acording to Netsring protocols. Then the 
+decoded data is transferred to two servos, one to steer 
+the car and another to move the car at a given speed. 
 
+Author: Neda Ashrafi Amiri
+*/
+#include <Servo.h>
+Servo esc; //initialize esc type Servo
+Servo servo; //initialize servo type Servo
+String c; //initialize encoded Netsrting received via Serial COM
+String decodedS; // initialize decoded String
+int throttle = 0;
+int steer=60; 
+int control =512;
+
+void setup() {
+  esc.attach(9);//attach esc to pin 9 on Mega
+  servo.attach(10);// attach servo to pin 10 Mega
+  Serial.begin(9600);
 }
 
 void loop() {
-  // read the value from the sensor:
-  // control = analogRead(sensorPin); //uncomment when controling from potentiometer 
   throttle = map(control, 0, 1023, 1000, 2000); 
-  //steer= map(control, 0, 1023, 1000, 2000); 
-  // display value and send to servo
   Serial.println(control);
   esc.write(throttle); 
   servo.write(steer);
