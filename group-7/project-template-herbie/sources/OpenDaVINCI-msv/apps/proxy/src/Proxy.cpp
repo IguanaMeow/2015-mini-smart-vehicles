@@ -21,7 +21,7 @@
 #include <string>
 #include <cmath>
 #include <unistd.h>
-#include <sstream> 
+#include <sstream>
 
 #include "core/base/KeyValueConfiguration.h"
 #include "core/data/Container.h"
@@ -32,7 +32,7 @@
 #include "GeneratedHeaders_Data.h"
 
 #include "Proxy.h"
-#include "Netstring.h" 
+#include "Netstring.h"
 #include "../serial/include/serial/serial.h"
 
  double extractData(string, string);
@@ -120,11 +120,11 @@ namespace msv {
     SensorBoardData sbd;
     VehicleControl vc;
     string vcDataString, sensorData;
-    serial::Serial my_serial("/dev/ttyACM0", 115200, serial::Timeout::simpleTimeout(1000));
+    serial::Serial my_serial("/dev/ttyACM0", 9600, serial::Timeout::simpleTimeout(1000));
     stringstream ss;
-    bool dataReceived = true;  
-    int syncTest = 0; 
-             
+    bool dataReceived = true;
+    int syncTest = 0;
+
 
 
  // This method will do the main data processing job.
@@ -145,7 +145,7 @@ namespace msv {
 
             Container containerVehicleControl = getKeyValueDataStore().get(Container::VEHICLECONTROL);
             vc = containerVehicleControl.getData<VehicleControl> ();
-          
+
             leftFlashingLights = vc.getLeftFlashingLights();
             rightFlashingLights = vc.getRightFlashingLights();
             brakeLights = vc.getBrakeLights();
@@ -153,10 +153,10 @@ namespace msv {
             distribute(containerSensorBoardData);
 
 
-          
+
         if(dataReceived){
 	ss << (vc.getSteeringWheelAngle() *-1);
-        vcDataString = "WA=" + ss.str(); 
+        vcDataString = "WA=" + ss.str();
         ss.str("");
         ss << vc.getSpeed();
         vcDataString += "SP=";
@@ -177,18 +177,18 @@ namespace msv {
         my_serial.write(encodeNetstring(vcDataString));
         cerr << vcDataString << endl;
         dataReceived = false;
-    }   
+    }
 
         if(my_serial.available()) {
-            string result =  my_serial.readline(1024, ","); 
-            sensorData = decodeNetstring(result); 
+            string result =  my_serial.readline(1024, ",");
+            sensorData = decodeNetstring(result);
             cerr << result << endl;
             sbd.putTo_MapOfDistances(0, extractData("IR1", sensorData)); // IR front right
             sbd.putTo_MapOfDistances(1, extractData("IR2", sensorData)); // IR rear
             sbd.putTo_MapOfDistances(2, extractData("IR3", sensorData)); // IR rear right
             sbd.putTo_MapOfDistances(3, -1); // US front
             sbd.putTo_MapOfDistances(4, -1); // US front right
-	   
+
  	   // sbd.putTo_MapOfDistances(3, extractData("US1", sensorData)); // US front
            // sbd.putTo_MapOfDistances(4, extractData("US2", sensorData)); // US front right
             dataReceived = true;
@@ -203,7 +203,7 @@ namespace msv {
 } // msv
 
 double extractData(string label, string sbData){
-     
+
     double sensorValue;
     int stringPos = sbData.find(label);
     stringstream convert(sbData.substr(stringPos + 4));
