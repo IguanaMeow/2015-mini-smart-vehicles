@@ -37,56 +37,51 @@ namespace msv {
     using namespace core::data;
     using namespace core::data::control;
     using namespace core::data::environment;
-//        using namespace libdata::generated::msv;
+//  using namespace libdata::generated::msv;
 
-    
-    Driver::Driver(const int32_t &argc, char **argv) : 
-            ConferenceClientModule(argc, argv, "Driver"),parking()   {
+    int parkingMode = 0;
 
+    Driver::Driver(const int32_t &argc, char **argv) :
+        ConferenceClientModule(argc, argv, "Driver"),parking()   {
+        for(int i = 0; i < argc; i++)
+            if(!strcmp(argv[i], "--parking"))
+                parkingMode = 1;
+        cout << "PARKING: " << parkingMode << endl;
     }
 
     Driver::~Driver() {}
 
     void Driver::setUp() {
-            //vc.setSpeed(0.0);
-            // This method will be call automatically _before_ running body().
+        // This method will be called automatically _before_ running body().
     }
 
     void Driver::tearDown() {
-            
-            // This method will be call automatically _after_ return from body().
-            VehicleControl vc;
-            vc.setSpeed(0);
-            vc.setSteeringWheelAngle(0);
-            Container c(Container::VEHICLECONTROL, vc);
-            getConference().send(c);
+        // This method will be called automatically _after_ returning from body().
+        VehicleControl vc;
+        vc.setSpeed(0);
+        vc.setSteeringWheelAngle(0);
+        Container c(Container::VEHICLECONTROL, vc);
+        getConference().send(c);
     }
 
 
     // This method will do the main data processing job.
-    ModuleState::MODULE_EXITCODE Driver::body() {
-	int countOfWhileLoop = 0;
-        //float back = Constants::PI + (Constants::PI/2);
-        while (getModuleState() == ModuleState::RUNNING) {
-            // In the following, you find example for the various data sources that are available:
-
+    ModuleState::MODULE_EXITCODE Driver::body()
+    {
+        while (getModuleState() == ModuleState::RUNNING)
+        {
             // 1. Get most recent vehicle data:
             VehicleData vd;
-	    VehicleControl vc;
             Container containerVehicleData = getKeyValueDataStore().get(Container::VEHICLEDATA);
             vd = containerVehicleData.getData<VehicleData> ();
             float headingAngle = vd.getHeading() * Constants :: RAD2DEG;
-
             float currentSpeed = vd.getSpeed();
-
 
             // 2. Get most recent sensor board data:
             Container containerSensorBoardData = getKeyValueDataStore().get(Container::USER_DATA_0);
             SensorBoardData sbd = containerSensorBoardData.getData<SensorBoardData> ();
             sbd.setNumberOfSensors(6);
             
-
-            //float usFrontCentre;
             float usFrontRight = sbd.getValueForKey_MapOfDistances(US_FrontRight);
             float usRearRight = sbd.getValueForKey_MapOfDistances(US_RearRight);
             float usFrontCentre = sbd.getValueForKey_MapOfDistances(US_FrontCenter);
@@ -94,104 +89,69 @@ namespace msv {
             float irRear = sbd.getValueForKey_MapOfDistances(IR_Rear);
             float irRearRight = sbd.getValueForKey_MapOfDistances(IR_RearRight);
 
-
-           
-
-            cerr << "Heading Angle:       |" << headingAngle << "|"<< endl; 
-            cerr << "current Speed:       |" << currentSpeed << "|"<< endl;
-            cerr << "----------------------" << endl;
-            cerr << "usFrontCentre value: |" << usFrontCentre<< "|"<< endl;
-            cerr << "----------------------" << endl;
-            cerr << "usFrontRight value:  |" << usFrontRight << "|"<< endl;
-            cerr << "----------------------" << endl;
-            cerr << "usRearRight value:  |" << usRearRight  << "|"<< endl;
-            cerr << "----------------------" << endl;
-            cerr << "irFrontRight value:  |" << irFrontRight << "|"<< endl;
-            cerr << "----------------------" << endl;
-            cerr << "irRearRight value:   |" << irRearRight  << "|"<< endl;
-            cerr << "----------------------" << endl;
-            cerr << "irRear value:        |" << irRear       << "|"<< endl;
-            cerr << "----------------------" << endl;
-            
-            
-            //cerr << "Most recent sensor board data: " << sbd.toString() << endl;
-            
-
             // 3. Get most recent user button data:
             //Container containerUserButtonData = getKeyValueDataStore().get(Container::USER_BUTTON);
             //UserButtonData ubd = containerUserButtonData.getData<UserButtonData> ();
-            //cerr << "Most recent user button data: '" << ubd.toString() << "'" << endl;
+            //cout << "Most recent user button data: '" << ubd.toString() << "'" << endl;
 
             // 4. Get most recent steering data as fill from lanedetector for example:
             Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_1);
             SteeringData sd = containerSteeringData.getData<SteeringData> ();
+
+            cout << "----------------------" << endl;
+            cout << "Heading Angle:       |" << headingAngle << "|"<< endl;
+            cout << "current Speed:       |" << currentSpeed << "|"<< endl;
+            cout << "----------------------" << endl;
+            cout << "usFrontCentre value: |" << usFrontCentre<< "|"<< endl;
+            cout << "usFrontRight value:  |" << usFrontRight << "|"<< endl;
+            cout << "usRearRight value:   |" << usRearRight  << "|"<< endl;
+            cout << "----------------------" << endl;
+            cout << "irFrontRight value:  |" << irFrontRight << "|"<< endl;
+            cout << "irRearRight value:   |" << irRearRight  << "|"<< endl;
+            cout << "irRear value:        |" << irRear       << "|"<< endl;
+            cout << "----------------------" << endl;
             cout << "Wheel Angle          |" << sd.getWheelAngle() << endl;
-            cerr << "----------------------------------------" << endl << endl;
+            cout << "----------------------" << endl << endl;
 
-            // Design your control algorithm here depending on the input data from above.
-
-
-
-            /* ---------------------   side way parking area --------------------- */
-            float speed;
+            float speed = 1;
             float desiredSteeringWheelAngle = 0.0;
-            
 
+            if(parkingMode)
+            {
+                if(parking.hasGap(usRearRight, irFrontRight,irRearRight))
+                {
+                    speed = 0;
+                    cout << "stop stop stop stop " << endl;
+                }
 
-            speed = 1;
-            
-            if(parking.hasGap(usRearRight, irFrontRight,irRearRight)){
+                if (parking.canTurnRight(usFrontRight,irFrontRight,irRearRight))
+                {
+                    speed = -0.5;
+                    desiredSteeringWheelAngle = 26.0;
+                    cout << "turn right turn right turn right" << endl;
+                }
 
-                speed = 0;
-                cerr << "stop stop stop stop " << endl;
+                if (parking.canTurnLeft(irRear,usRearRight))
+                {
+                    speed = -0.5;
+                    desiredSteeringWheelAngle = -26;
+                    cout << "turn left turn left turn left " <<endl;
+                }
 
-            } 
-
-            if (parking.canTurnRight(usFrontRight,irFrontRight,irRearRight)){
-                
-                speed = -0.5;
-                desiredSteeringWheelAngle = 26.0;
-                cerr << "turn right turn right turn right" << endl;
-
+                if (parking.stop(usRearRight, irRear))
+                {
+                    speed = 0;
+                    desiredSteeringWheelAngle = 0;
+                    cout << "stop stop stop stop " <<endl;
+                }
+            }
+            else
+            {
+                desiredSteeringWheelAngle = sd.getWheelAngle();
             }
 
-            if (parking.canTurnLeft(irRear,usRearRight)){
-
-                speed = -0.5;
-                desiredSteeringWheelAngle = -26;
-                cerr << "turn left turn left turn left " <<endl;
-                
-            }
-
-            if (parking.stop(usRearRight, irRear)){
-
-                speed = 0;
-                desiredSteeringWheelAngle = 0;
-                cerr << "stop stop stop stop " <<endl;
-            }
-
-
-
-
-
-
-
-            /* ---------------------   side way parking area END --------------------- */
-
-            // With setSpeed you can set a desired speed for the vehicle in the range of -2.0 (backwards) .. 0 (stop) .. +2.0 (forwards)
-            //vc.setSpeed(10);
-
-            if (countOfWhileLoop > 60) {
-                countOfWhileLoop = 0;		
-            } else if (countOfWhileLoop > 30) { //frequency = 30, therefore every 30th time it executes this code
-                speed = 0;
-            }
-
+            VehicleControl vc;
             vc.setSpeed(speed);
-
-            // With setSteeringWheelAngle, you can steer in the range of -26 (left) .. 0 (straight) .. +25 (right)
-            //vc.setSteeringWheelAngle(sd.getWheelAngle() * Constants::DEG2RAD);
-            
             vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
 
             // You can also turn on or off various lights:
@@ -205,7 +165,6 @@ namespace msv {
             getConference().send(c);
         }
 
-            return ModuleState::OKAY;
+        return ModuleState::OKAY;
     }
-
 }
