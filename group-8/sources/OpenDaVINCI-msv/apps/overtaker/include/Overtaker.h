@@ -67,6 +67,20 @@ namespace msv {
             virtual void setUp();
 
             virtual void tearDown();
+            
+            const int followLane;
+            const int turnOut;
+            const int straighten;
+            const int turnBack;
+            int curve;
+            int counter;
+            double steering;
+            int straCount;
+            int straCounter;
+            int sensor;
+            double prevHeading;
+            double newHeading;
+
     };
 
 } // msv

@@ -25,6 +25,8 @@
 #include "core/data/Constants.h"
 #include "core/data/control/VehicleControl.h"
 #include "core/data/environment/VehicleData.h"
+#include "core/base/KeyValueConfiguration.h"
+
 
 #include "GeneratedHeaders_Data.h"
 
@@ -39,8 +41,21 @@ using namespace core::data::control;
 using namespace core::data::environment;
 
 Overtaker::Overtaker(const int32_t &argc, char **argv) :
-        ConferenceClientModule(argc, argv, "Overtaker") {
-}
+        ConferenceClientModule(argc, argv, "Overtaker"),
+        followLane(1),
+        turnOut(2),
+        straighten(3),
+        turnBack(4),
+        curve(0),
+        counter(0),
+        steering(25),
+        straCount(0),
+        straCounter(0),
+        sensor(0),
+        prevHeading(0),
+        newHeading(0)
+
+        {}
 
 Overtaker::~Overtaker() {}
 
@@ -53,16 +68,14 @@ void Overtaker::tearDown() {
 }
 
 // This method will do the main data processing job.
-ModuleState::MODULE_EXITCODE Overtaker::body() {
-        int followLane = 1;
-        int turnOutStra = 2;
-        int turnBackStra = 3;
-        int curve = 0;
-        int state = followLane;
-        int const carLength = 4;
-        int counter = 0;
-        double steering = 25;
+ModuleState::MODULE_EXITCODE Overtaker::body()   
 
+        {
+        
+        KeyValueConfiguration kv = getKeyValueConfiguration();
+        double carLength = kv.getValue<double> ("global.carLength");
+        int state = followLane;
+        
         while (getModuleState() == ModuleState::RUNNING) {
         // In the following, you find example for the various data sources that are available:
 
@@ -107,35 +120,46 @@ ModuleState::MODULE_EXITCODE Overtaker::body() {
         switch(state){
         case 1 : 
         //cerr << "follow lane" << endl;
-                if(sbd.getValueForKey_MapOfDistances(3) < (1.5 * carLength) && sbd.getValueForKey_MapOfDistances(3) > 0){
+                if(sbd.getValueForKey_MapOfDistances(3) < (1.75 * carLength) && sbd.getValueForKey_MapOfDistances(3) > 0){
 
                     cerr << "heading = " << sd.getHeadingData() << endl;
                     
                     if(sd.getHeadingData() > 0.10)
                     {
                         curve = 2;
+                        steering = 16;
+                        sensor = 0;
                     }
                     else if(sd.getHeadingData() < -0.10)
                     {
                         curve = 3;
                     }
-                        state = turnOutStra;
+                        state = turnOut;
                 }
+                //prevHeading = vd.getHeading();
                 vc.setSteeringWheelAngle(sd.getHeadingData());
                 break;
         case 2 :
-       // cerr << "Turn out straight" << endl;
-                if(sbd.getValueForKey_MapOfDistances(0) > 0 )
+        //cerr << "Turn out straight" << endl;
+                if(sbd.getValueForKey_MapOfDistances(sensor) > 0)
                 {
                     if(curve > 2)
                     {
                         counter = counter/2;
+                        straCounter = counter / 2;
                     }
                     else if(curve > 1)
                     {
-                        counter = counter + (counter/2);
+                        counter = counter + (counter / 2);
+                        straCounter = counter;
+                        steering = 25;
                     }
-                        state = turnBackStra;
+                    else
+                    {
+                        straCounter = counter;
+                    }
+
+                        state = straighten;
                         curve = 0;
                         break;
                 }
@@ -143,10 +167,25 @@ ModuleState::MODULE_EXITCODE Overtaker::body() {
                 //std::cout << "counter " << counter << std::endl;
                 vc.setSteeringWheelAngle(-steering * Constants::DEG2RAD);
                 break;
-        case 3 :
-      // cerr << "turnBack straight" << endl;
+
+        case 3 : 
+                if(straCount < straCounter) 
+                {
+                    std::cout << "counter " << straCount << std::endl;
+
+                    vc.setSteeringWheelAngle(steering * Constants::DEG2RAD);
+                    ++straCount;
+                }
+                else state = turnBack;
+
+               // newHeading = vd.getHeading();
+               // std::cout << "Heading " << newHeading << std::endl;
+
+                break;
+        case 4 :
+       //cerr << "turnBack straight" << endl;
                // std::cout << "distance " << sbd.getValueForKey_MapOfDistances(4) << std::endl;
-                if(sbd.getValueForKey_MapOfDistances(4) > 5 || sbd.getValueForKey_MapOfDistances(4) < 0)
+                if((sbd.getValueForKey_MapOfDistances(4) > (1.25 * carLength) || sbd.getValueForKey_MapOfDistances(4) < 0) && sbd.getValueForKey_MapOfDistances(0) < 0)
                 {
                         if(counter > 0)
                         {
