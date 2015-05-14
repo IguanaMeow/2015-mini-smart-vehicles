@@ -140,7 +140,7 @@ ModuleState::MODULE_EXITCODE Overtaker::body()
                 vc.setSteeringWheelAngle(sd.getHeadingData());
                 break;
         case 2 :
-            cerr << "Turn out straight" << endl;
+            cerr << "Turn out to left lane" << endl;
                 if(sbd.getValueForKey_MapOfDistances(sensor) > 0)
                 {
                     if(curve > 2)
@@ -171,7 +171,7 @@ ModuleState::MODULE_EXITCODE Overtaker::body()
         case 3 : 
                 if(straCount < straCounter) 
                 {
-                    std::cout << "turning back counter " << straCount << std::endl;
+                    std::cout << "turning straught counter " << straCount << std::endl;
 
                     vc.setSteeringWheelAngle(steering * Constants::DEG2RAD);
                     ++straCount;
@@ -183,7 +183,7 @@ ModuleState::MODULE_EXITCODE Overtaker::body()
 
                 break;
         case 4 :
-            cerr << "turnBack straight" << endl;
+            cerr << "turn back to Lane" << endl;
                // std::cout << "distance " << sbd.getValueForKey_MapOfDistances(4) << std::endl;
                 if((sbd.getValueForKey_MapOfDistances(4) > (1.25 * carLength) || sbd.getValueForKey_MapOfDistances(4) < 0) && sbd.getValueForKey_MapOfDistances(0) < 0)
                 {
