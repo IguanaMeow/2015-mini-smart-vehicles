@@ -109,7 +109,7 @@ namespace msv {
 			    m_sharedImageMemory->unlock();
 
 			    // Mirror the image.
-			    cvFlip(m_image, 0, -1);
+			    //cvFlip(m_image, 0, -1);
 
 			    retVal = true;
 		    }
