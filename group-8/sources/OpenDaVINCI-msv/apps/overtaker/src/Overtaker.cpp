@@ -119,8 +119,8 @@ ModuleState::MODULE_EXITCODE Overtaker::body()
 
         switch(state){
         case 1 : 
-        //cerr << "follow lane" << endl;
-                if(sbd.getValueForKey_MapOfDistances(3) < (1.75 * carLength) && sbd.getValueForKey_MapOfDistances(3) > 0){
+            cerr << "follow lane" << endl;
+                if(sbd.getValueForKey_MapOfDistances(3) < (1.5 * carLength) && sbd.getValueForKey_MapOfDistances(3) > 0){
 
                     cerr << "heading = " << sd.getHeadingData() << endl;
                     
@@ -140,7 +140,7 @@ ModuleState::MODULE_EXITCODE Overtaker::body()
                 vc.setSteeringWheelAngle(sd.getHeadingData());
                 break;
         case 2 :
-        //cerr << "Turn out straight" << endl;
+            cerr << "Turn out straight" << endl;
                 if(sbd.getValueForKey_MapOfDistances(sensor) > 0)
                 {
                     if(curve > 2)
@@ -171,7 +171,7 @@ ModuleState::MODULE_EXITCODE Overtaker::body()
         case 3 : 
                 if(straCount < straCounter) 
                 {
-                    std::cout << "counter " << straCount << std::endl;
+                    std::cout << "turning back counter " << straCount << std::endl;
 
                     vc.setSteeringWheelAngle(steering * Constants::DEG2RAD);
                     ++straCount;
@@ -183,7 +183,7 @@ ModuleState::MODULE_EXITCODE Overtaker::body()
 
                 break;
         case 4 :
-       //cerr << "turnBack straight" << endl;
+            cerr << "turnBack straight" << endl;
                // std::cout << "distance " << sbd.getValueForKey_MapOfDistances(4) << std::endl;
                 if((sbd.getValueForKey_MapOfDistances(4) > (1.25 * carLength) || sbd.getValueForKey_MapOfDistances(4) < 0) && sbd.getValueForKey_MapOfDistances(0) < 0)
                 {
@@ -206,11 +206,6 @@ ModuleState::MODULE_EXITCODE Overtaker::body()
                 break;
         }
         }
-
-        // You can also turn on or off various lights:
-        vc.setBrakeLights(false);
-        vc.setLeftFlashingLights(false);
-        vc.setRightFlashingLights(true);
 
         // Create container for finally sending the data.
         Container c(Container::VEHICLECONTROL, vc);
