@@ -9,10 +9,11 @@ int IR_front_right, IR_rear_right, IR_rear;
 
 // this constant won't change.  It's the pin number
 // of the sensor's output:
-const int USFtrig = 4;
-const int USFecho = 7;
-const int USFRecho = 6;
-const int USFRtrig = 5;
+const int USFtrig = 5;
+const int USFecho = 6;
+const int USFRtrig = 4;
+const int USFRecho = 7;
+
 
 int sonarFront;
 int sonarFrontRight;
@@ -21,7 +22,7 @@ int duration2;
 
 void setup() {
   //Wire.begin();
-  Serial.begin(9600);
+  Serial.begin(115200);
   pinMode(USFecho, INPUT); 
   pinMode(USFtrig, OUTPUT);
   pinMode(USFRecho, INPUT);
@@ -84,7 +85,7 @@ int US_getRange(int trigPin, int echoPin) {
   digitalWrite(trigPin, HIGH); //Trigger ultrasonic detection 
   delayMicroseconds(10); 
   digitalWrite(trigPin, LOW); 
-  int distance = pulseIn(echoPin, HIGH); //Read ultrasonic reflection
+  int distance = pulseIn(echoPin, HIGH, 10000); //Read ultrasonic reflection
   distance= distance/58; //Calculate distance 
   
   if(distance <= 0 ) return -1;
