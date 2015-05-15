@@ -79,8 +79,8 @@ namespace msv {
 
             enum SENSOR_ID {
                 IR_FrontRight = 0,
-                IR_Rear = 1,
-                IR_RearRight = 2,
+                IR_RearRight = 1,
+                IR_Rear = 2,
                 US_FrontCenter = 3,
                 US_FrontRight = 4,
                 US_RearRight = 5

@@ -65,5 +65,7 @@ void produceDataForHost_AfterConsumption(DataT *ptrToDataForHost, int maxBufferL
  */
 void produceDataForHost_WithoutConsumption(DataT *ptrToDataForHost, int maxBufferLength);
 
+void prepareDataFeed(void);
+
 #endif // PROTOCOL_H
 

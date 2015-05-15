@@ -46,6 +46,8 @@ Thread* getThreadSteering(void);
  */
 void setMotorData(int steering, int speed);
 
+void setCutSpeed(int value);
+
 /**
  * This method enables interactive access to the control
  * the steering servo and acceleration motor and allows

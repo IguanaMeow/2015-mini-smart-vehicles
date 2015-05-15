@@ -70,7 +70,19 @@ void consumeDataFromHost(DataT *ptrToDataFromHost) {
                             break;
                         }
                     }
-                    setMotorData(direction,speed);
+                    /*WheelEncoderDataT WC;
+                    WC.drivenDistanceLeftWheel = 0;
+                    WC.drivenDistanceRightWheel = 0;
+                    WC.speedLeftWheel = 0;
+                    WC.speedRightWheel = 0;
+
+                    getWheelEncoderData(&WC);
+                    
+                    if (WC.speedRightWheel <= 8) {
+                    } else {
+                                setMotorData(direction,1500);
+                    }*/
+                                setMotorData(direction,speed);
                 }
             }
         }
@@ -214,18 +226,25 @@ void prepareDataFeed(void) {
         WC.speedRightWheel = 0;
 
         getWheelEncoderData(&WC);
+
+        if (WC.speedRightWheel > 8) {
+            setCutSpeed(1);
+        } else {
+            setCutSpeed(0);
+        }
         
         chsprintf(buffer, "[WC(%d;%d;%d;%d)]$", WC.drivenDistanceLeftWheel,
                                                 WC.drivenDistanceRightWheel,
                                                 WC.speedLeftWheel,
                                                 WC.speedRightWheel);
-
         for(i = 0; i < 50; i++) {
             if (buffer[i] != '$')
                 myData.payload[myData.length + i] = buffer[i];
             else
                 break;
-        }
+
+            }
+        //}
         myData.length += i;
     }
 }

@@ -28,13 +28,14 @@ static Thread *ThreadSteering = NULL;
 
 #define CENTER_STEERING 1450 // Depends on the concrete vehicle.
 #define NO_ACCELERATION 1500 // Pulse width for no acceleration.
-#define MAX_POSITIVE_ACCELERATION 1900 // Pulse width for max negative acceleration (to be experimentally determined, for example 800 for max negative acceleration, 1900 for max positive acceleration).
-#define MAX_NEGATIVE_ACCELERATION 800 // Pulse width for max negative acceleration (to be experimentally determined, for example 800 for max negative acceleration, 1900 for max positive acceleration).
+#define MAX_POSITIVE_ACCELERATION 2000 // Pulse width for max negative acceleration (to be experimentally determined, for example 800 for max negative acceleration, 1900 for max positive acceleration).
+#define MAX_NEGATIVE_ACCELERATION 1000 // Pulse width for max negative acceleration (to be experimentally determined, for example 800 for max negative acceleration, 1900 for max positive acceleration).
 #define TIM3_CHANNEL3 2
 #define TIM3_CHANNEL4 3
 
 static int steeringServo = 0; // 1265 mapping required 
 static int desiredSpeed = NO_ACCELERATION;
+static int cut_speed = 0;
 
 // Configuration for the PWM output.
 static PWMConfig pwmConfiguration = {
@@ -78,7 +79,7 @@ void setMotorData(int steering, int speed) {
     // Furthermore, make sure the car is put on a stack of books to avoid damages to yourself and others!
     
     //Step-wose increasing or decreasing the PWM 
-    if (speed > desiredSpeed) {        
+    /*if (speed > desiredSpeed) {        
         for(; desiredSpeed < speed; desiredSpeed++) {
              chThdSleepMilliseconds(11);
         }
@@ -88,9 +89,13 @@ void setMotorData(int steering, int speed) {
             chThdSleepMilliseconds(11);
         }
     }        
-    else { 
-        desiredSpeed = speed;
-    }
+    else {*/ 
+    desiredSpeed = speed;
+    //}
+}
+
+void setCutSpeed(int value) {
+    cut_speed = value;
 }
 
 void commandControlSteeringAccelerationMotors(BaseSequentialStream *chp, int argc, char *argv[]) {
@@ -129,7 +134,12 @@ static msg_t Thread_Acceleration(void *arg) {
 
     while (TRUE) {
 
-        pwmEnableChannel(&PWMD3, TIM3_CHANNEL3, desiredSpeed);
+        if (cut_speed) {
+            pwmEnableChannel(&PWMD3, TIM3_CHANNEL3, 1500);
+        } else {
+            pwmEnableChannel(&PWMD3, TIM3_CHANNEL3, desiredSpeed);
+        }
+
         chThdSleepMilliseconds(10);  
     }
 

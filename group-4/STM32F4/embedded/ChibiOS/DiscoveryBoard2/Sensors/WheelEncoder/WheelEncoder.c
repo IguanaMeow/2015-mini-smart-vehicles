@@ -167,7 +167,7 @@ void getWheelEncoderData(WheelEncoderDataT *data) {
         data->drivenDistanceLeftWheel = (int) (dLeft * 100.0);
         data->drivenDistanceRightWheel = (int) (dRight * 100.0);
         data->speedLeftWheel = (int) ((vLeft[0] + vLeft[1] + vLeft[2] + vLeft[3])*100.0/4.0);
-        data->speedLeftWheel = (int) ((vRight[0] + vRight[1] + vRight[2] + vRight[3])*100.0/4.0);
+        data->speedRightWheel = (int) ((vRight[0] + vRight[1] + vRight[2] + vRight[3])*100.0/4.0);
     }
 }
 
