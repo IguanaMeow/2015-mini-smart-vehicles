@@ -69,7 +69,7 @@ namespace msv {
             virtual void setUp();
             virtual void tearDown();
 
-            bool findGap(float*, float*, float*);
+            float filter(float,float*);
 
         public:
             /**

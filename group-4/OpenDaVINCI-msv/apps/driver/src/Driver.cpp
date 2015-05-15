@@ -40,6 +40,12 @@ namespace msv {
 //  using namespace libdata::generated::msv;
 
     int parkingMode = 0;
+    float usFrontRightArr[5] = {-1};
+    float usRearRightArr[5] =  {-1};
+    float usFrontCentreArr[5] =  {-1};
+    float irFrontRightArr[5] = {-1};
+    float irRearArr[5] = {-1};
+    float irRearRightArr[5] = {-1};
 
     Driver::Driver(const int32_t &argc, char **argv) :
         ConferenceClientModule(argc, argv, "Driver"),parking()   {
@@ -64,6 +70,17 @@ namespace msv {
         getConference().send(c);
     }
 
+    float Driver::filter(float newData,float arr[]){
+
+        for (int i = 0; i < 4; ++i)
+        {   
+            arr[i] = arr[i+1];
+        }
+        arr[4] = newData;
+        sort(arr, arr + 5);
+        return arr[2];
+    }
+
 
     // This method will do the main data processing job.
     ModuleState::MODULE_EXITCODE Driver::body()
@@ -82,12 +99,22 @@ namespace msv {
             SensorBoardData sbd = containerSensorBoardData.getData<SensorBoardData> ();
             sbd.setNumberOfSensors(6);
             
-            float usFrontRight = sbd.getValueForKey_MapOfDistances(US_FrontRight);
-            float usRearRight = sbd.getValueForKey_MapOfDistances(US_RearRight);
-            float usFrontCentre = sbd.getValueForKey_MapOfDistances(US_FrontCenter);
-            float irFrontRight = sbd.getValueForKey_MapOfDistances(IR_FrontRight);
-            float irRear = sbd.getValueForKey_MapOfDistances(IR_Rear);
-            float irRearRight = sbd.getValueForKey_MapOfDistances(IR_RearRight);
+            
+        
+            float usFrontRightData = sbd.getValueForKey_MapOfDistances(US_FrontRight);
+            float usRearRightData = sbd.getValueForKey_MapOfDistances(US_RearRight);
+            float usFrontCentreData = sbd.getValueForKey_MapOfDistances(US_FrontCenter);
+            float irFrontRightData = sbd.getValueForKey_MapOfDistances(IR_FrontRight);
+            float irRearData = sbd.getValueForKey_MapOfDistances(IR_Rear);
+            float irRearRightData = sbd.getValueForKey_MapOfDistances(IR_RearRight);
+
+            float usFrontRight = filter(usFrontRightData,usFrontRightArr);
+            float usRearRight = filter(usRearRightData,usRearRightArr);
+            float usFrontCentre = filter(usFrontCentreData,usFrontCentreArr);
+            float irFrontRight = filter(irFrontRightData,irFrontRightArr);
+            float irRear = filter(irRearData,irRearArr);
+            float irRearRight = filter(irRearRightData,irRearRightArr);
+
 
             // 3. Get most recent user button data:
             //Container containerUserButtonData = getKeyValueDataStore().get(Container::USER_BUTTON);
@@ -115,6 +142,7 @@ namespace msv {
 
             float speed = 1;
             float desiredSteeringWheelAngle = 0.0;
+
 
             if(parkingMode)
             {
