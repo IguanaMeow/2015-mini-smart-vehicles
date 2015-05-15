@@ -133,9 +133,9 @@ namespace msv {
         // Portion of the image cropped away
         const float crop = 0.5;
         // Total value exponent
-        const float exp = 1.05;
+        const float exp = 1.09;
         // Total value to turning degrees ratio
-        const float ratio = 0.12;
+        const float ratio = 0.075;
         // Increased weight of each row (1 + weight * row#)
         const float weight = 0.25;
         // Minimum row length
@@ -154,11 +154,11 @@ namespace msv {
 
         // Variable declarations
         Mat dst, cdst;
-        const int rows = 32 - (abs(prevAngle * 0.6) > 6 ? 6 : floor(abs(prevAngle * 0.6)));
+        const int rows = 36 - (abs(prevAngle * 0.8) > 8 ? 8 : floor(abs(prevAngle * 0.8)));
         const int rowdist = src.rows * 0.025;
         const int center = src.cols / 2;
-        const int wbot = center * 16 / 20;
-        const int wtop = center * 6 / 20;
+        const int wbot = center * 18 / 20;
+        const int wtop = center * 8 / 20;
         int lnull[rows];
         int rnull[rows];
         for(int i = 0; i < rows; i++)
@@ -183,6 +183,7 @@ namespace msv {
         vector<Vec4i> lines;
         HoughLinesP(dst, lines, 1, CV_PI/180, 8, 10, 10);
 
+        // Calculate angle of lines and filter horizontal ones
         for(size_t i = 0; i < lines.size(); i++)
         {
             Vec4i l = lines[i];
@@ -227,10 +228,8 @@ namespace msv {
             line(cdst, Point(center, 0), Point(center, src.rows), Scalar(255,0,0), 1, CV_AA);
 
             // Draw filter limit
-            int wi = 320 * 16 / 20;
-            int wi2 = 320 * 6 / 20;
-            line(cdst, Point(320 - wi, 240), Point(320 - wi2, 0), Scalar(255, 192, 0), 1, CV_AA);
-            line(cdst, Point(320 + wi, 240), Point(320 + wi2, 0), Scalar(255, 192, 0), 1, CV_AA);
+            line(cdst, Point(center - wbot, src.rows), Point(center - wtop, 0), Scalar(255, 192, 0), 1, CV_AA);
+            line(cdst, Point(center + wbot, src.rows), Point(center + wtop, 0), Scalar(255, 192, 0), 1, CV_AA);
         }
 
         // Calculate distance to lines
@@ -288,11 +287,11 @@ namespace msv {
                 while(++j < rows && left[j] == lnull[j]);
                 if(j != rows)
                 {
-                    left[i] = max(left[i - 1] + (left[j] - left[i - 1]) / (j - (i - 1)), lnull[i]);
+                    left[i] = limit(left[i - 1] + (left[j] - left[i - 1]) / (j - (i - 1)), lnull[i], center);
                 }
                 else
                 {
-                    left[i] = max(left[i - 1] + (left[i - 1] - left[i - 2]), lnull[i]);
+                    left[i] = limit(left[i - 1] + (left[i - 1] - left[i - 2]), lnull[i], center);
                 }
             }
             if(right[i] == rnull[i] && right[i - 1] != rnull[i - 1] && rcount > 2)
@@ -301,11 +300,11 @@ namespace msv {
                 while(++j < rows && right[j] == rnull[j]);
                 if(j != rows)
                 {
-                    right[i] = min(right[i - 1] + (right[j] - right[i - 1]) / (j - (i - 1)), rnull[i]);
+                    right[i] = limit(right[i - 1] + (right[j] - right[i - 1]) / (j - (i - 1)), center, rnull[i]);
                 }
                 else
                 {
-                    right[i] = min(right[i - 1] + (right[i - 1] - right[i - 2]), rnull[i]);
+                    right[i] = limit(right[i - 1] + (right[i - 1] - right[i - 2]), center, rnull[i]);
                 }
             }
         }
@@ -319,11 +318,11 @@ namespace msv {
                 while(--j >= 0 && left[j] == lnull[j]);
                 if(j != -1)
                 {
-                    left[i] = max(left[i + 1] + (left[j] - left[i + 1]) / (j - (i + 1)), lnull[i]);
+                    left[i] = limit(left[i + 1] + (left[j] - left[i + 1]) / (j - (i + 1)), lnull[i], center);
                 }
                 else
                 {
-                    left[i] = max(left[i + 1] + (left[i + 1] - left[i + 2]), lnull[i]);
+                    left[i] = limit(left[i + 1] + (left[i + 1] - left[i + 2]), lnull[i], center);
                 }
             }
             if(right[i] == rnull[i] && right[i + 1] != rnull[i + 1] && rcount > 2)
@@ -332,11 +331,11 @@ namespace msv {
                 while(--j >= 0 && right[j] == rnull[j]);
                 if(j != -1)
                 {
-                    right[i] = min(right[i + 1] + (right[j] - right[i + 1]) / (j - (i + 1)), rnull[i]);
+                    right[i] = limit(right[i + 1] + (right[j] - right[i + 1]) / (j - (i + 1)), center, rnull[i]);
                 }
                 else
                 {
-                    right[i] = min(right[i + 1] + (right[i + 1] - right[i + 2]), rnull[i]);
+                    right[i] = limit(right[i + 1] + (right[i + 1] - right[i + 2]), center, rnull[i]);
                 }
             }
         }
@@ -344,9 +343,6 @@ namespace msv {
         // Calculate sum of distances
         for(int i = 0; i < rows; i++)
         {
-            //if(right[i] < center + minLength || left[i] > center - minLength)
-            //    continue;
-
             const int y = src.rows - ((i + 1) * rowdist);
             int value = (-left[i] + center - (right[i] - center)) * (i * weight + 1);
             total += value;
@@ -360,17 +356,12 @@ namespace msv {
         }
 
         // Calculate new angle
-        double newAngle = prevAngle;
-        //if(lcount > 2 || rcount > 2)
-        {
-            total /= totalWeight;
-            const int sign = (total < 0) ? -1 : 1;
-            total *= sign;
-            total = pow(total, exp);
-            total *= sign;
-            double diff = (total * -ratio) - prevAngle;
-            newAngle += diff;
-        }
+        total /= totalWeight;
+        const int sign = (total < 0) ? -1 : 1;
+        total *= sign;
+        total = pow(total, exp);
+        total *= sign;
+        const double newAngle = total * -ratio;
 
         // Create SteeringData
         SteeringData sd;
@@ -444,6 +435,12 @@ namespace msv {
         OPENDAVINCI_CORE_DELETE_POINTER(player);
 
 	    return ModuleState::OKAY;
+    }
+
+    // Constrains input between low and high
+    int LaneDetector::limit(int input, int low, int high)
+    {
+        return min(high, max(low, input));
     }
 } // msv
 
