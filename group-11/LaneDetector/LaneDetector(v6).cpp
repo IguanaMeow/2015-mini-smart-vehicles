@@ -130,113 +130,73 @@ namespace msv {
     void LaneDetector::processImage() {
         if (m_debug) {
 
-        cv::Mat mat_img(m_image);  //converts the IPL image to a mat image
-        Mat gray, edge, draw;
+        Mat mat_img(m_image);  //converts the IPL image to a mat image
+        Mat gray, edge;  //initialise variables necessary to use for canny image
+	int d1, d2;
 
         cvtColor(mat_img, gray, CV_BGR2GRAY);
         Canny( gray, edge, 50, 150, 3);
 
         cvtColor(edge, mat_img, CV_GRAY2BGR);
-        gray.release();
-        edge.release();
+        gray.release(); edge.release();
 
-        int rows = mat_img.rows;
-        int cols = mat_img.cols;
+        int rows = mat_img.rows; int cols = mat_img.cols;
 
-        cv::Point pt1;  //initialize the startin and ending points for each arrow
-        cv::Point pt2;
-        cv::Point pt3;
-        cv::Point pt4;
-        cv::Point pt5;
-        cv::Point pt6;
-	cv::Point pt7;  /*LeftMid Arrow Start*/             
-	cv::Point pt8;  /*LeftTop Arrow End*/
-	cv::Point pt9;
-	cv::Point pt10;
-	cv::Point pt11;
-	cv::Point pt12;
-        pt1.x=cols/2;       //starting points for first arrow
-        pt1.y=0;
-        pt2.x=cols/2;       //ending points for first arrow
-        pt2.y=rows;
-
-        drawLine(mat_img, pt1,pt2, 1, 8, 0, 0, 255);
-
-        pt3.x=cols/2;
-        pt3.y=420;
-
-        pt4.x = pt3.x;
-        pt4.y = pt3.y;
-	pt12.x=pt3.x;
-	pt12.y=465;
-        pt5.x = pt3.x;
-        pt5.y = 465;
-
-        pt6.x = pt3.x;  
-	pt6.y = 420;
-
-        pt8.x = pt3.x;  
-	pt8.y = 420;		//bot left
-        pt7.x = pt3.x;  
-	pt7.y = 320;
-        pt9.x = pt3.x; 
- 	pt9.y = pt7.y;
-	pt10.x = pt3.x;
-	pt10.y = 350;
-	pt11.x = pt3.x;  	//top left
-	pt11.y = 350;
+        Point centerStart;
+        Point centerEnd;
+        Point botArrowsStart;
+        Point rightArrow;        
+	Point leftTopArrow;
+	Point leftBotArrow;
+	Point leftTopArrowStart;
 	
-	int d1, d2;
+        centerStart.x=cols/2; 			centerStart.y=0;
+        centerEnd.x=cols/2;  			centerEnd.y=rows;
+        botArrowsStart.x = cols/2; 		botArrowsStart.y = 420;
+	rightArrow.x = botArrowsStart.x;	rightArrow.y = botArrowsStart.y;
+        leftBotArrow.x = botArrowsStart.x;  	leftBotArrow.y = botArrowsStart.y;
+	leftTopArrowStart.x = cols/2; 		leftTopArrowStart.y = 350;
+	leftTopArrow.x =leftTopArrowStart.x;    leftTopArrow.y = 350;
 	
-     
 
-        cv::Vec3b rightLaneColor = mat_img.at<cv::Vec3b>(pt4); //defines the color at current positions
-        while(pt4.x != cols){
-            pt4.x = pt4.x +1; //extend the arrow
-            rightLaneColor = mat_img.at<cv::Vec3b>(pt4); //checks for color at current position
+        Vec3b rightLaneColor = mat_img.at<Vec3b>(rightArrow); //defines the color at current positions
+        while(rightArrow.x != cols){
+            rightArrow.x = rightArrow.x +1; //extend the arrow
+            rightLaneColor = mat_img.at<Vec3b>(rightArrow); //checks for color at current position
             if(rightLaneColor.val[0] == 255 && rightLaneColor.val[1] == 255 && rightLaneColor.val[2] == 255){
                 break; //color is white at current position
             }
         }
-	d1 = pt4.x - 320;
-if(pt4.x > 620){
-d1 = 280;
-}
+	cout <<rightArrow.x<<endl;
+	d1 = rightArrow.x - 320;
+	if(rightArrow.x > 620){
+	d1 = 280;
+	}
 
-        drawLine(mat_img, pt3,pt4, 1, 8, 240, 206, 81);
-
-       /* cv::Vec3b leftLaneColor = mat_img.at<cv::Vec3b>(pt5);
-        while(true){
-            pt5.x = pt5.x -1;
-            leftLaneColor = mat_img.at<cv::Vec3b>(pt5);
-            if(leftLaneColor.val[0] == 255 && leftLaneColor.val[1] == 255 && leftLaneColor.val[2] == 255){
-                break;
-            }
-        }
-cout <<"pt5 = " <<pt5.x<<endl;
-        drawLine(mat_img, pt12,pt5, 1, 8, 240, 206, 81); */
-
-    	cv::Vec3b topLeftLaneColor = mat_img.at<cv::Vec3b>(pt8);
-        while(pt8.x != 0){
-            pt8.x = pt8.x -1;
-           topLeftLaneColor = mat_img.at<cv::Vec3b>(pt8);
+    	Vec3b topLeftLaneColor = mat_img.at<Vec3b>(leftBotArrow);
+        while(leftBotArrow.x != 0){
+            leftBotArrow.x = leftBotArrow.x -1;
+            topLeftLaneColor = mat_img.at<Vec3b>(leftBotArrow);
             if(topLeftLaneColor.val[0] == 255 && topLeftLaneColor.val[1] == 255 && topLeftLaneColor.val[2] == 255){
                 break;
             }
         }
-cout <<"p8 = " <<pt8.x<<endl;
-        drawLine(mat_img, pt6,pt8, 1, 8, 240, 206, 81);
-
-cv::Vec3b topMiddleLaneColor = mat_img.at<cv::Vec3b>(pt11);
-        while(pt11.x != 0){
-            pt11.x = pt11.x -1;
-           topMiddleLaneColor = mat_img.at<cv::Vec3b>(pt11);
+	cout <<"leftBotArrow = " <<leftBotArrow.x<<endl;
+        
+	Vec3b topMiddleLaneColor = mat_img.at<Vec3b>(leftTopArrow);
+        while(leftTopArrow.x != 0){
+            leftTopArrow.x = leftTopArrow.x -1;
+           topMiddleLaneColor = mat_img.at<Vec3b>(leftTopArrow);
             if(topMiddleLaneColor.val[0] == 255 && topMiddleLaneColor.val[1] == 255 && topMiddleLaneColor.val[2] == 255){
                 break;
             }
         }
-cout <<"p11 = " <<pt11.x<<endl;
-        drawLine(mat_img, pt10,pt11, 1, 8, 240, 206, 81);
+	cout <<"leftTopArrow = " <<leftTopArrow.x<<endl;
+
+	drawLine(mat_img, centerStart ,centerEnd, 1, 8, 0, 0, 255);
+	drawLine(mat_img, botArrowsStart,leftBotArrow, 1, 8, 240, 206, 81);
+	drawLine(mat_img, botArrowsStart,rightArrow, 1, 8, 240, 206, 81);
+        drawLine(mat_img, leftTopArrowStart,leftTopArrow, 1, 8, 240, 206, 81);
 
         imshow("image", mat_img);      
 	cvWaitKey(10);
@@ -244,50 +204,47 @@ cout <<"p11 = " <<pt11.x<<endl;
         double angle = 0.0;
 	
 while(true){
-	if (pt8.x > 120) {
-	d2 = 320 - pt8.x;
+	if (leftBotArrow.x > 120) {
+	d2 = 320 - leftBotArrow.x;
 	break; 
-}
-	else if (pt11.x > 110 && pt11.x < 300) {
-	d2 = 320 - pt11.x;
+	}
+	else if (leftTopArrow.x > 110 && leftTopArrow.x < 300) {
+	d2 = 320 - leftTopArrow.x;
 	break;
-}
+	}
 	
 	else{
 	d2 = 280;
 	break;
-} 
+	} 
 }
-	
-	cout <<pt4.x<<endl;
-	cout <<"d1 = " <<d1<<endl;
-	cout <<"d2 = " <<d2<<endl;
+	cout <<"d1 = " <<d1<<endl;	cout <<"d2 = " <<d2<<endl;
 	
 	angle = 0;
 	sd.setExampleData(angle);
 
-	if (pt4.x > 615 && pt8.x < 20){
+	if (rightArrow.x > 615 && leftBotArrow.x < 20){
 	angle =  20;
 	sd.setExampleData(angle);
 	cout << "TURN right emergency: " << angle <<endl;
 	}
 
 	else if(d1 >= d2 + 50){
-		if (pt11.x > 110 && pt11.x < 300){
-		angle = pt11.x / 26 + 6;
+		if (leftTopArrow.x > 110 && leftTopArrow.x < 300){
+		angle = leftTopArrow.x / 26 + 6;
 		}
 		else{
-		angle = pt8.x / 26 + 10;
+		angle = leftBotArrow.x / 26 + 10;
 		}
 	sd.setExampleData(angle);
 	cout << "TURN Right: " << angle <<endl;
 }
 	else if(d2 >= d1 + 50){
-	angle =  ((pt4.x - 320) / 9 - 23);
+	angle =  ((rightArrow.x - 320) / 9 - 23);
 	sd.setExampleData(angle);
 	cout << "TURN Left: " << angle <<endl;
 	}
-	else if(pt11.x == 0 && pt4.x == 640 && pt8.x == 0){
+	else if(leftTopArrow.x == 0 && rightArrow.x == 640 && leftBotArrow.x == 0){
 	angle =  0;
 	sd.setExampleData(angle);
 	cout << "go straight: " << angle <<endl;
@@ -363,5 +320,4 @@ while(true){
 	    return ModuleState::OKAY;
     }
 } // msv
-
 
