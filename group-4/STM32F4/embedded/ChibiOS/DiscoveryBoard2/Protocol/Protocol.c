@@ -70,42 +70,10 @@ void consumeDataFromHost(DataT *ptrToDataFromHost) {
                             break;
                         }
                     }
-                    /*WheelEncoderDataT WC;
-                    WC.drivenDistanceLeftWheel = 0;
-                    WC.drivenDistanceRightWheel = 0;
-                    WC.speedLeftWheel = 0;
-                    WC.speedRightWheel = 0;
-
-                    getWheelEncoderData(&WC);
-                    
-                    if (WC.speedRightWheel <= 8) {
-                    } else {
-                                setMotorData(direction,1500);
-                    }*/
-                                setMotorData(direction,speed);
+                    setMotorData(direction,speed);
                 }
             }
         }
-        /*if (ptrToDataFromHost->length > 2) {
-            if (ptrToDataFromHost->payload[1] == ':') {
-                if (ptrToDataFromHost->payload[0] == '1') {
-                    // Change data feed with value after ':'
-                    int value = 0;
-                    if (rsscanf(ptrToDataFromHost->payload + 2, "%d", &value)) {
-                        if (value >= 0 && value <= 64) {
-                            dataFeed = value;
-                        }
-                    }
-                }
-            }
-            else {
-                // Example: Processing received input via RPN Calculator.
-                int result = RPN_calculator(ptrToDataFromHost->payload);
-
-                chsprintf(myData.payload, "%d", result);
-                myData.length = log(result)/log(10) + 1; // Count number of characters of the result.
-            }
-        }*/
     }
 }
 

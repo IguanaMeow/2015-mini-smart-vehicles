@@ -68,30 +68,8 @@ Thread* getThreadSteering(void) {
 }
 
 void setMotorData(int steering, int speed) {
-    // (void)speed;
-    // Map desired steering angle to PWM value.
     steeringServo = CENTER_STEERING + (steering * 11.75);
-
-    // To do: Identify correct PWM values for acceleration forwards/backwards.
-    // desiredSpeed = speed;
-
-    // For now: explicitly NO_ACCELERATION! Do not change until you know what you are doing!
-    // Furthermore, make sure the car is put on a stack of books to avoid damages to yourself and others!
-    
-    //Step-wose increasing or decreasing the PWM 
-    /*if (speed > desiredSpeed) {        
-        for(; desiredSpeed < speed; desiredSpeed++) {
-             chThdSleepMilliseconds(11);
-        }
-    }
-    if (speed < desiredSpeed) {
-        for(; desiredSpeed > speed; desiredSpeed--) {  
-            chThdSleepMilliseconds(11);
-        }
-    }        
-    else {*/ 
     desiredSpeed = speed;
-    //}
 }
 
 void setCutSpeed(int value) {
