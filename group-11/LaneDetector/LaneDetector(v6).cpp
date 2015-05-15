@@ -244,7 +244,7 @@ while(true){
 	sd.setExampleData(angle);
 	cout << "TURN Left: " << angle <<endl;
 	}
-	else if(leftTopArrow.x == 0 && rightArrow.x == 640 && leftBotArrow.x == 0){
+	else if(leftTopArrow.x < 10 && rightArrow.x > 630 && leftBotArrow.x < 10){
 	angle =  0;
 	sd.setExampleData(angle);
 	cout << "go straight: " << angle <<endl;
