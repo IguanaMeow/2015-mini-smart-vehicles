@@ -131,15 +131,21 @@ namespace msv {
         //  CONFIGURATION  //
         /////////////////////
         // Portion of the image cropped away
-        const float crop = 0.5;
+        const double crop = 0.5;
         // Total value exponent
-        const float exp = 1.09;
+        const double exp = 1.12;
         // Total value to turning degrees ratio
-        const float ratio = 0.075;
+        const double ratio = 0.075;
+        // Amount of rows when going straight
+        const int maxRows = 36;
+        // Amount of rows when turning
+        const int minRows = 26;
+        // Distance between each row
+        const double rowDist = 0.025;
+        // Coefficient of angle to amount of rows
+        const double turnCoef = 1;
         // Increased weight of each row (1 + weight * row#)
-        const float weight = 0.25;
-        // Minimum row length
-        const int minLength = 10;
+        const double weight = 0.25;
 
         // Create Mat from image
         Mat src(m_image);
@@ -154,8 +160,9 @@ namespace msv {
 
         // Variable declarations
         Mat dst, cdst;
-        const int rows = 36 - (abs(prevAngle * 1) > 10 ? 10 : floor(abs(prevAngle * 1)));
-        const int rowdist = src.rows * 0.025;
+        const int rowturn = floor(abs(prevAngle * turnCoef));
+        const int rows = maxRows - (rowturn > (maxRows - minRows) ? (maxRows - minRows) : rowturn);
+        const int rowdist = src.rows * rowDist;
         const int center = src.cols / 2;
         const int wbot = center * 18 / 20;
         const int wtop = center * 8 / 20;
@@ -164,15 +171,15 @@ namespace msv {
         for(int i = 0; i < rows; i++)
         {
             const int y = src.rows - ((i + 1) * rowdist);
-            lnull[i] = ((center - wtop) - (center - wbot)) * ((src.rows - y) / (float)src.rows) + (center - wbot);
-            rnull[i] = ((center + wtop) - (center + wbot)) * ((src.rows - y) / (float)src.rows) + (center + wbot);
+            lnull[i] = ((center - wtop) - (center - wbot)) * ((src.rows - y) / (double)src.rows) + (center - wbot);
+            rnull[i] = ((center + wtop) - (center + wbot)) * ((src.rows - y) / (double)src.rows) + (center + wbot);
         }
         int lcount = 0;
         int rcount = 0;
         int total = 0;
         int left[rows];
         int right[rows];
-        float totalWeight = 0;
+        double totalWeight = 0;
 
         // Edge detection
         Canny(src, dst, 100, 300, 3);
@@ -190,10 +197,10 @@ namespace msv {
             Vec4i l = lines[i];
             int dy = l[3] - l[1];
             int dx = l[2] - l[0];
-            float angle = 0;
+            double angle = 0;
             if(dx != 0)
             {
-                float theta = atan2(dy, dx);
+                double theta = atan2(dy, dx);
                 angle = theta * 180/CV_PI;
             }
             else
@@ -246,22 +253,22 @@ namespace msv {
 
                 if((l[1] < y && l[3] > y) || (l[1] > y && l[3] < y))
                 {
-                    float ytotal = l[1] - l[3];
-                    float ypart = l[1] - y;
-                    float percent = ypart / ytotal;
+                    double ytotal = l[1] - l[3];
+                    double ypart = l[1] - y;
+                    double percent = ypart / ytotal;
 
                     int x = (l[2] - l[0]) * percent + l[0];
 
                     if(x < center)
                     {
-                        if(x > lx && x < center - minLength)
+                        if(x > lx)
                         {
                             lx = x;
                         }
                     }
                     else
                     {
-                        if(x < rx && x > center + minLength)
+                        if(x < rx)
                         {
                             rx = x;
                         }
@@ -364,7 +371,7 @@ namespace msv {
         total = pow(total, exp);
         total *= sign;
         if(total < 0)
-            total *= 1.1;
+            total *= 1.4;
         const double newAngle = total * -ratio;
 
         // Calculate distance to stoplines
