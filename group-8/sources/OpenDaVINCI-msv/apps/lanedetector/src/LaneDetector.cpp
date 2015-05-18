@@ -22,6 +22,7 @@
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 #include <math.h>
+#include <algorithm>
 
 #include "core/data/Constants.h"
 #include "core/macros.h"
@@ -52,61 +53,40 @@ using namespace tools::player;
 
 
 LaneDetector::LaneDetector(const int32_t &argc, char **argv) : ConferenceClientModule(argc, argv, "lanedetector"),
-		m_hasAttachedToSharedImageMemory(false),
-		m_sharedImageMemory(),
-		m_image(NULL),
-		merge_image(NULL),
-		m_debug(false),
-		rightLine1(0, 0, 0),
-		rightLine2(0, 0, 0),
-        rightLine3(0, 0, 0),
-        rightLine4(0, 0, 0),
-        rightLine5(0, 0, 0),
-        rightLine6(0, 0, 0),
+	m_hasAttachedToSharedImageMemory(false),
+	m_sharedImageMemory(),
+	m_image(NULL),
+	merge_image(NULL),
+	m_debug(false),
 
-		leftLine1(0, 0, 0),
-		leftLine2(0, 0, 0),
-		leftLine3(0, 0, 0),
-		leftLine4(0, 0, 0),
-        leftLine5(0, 0, 0),
-        leftLine6(0, 0, 0),
+	upline1(0.0, 0.0, 130),
+	upline2(0.0, 0.0, 130),
+	state(1),
+	counter(0),
+	critCounter(0),
+    critAngleCounter(0),
+	yCount(0),
 
-		upline1(0, 0, 130),
-		upline2(0, 0, 130),
-		state(1),
-		counter(0),
-		critCounter(0),
-        critAngleCounter(0),
-		yCount(0),
+	imgWidth(0),
+	imgHeight(0),
 
+	SPEED(2),
+	SIZE(6),
 
+	tempAngle(0.0),
 
-		imgWidth(0),
-		imgHeight(0),
-
-		SPEED(2),
-
-		tempAngle(0.0),
-
-		critAngleRight(0.0),
-		critAngleLeft(0.0),
+	critAngleRight(0.0),
+	critAngleLeft(0.0),
     rightError(0.0),
-    leftError(0.0)
-{
-	rightList.push_back(rightLine1);
-	rightList.push_back(rightLine2);
-    rightList.push_back(rightLine3);
-    rightList.push_back(rightLine4);
-    rightList.push_back(rightLine5);
-    rightList.push_back(rightLine6);
+    leftError(0.0),
 
-	leftList.push_back(leftLine1);
-	leftList.push_back(leftLine2);
-	leftList.push_back(leftLine3);
-	leftList.push_back(leftLine4);
-    leftList.push_back(leftLine5);
-    leftList.push_back(leftLine6);
-}
+    leftLength(0),
+    rightLength(0),
+
+    rightList(6, Lines(0.0, 0.0, 0.0)),
+    leftList(6, Lines(0.0, 0.0, 0.0))
+
+{}
 
 LaneDetector::~LaneDetector() {}
 
@@ -218,8 +198,8 @@ void LaneDetector::processImage() {
 //	cout << "x1: " << rightLine1.getXPos() << " x2: " << rightLine2.getXPos() << " y1: " << rightLine1.getYPos() << " y2: " << rightLine2.getYPos() << endl;
 
 
-	validLines(&leftList,0);
-    validLines(&rightList,1);
+	validLines(leftList,0);
+    validLines(rightList,1);
     ///***********************************************************************CHAGE THIS)
             // critAngleRight = (atan2(rightLine2.getYPos() - rightLine1.getYPos(), rightLine1.getXPos() - rightLine2.getXPos()) * Constants::RAD2DEG);
   if (critAngleCounter < 2 ) {
@@ -254,10 +234,14 @@ void LaneDetector::processImage() {
   }
 
 	SteeringData sd;
+	LaneData ld;
+	ld.setRightLine1(rightLength);
+	ld.setLeftLine(leftLength);
+
 
 	
-	rightError = rightLine1.getCritical() - rightLine1.getXPos();
-  leftError = validLeft.begin()->getXPos()-validLeft.begin()->getCritical();
+	rightError = rightList[0].getCritical() - rightList[0].getXPos();
+  	leftError = validLeft.begin()->getXPos()-validLeft.begin()->getCritical();
   // cout<<"left validLeft begin xpos is" <<validLeft.begin()->getXPos()<<"  its critical is " << validLeft.begin()->getCritical()<<"    LEFT ERROR IS           "<<leftError<<endl; 
   // cout<<"left validLeft begin xpos is" <<validLeft[1].getXPos()<<"  its critical is " << validLeft[1].getCritical()<<"    LEFT ERROR 2 IS           "<<validLeft[1].getXPos()-validLeft[1].getCritical()<<endl; 
 
@@ -322,10 +306,11 @@ void LaneDetector::processImage() {
 
 	// Create container for finally sending the data.
 	Container c(Container::USER_DATA_1, sd);
+	Container c2(Container::USER_DATA_3, ld);
 
 	// Send container.
 	getConference().send(c);
-
+	getConference().send(c2);
 }
 
 
@@ -393,126 +378,58 @@ void  LaneDetector::setLines(IplImage* image)
     imgWidth = image->width;
     imgHeight = image->height;
     if(yCount < 1) {
-        rightLine1.setYPos(round(imgHeight * 0.104));
-        rightLine2.setYPos(round(imgHeight * 0.146));
-        rightLine3.setYPos(round(imgHeight * 0.187));
-        rightLine4.setYPos(round(imgHeight * 0.24));
-        rightLine5.setYPos(round(imgHeight * 0.292));
-        rightLine6.setYPos(round(imgHeight * 0.35));
 
-        leftLine1.setYPos(round(imgHeight * 0.104));
-        leftLine2.setYPos(round(imgHeight * 0.146));
-        leftLine3.setYPos(round(imgHeight * 0.187));
-        leftLine4.setYPos(round(imgHeight * 0.24));
-        leftLine5.setYPos(round(imgHeight * 0.292));
-        leftLine6.setYPos(round(imgHeight * 0.35));
+	    rightList[0].setYPos(round(imgHeight * 0.104));
+	    rightList[1].setYPos(round(imgHeight * 0.146));
+	    rightList[2].setYPos(round(imgHeight * 0.187));
+	    rightList[3].setYPos(round(imgHeight * 0.24));
+	    rightList[4].setYPos(round(imgHeight * 0.292));
+	    rightList[5].setYPos(round(imgHeight * 0.35));
 
-        rightList[0].setYPos(rightLine1.getYPos());
-        rightList[1].setYPos(rightLine2.getYPos());
-        rightList[2].setYPos(rightLine3.getYPos());
-        rightList[3].setYPos(rightLine4.getYPos());
-        rightList[4].setYPos(rightLine5.getYPos());
-        rightList[5].setYPos(rightLine6.getYPos());
+	    leftList[0].setYPos(round(imgHeight * 0.104));
+	    leftList[1].setYPos(round(imgHeight * 0.146));
+	    leftList[2].setYPos(round(imgHeight * 0.187));
+	    leftList[3].setYPos(round(imgHeight * 0.24));
+	    leftList[4].setYPos(round(imgHeight * 0.292));
+	    leftList[5].setYPos(round(imgHeight * 0.35));
 
-        leftList[0].setYPos(leftLine1.getYPos());
-        leftList[1].setYPos(leftLine2.getYPos());
-        leftList[2].setYPos(leftLine3.getYPos());
-        leftList[3].setYPos(leftLine4.getYPos());
-        leftList[4].setYPos(leftLine5.getYPos());
-        leftList[5].setYPos(leftLine6.getYPos());
+	    upline1.setXPos((imgWidth / 2) - (imgWidth * 0.04));
+	    upline2.setXPos((imgWidth / 2) + (imgWidth * 0.04));
+	    upline1.setCritical(imgHeight * 0.3);
+	    upline2.setCritical(imgHeight * 0.3);
 
-        upline1.setXPos((imgWidth / 2) - (imgWidth * 0.04));
-        upline2.setXPos((imgWidth / 2) + (imgWidth * 0.04));
-        upline1.setCritical(imgHeight * 0.3);
-        upline2.setCritical(imgHeight * 0.3);
-
-        yCount = 1;
+	    yCount = 1;
     }
 
     upline1.setYPos(measureDistance(upline1.getXPos(), 2, m_image));
     upline2.setYPos(measureDistance(upline2.getXPos(), 2, m_image));
 
-    rightLine1.setXPos(measureDistance(rightLine1.getYPos(), 1, m_image));
-    rightLine2.setXPos(measureDistance(rightLine2.getYPos(), 1, m_image));
-    rightLine3.setXPos(measureDistance(rightLine3.getYPos(), 1, m_image));
-    rightLine4.setXPos(measureDistance(rightLine4.getYPos(), 1, m_image));
-    rightLine5.setXPos(measureDistance(rightLine5.getYPos(), 1, m_image));
-    rightLine6.setXPos(measureDistance(rightLine6.getYPos(), 1, m_image));
-
-    leftLine1.setXPos(measureDistance(leftLine1.getYPos(), 0, m_image));
-    leftLine2.setXPos(measureDistance(leftLine2.getYPos(), 0, m_image));
-    leftLine3.setXPos(measureDistance(leftLine3.getYPos(), 0, m_image));
-    leftLine4.setXPos(measureDistance(leftLine4.getYPos(), 0, m_image));
-    leftLine5.setXPos(measureDistance(leftLine5.getYPos(), 0, m_image));
-    leftLine6.setXPos(measureDistance(leftLine6.getYPos(), 0, m_image));
-
-    cout<< leftLine6.getXPos()<< "    is line 6 's x position" <<endl;
-
     if (critCounter < 12) {
-    	for(vector<Lines>::iterator itLeft = leftList.begin(); itLeft != leftList.end(); ++itLeft) {
-            if (itLeft->getCritical() < 1){
-                calculateCritical(itLeft, 0, m_image);
+    	for(int i = 0; i < SIZE; ++i) {
+            if (leftList[i].getCritical() < 1){
+                calculateCritical(leftList[i], 0, m_image);
             }
         }
-        for(vector<Lines>::iterator itRight = rightList.begin(); itRight != rightList.end(); ++itRight) {
-            if (itRight->getCritical() < 1){
-                calculateCritical(itRight, 1, m_image);
+        for(int i = 0; i < SIZE; ++i) {
+            if (rightList[i].getCritical() < 1){
+                calculateCritical(rightList[i], 1, m_image);
 
             }
 
         }
-        
-
-        rightLine1.setCritical(rightList[0].getCritical());
-        rightLine2.setCritical(rightList[1].getCritical());
-        rightLine3.setCritical(rightList[2].getCritical());
-        rightLine4.setCritical(rightList[3].getCritical());
-        rightLine5.setCritical(rightList[4].getCritical());
-        rightLine6.setCritical(rightList[5].getCritical());
-
-        leftLine1.setCritical(leftList[0].getCritical());
-        leftLine2.setCritical(leftList[1].getCritical());
-        leftLine3.setCritical(leftList[2].getCritical());
-        leftLine4.setCritical(leftList[3].getCritical());
-        leftLine5.setCritical(leftList[4].getCritical());
-        leftLine6.setCritical(leftList[5].getCritical());
 
     }
 
-        leftList[0].setXPos(leftLine1.getXPos());
-        leftList[1].setXPos(leftLine2.getXPos());
-        leftList[2].setXPos(leftLine3.getXPos());
-        leftList[3].setXPos(leftLine4.getXPos());
-        leftList[4].setXPos(leftLine5.getXPos());
-        leftList[5].setXPos(leftLine6.getXPos());
-
-        rightList[0].setXPos(rightLine1.getXPos());
-        rightList[1].setXPos(rightLine2.getXPos());
-        rightList[2].setXPos(rightLine3.getXPos());
-        rightList[3].setXPos(rightLine4.getXPos());
-        rightList[4].setXPos(rightLine5.getXPos());
-        rightList[5].setXPos(rightLine6.getXPos());
-
-        cout << "left 1    crit: " << leftLine1.getCritical() << " X: " << leftLine1.getXPos() <<endl;
-        cout << "left 2    crit: " << leftLine2.getCritical() << " X: " << leftLine2.getXPos() <<endl;
-        cout << "left 3    crit: " << leftLine3.getCritical() << " X: " << leftLine3.getXPos() <<endl;
-        cout << "left 4    crit: " << leftLine4.getCritical() << " X: " << leftLine4.getXPos() <<endl;
-        cout << "left 5    crit: " << leftLine5.getCritical() << " X: " << leftLine5.getXPos() <<endl;
-        cout << "left 6    crit: " << leftLine6.getCritical() << " X: " << leftLine6.getXPos() <<endl;
-        cout << "right 1    crit: " << rightLine1.getCritical() << " X: " << rightLine1.getXPos() <<endl;
-        cout << "right 2    crit: " << rightLine2.getCritical() << " X: " << rightLine2.getXPos() <<endl;
-        cout << "right 3    crit: " << rightLine3.getCritical() << " X: " << rightLine3.getXPos() <<endl;
-        cout << "right 4    crit: " << rightLine4.getCritical() << " X: " << rightLine4.getXPos() <<endl;
-        cout << "right 5    crit: " << rightLine5.getCritical() << " X: " << rightLine5.getXPos() <<endl;
-        cout << "right 6    crit: " << rightLine6.getCritical() << " X: " << rightLine6.getXPos() <<endl;
-
-
-       // cout << "rightList x " << rightList[0].getXPos() << "leftList x " << leftList[0].getXPos() << endl;
+    for (int i = 0; i < 6; ++i)
+    {
+    	leftList[i].setXPos(measureDistance(leftList[i].getYPos(), 0, m_image));
+    	rightList[i].setXPos(measureDistance(rightList[i].getYPos(), 1, m_image));
+    }
 }
 
-bool LaneDetector::isEmpty(std::vector<Lines>* lines){
-    for(int i=0; i<6; ++i){
-            if (lines->at(i).getYPos()>0)
+bool LaneDetector::isEmpty(std::vector<Lines>& lines){
+    for(int i=0; i<SIZE; ++i){
+            if (lines.at(i).getYPos()>0)
                 return false;
         }
         return true;
@@ -533,35 +450,41 @@ bool LaneDetector::isObject()
   }
 }
 
-void LaneDetector::validLines(std::vector<Lines>* lines, int LorR)
+void LaneDetector::validLines(std::vector<Lines>& lines, int LorR)
 {
+
     if (LorR==0){
         validLeft.clear();
+        leftLength = 0;
     }else{
         validRight.clear();
+		rightLength = 0;
     }
 	
 	int crop = (imgWidth-(imgHeight *1.333 ))/2;
 	//cout << crop << endl;
 	// Iterates through the vector of lines and stops when two validLeft lines have been found.
-	for(std::vector<Lines>::iterator it = lines->begin(); it != lines->end(); ++it )
+	for(int i = 0; i < SIZE; ++i)
 	{
 		if (LorR==0){
         // As long as the lines X-position isn't extremely out of bounds...
-		if(it->getXPos() > crop+1)
+		if(lines[i].getXPos() > crop+1)
 		{
 			// ...add it to the vector.
-			validLeft.push_back(*it);
+			validLeft.push_back(lines[i]);
+			++leftLength;
 
 		}else{
             validLeft.push_back(Lines(-1,-1,-1));
         }
 
     }else{
-        if(it->getXPos() < (imgWidth-crop-1))
+        if(lines[i].getXPos() < (imgWidth-crop-1))
         {
             // ...add it to the vector.
-            validRight.push_back(*it);
+            validRight.push_back(lines[i]);
+			++rightLength;
+
         }else{
             validRight.push_back(Lines(-1,-1,-1));
         }
@@ -572,19 +495,19 @@ void LaneDetector::validLines(std::vector<Lines>* lines, int LorR)
 
 }
 
-void LaneDetector::calculateCritical(const vector<Lines>::iterator& line, int dir, IplImage* image) {
+void LaneDetector::calculateCritical(Lines& line, int dir, IplImage* image) {
 	double result;
-	result = measureDistance(line->getYPos(), dir, image);
+	result = measureDistance(line.getYPos(), dir, image);
 	
 	if(dir == 0){
 		if (result > 1) {
-		line->setCritical(result);
+		line.setCritical(result);
 		++critCounter;
 		}
 	}
 	else{
 		if (result < (imgWidth-1)) {
-		line->setCritical(result);
+		line.setCritical(result);
 		++critCounter;
 	}
 	}
@@ -601,7 +524,7 @@ double LaneDetector::measureAngle(IplImage *image) {
     int y = image->height;
     int x = image->width;
 
-    if(!isEmpty(&validLeft) && !isEmpty(&validRight)){
+    if(!isEmpty(validLeft) && !isEmpty(validRight)){
         tempListLeft.clear();
         tempListRight.clear();
         for(int i=0; i<6; ++i){
@@ -663,7 +586,7 @@ double LaneDetector::measureAngle(IplImage *image) {
     	
 
 
-	}else if (!isEmpty(&validLeft)&& isEmpty(&validRight)){
+	}else if (!isEmpty(validLeft)&& isEmpty(validRight)){
 		
 		//follow left lane
 		tempListLeft.clear();
@@ -722,7 +645,7 @@ double LaneDetector::measureAngle(IplImage *image) {
     	
 
 
-	}else if (isEmpty(&validLeft)&& !isEmpty(&validRight)){
+	}else if (isEmpty(validLeft)&& !isEmpty(validRight)){
 
 		//follow right lane
 		tempListLeft.clear();
@@ -870,7 +793,7 @@ double LaneDetector::measureDistance(int yPos, int dir, IplImage* image) {
 				break;
 			}
 		}
-		ptDown.y -= rightLine1.getYPos();
+		ptDown.y -= rightList[0].getYPos();
 		line(newImage, ptDown, ptUp, cvScalar(0,184,245), 1, 8);
 	}
 

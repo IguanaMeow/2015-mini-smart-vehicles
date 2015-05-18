@@ -85,7 +85,7 @@ namespace msv {
             bool m_debug;
 
 			/* Scans for two valid lines in a vector of lines */
-			void validLines(std::vector<Lines>* lines, int LorR);
+			void validLines(std::vector<Lines>& lines, int LorR);
             
             /* Measures the distance to full-white lines */
 			double measureDistance(int yPos, int dir, IplImage* image);
@@ -93,7 +93,7 @@ namespace msv {
 			/* Measures the angle between delta X and delta Y */
 			double measureAngle(IplImage *image);
 
-			void calculateCritical(const vector<Lines>::iterator& line, int dir, IplImage* image);
+			void calculateCritical(Lines& line, int dir, IplImage* image);
 
 			void setLines(IplImage* image);
 
@@ -102,22 +102,9 @@ namespace msv {
 	        virtual void tearDown();
 
             void processImage();
-            bool isEmpty(std::vector<Lines>* lines);
+            bool isEmpty(std::vector<Lines>& lines);
             bool isObject();
-            
-			Lines rightLine1;
-        	Lines rightLine2;
-        	Lines rightLine3;
-        	Lines rightLine4;
-        	Lines rightLine5;
-        	Lines rightLine6;
 
-        	Lines leftLine1;
-        	Lines leftLine2;
-        	Lines leftLine3;
-        	Lines leftLine4;
-        	Lines leftLine5;
-        	Lines leftLine6;
         	Lines upline1;
         	Lines upline2;
 
@@ -131,6 +118,7 @@ namespace msv {
         	int imgHeight;
 
         	double const SPEED;
+        	int const SIZE;
         	
       		double tempAngle;
 
@@ -139,6 +127,8 @@ namespace msv {
 
         	double rightError;
         	double leftError;
+        	int leftLength;
+        	int rightLength;
 
 			vector<Lines> rightList;
       		vector<Lines> leftList;
