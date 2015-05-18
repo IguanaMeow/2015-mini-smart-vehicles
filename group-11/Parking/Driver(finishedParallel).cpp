@@ -78,18 +78,12 @@ namespace msv {
                         if (vd.getAbsTraveledPath() >= count + 5 && sbd.getValueForKey_MapOfDistances(0) < 0){
 
                                 park = true;
-
                          }  
                         
-
                         if (sbd.getValueForKey_MapOfDistances(2) > 0 && park == false){
                                 count = vd.getAbsTraveledPath(); 
 
-        
                         }
-
-
-                       
                       
 
                          if (park == true){
