@@ -28,6 +28,7 @@
 #include "serial/serial.h"
 
 #include "Camera.h"
+#include "RunningMedian.h"
 
 namespace msv {
 
@@ -93,6 +94,11 @@ namespace msv {
             uint8_t oldIncomingSer[OUTSERIAL];
             uint16_t speedOut;
             uint16_t steeringOut;
+            RunningMedian irFrontRightMedian;
+            RunningMedian irMiddleRightMedian;
+            RunningMedian irBackMedian;
+            RunningMedian usFrontMedian;
+            RunningMedian usFrontRightMedian;
 
 
     };
