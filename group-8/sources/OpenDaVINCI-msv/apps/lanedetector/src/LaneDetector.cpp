@@ -633,10 +633,124 @@ double LaneDetector::measureAngle(IplImage *image) {
     	
 
 
-}else{
-    angle = tempAngle;
+	}else if (!isEmpty(&validLeft)&& isEmpty(&validRight)){
+
+		//follow left lane
+		tempListLeft.clear();
+        tempListRight.clear();
+        for(int i=0; i<6; ++i){
+            if (validLeft[i].getXPos()>0 ){
+                tempListLeft.push_back(validLeft[i]);
+            }
+        }
+        int length = tempListLeft.size();
+	for(int j=0; j<length; ++j){
+        ptBegin.x = x/2;
+      //  ptBegin.y = y-tempListLeft[0].getYPos();
+        ptBegin.y= y;
+        ptEnd.x =tempListLeft[j].getCritical()-tempListLeft[j].getXPos()+x/2;
+        ptEnd.y =y-tempListLeft[j].getYPos();
+        //cout << "THE baseline WILL BE ----------->>>>>>>>>>    " << tempListLeft[0].getXPos()<< "  ,  " <<tempListLeft[0].getYPos() <<endl;
+        //cout << "Right X temp IS ----------->>>>>>>>>>    " << tempListRight[j].getXPos() <<endl;
+        cout << "Left X IS ----------->>>>>>>>>>    " << tempListLeft[j].getXPos() << "it's critical is " << tempListLeft[j].getCritical()<<endl;
+        cout << "Left Y IS ----------->>>>>>>>>>    " << tempListLeft[j].getYPos() <<endl;
+        line(newImage, ptBegin, ptEnd, cvScalar(255, 100, 255), 2, 8);
+
+    }
+    double sum = 0.0;
+    double array[length];
+    
+    	if(length >1){
+    		length = 2;
+    	}
+   		for (int i = 0; i < length; ++i){
+        //int alphaX =(((tempListRight[i].getXPos()-tempListLeft[i].getXPos())/2)+tempListLeft[i].getXPos())-(((tempListRight[0].getXPos()-tempListLeft[0].getXPos())/2)+tempListLeft[0].getXPos());
+        int alphaX =tempListLeft[i].getCritical()-tempListLeft[i].getXPos();
+        
+        int alphaY = tempListLeft[i].getYPos()-y;
+
+         cout << "THE DELTA X  ----------->>>>>>>>>>    " << alphaX <<endl;
+         cout << "THE DELTA Y  ----------->>>>>>>>>>    " << -alphaY <<endl;
+        if(alphaX == 0 ){
+            array[i] = 0.0;
+        }else{
+            array[i]= atan2(alphaX,-alphaY);
+        }
+        sum+=array[i];
+    }
+    angle = (sum/length);
+    if (angle* Constants::RAD2DEG > 25)
+        angle = 25* Constants::DEG2RAD;
+    else if (angle* Constants::RAD2DEG < -26)
+        angle = -26* Constants::DEG2RAD;
+    
+    cout << "THE ANGLE WILL BE ----------->>>>>>>>>>    " << angle << " <-radius   degree->"<< angle* Constants::RAD2DEG <<endl;
+    tempAngle = angle;
+
+    
+    	
+
+
+	}else if (isEmpty(&validLeft)&& !isEmpty(&validRight)){
+
+		//follow right lane
+		tempListLeft.clear();
+        tempListRight.clear();
+        for(int i=0; i<6; ++i){
+            if (validRight[i].getXPos()>0 ){
+                tempListRight.push_back(validRight[i]);
+            }
+        }
+        int length = tempListRight.size();
+	for(int j=0; j<length; ++j){
+        ptBegin.x = x/2;
+      //  ptBegin.y = y-tempListLeft[0].getYPos();
+        ptBegin.y= y;
+        ptEnd.x =tempListRight[j].getCritical()-tempListRight[j].getXPos()+x/2;
+        ptEnd.y =y-tempListRight[j].getYPos();
+        //cout << "THE baseline WILL BE ----------->>>>>>>>>>    " << tempListLeft[0].getXPos()<< "  ,  " <<tempListLeft[0].getYPos() <<endl;
+        //cout << "Right X temp IS ----------->>>>>>>>>>    " << tempListRight[j].getXPos() <<endl;
+        //cout << "Left X IS ----------->>>>>>>>>>    " << tempListLeft[j].getXPos() <<endl;
+        //cout << "Left Y IS ----------->>>>>>>>>>    " << tempListLeft[j].getYPos() <<endl;
+        line(newImage, ptBegin, ptEnd, cvScalar(255, 100, 255), 2, 8);
+
+    }
+    double sum = 0.0;
+    double array[length];
+    
+    	if(length >1){
+    		length = 2;
+    	}
+   		for (int i = 0; i < length; ++i){
+        //int alphaX =(((tempListRight[i].getXPos()-tempListLeft[i].getXPos())/2)+tempListLeft[i].getXPos())-(((tempListRight[0].getXPos()-tempListLeft[0].getXPos())/2)+tempListLeft[0].getXPos());
+        int alphaX =tempListRight[i].getCritical()-tempListRight[i].getXPos();
+        
+        int alphaY = tempListRight[i].getYPos()-y;
+
+         cout << "THE DELTA X  ----------->>>>>>>>>>    " << alphaX <<endl;
+         cout << "THE DELTA Y  ----------->>>>>>>>>>    " << -alphaY <<endl;
+        if(alphaX == 0 ){
+            array[i] = 0.0;
+        }else{
+            array[i]= atan2(alphaX,-alphaY);
+        }
+        sum+=array[i];
+    }
+    angle = (sum/length);
+    if (angle* Constants::RAD2DEG > 25)
+        angle = 25* Constants::DEG2RAD;
+    else if (angle* Constants::RAD2DEG < -26)
+        angle = -26* Constants::DEG2RAD;
+    
+    cout << "THE ANGLE WILL BE ----------->>>>>>>>>>    " << angle << " <-radius   degree->"<< angle* Constants::RAD2DEG <<endl;
+    tempAngle = angle;
+	}
+   else{
+   		//follow tempangle
+   	angle = tempAngle;
     cout << "THE TEMP ANGLE WILL BE ----------->>>>>>>>>>    " << angle << " <-radius   degree->"<< angle* Constants::RAD2DEG <<endl;
-}
+
+   }
     
     
     return angle;
