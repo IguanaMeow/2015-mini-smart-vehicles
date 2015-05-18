@@ -38,30 +38,31 @@ namespace msv {
         using namespace core::data::environment;
 
         Driver::Driver(const int32_t &argc, char **argv) :
-	        ConferenceClientModule(argc, argv, "Driver") {
+            ConferenceClientModule(argc, argv, "Driver") {
         }
 
         Driver::~Driver() {}
 
         void Driver::setUp() {
-	        // This method will be call automatically _before_ running body().
+            // This method will be call automatically _before_ running body().
         }
 
         void Driver::tearDown() {
-	        // This method will be call automatically _after_ return from body().
+            // This method will be call automatically _after_ return from body().
         }
 
         // This method will do the main data processing job.
         ModuleState::MODULE_EXITCODE Driver::body() {
 
-    int stop = 0;
+   // int stop = 0;
    // int *pstop;
-	 
+     
    // pstop =  &stop;
- int overtaking = 0;
-int *povertaking;
-povertaking = &overtaking;
-	        while (getModuleState() == ModuleState::RUNNING) {
+        int overtaking = 0;
+        int *povertaking;
+        povertaking = &overtaking;
+        
+            while (getModuleState() == ModuleState::RUNNING) {
                 // In the following, you find example for the various data sources that are available:
 
           
@@ -89,15 +90,15 @@ povertaking = &overtaking;
                 // With setSpeed you can set a desired speed for the vehicle in the range of -2.0 (backwards) .. 0 (stop) .. +2.0 (forwards)
 
               
-cout << "BOOLEAN: " << sd.getStopData() <<endl;
+//cout << "BOOLEAN: " << sd.getStopData() <<endl;
 //cout << *pstop <<endl;
 cout << "OVERTAKING " << *povertaking <<endl;
 
 //DRIVE
-if(stop == 0){
+/*if(stop == 0){
 sd.setSpeedData(1.0);
 
-}
+} */
 // Detects object in front and turns
 if (sbd.SensorBoardData::getValueForKey_MapOfDistances(3) <= 60 && sbd.SensorBoardData::getValueForKey_MapOfDistances(3) >= 20)
 {
@@ -116,20 +117,20 @@ if (overtaking == 1 || 2){
 // Activating overtaking state
 if (sbd.SensorBoardData::getValueForKey_MapOfDistances(2) >= 5 && sbd.SensorBoardData::getValueForKey_MapOfDistances(2) <= 10 && overtaking == 1)
 { 
-	*povertaking = 2;
-	cout<<"Third statement " <<endl;
+    *povertaking = 2;
+    cout<<"Third statement " <<endl;
 }
 
 // Turns right for as long as Front-Right IR is less than zero and Rear-Right IR detects the object.
 if (sbd.SensorBoardData::getValueForKey_MapOfDistances(0) < 6 && sbd.SensorBoardData::getValueForKey_MapOfDistances(2) >=6 && overtaking == 2){
 sd.setExampleData(17.0);
-	cout<<"Fourth statement " <<endl;
+    cout<<"Fourth statement " <<endl;
 }
 // Deactivate overtaking state when both IR are less than zero
 if (sbd.SensorBoardData::getValueForKey_MapOfDistances(0) < 0 && sbd.SensorBoardData::getValueForKey_MapOfDistances(2) <=0 && overtaking == 2){
-	cout<<"Fifth statement " <<endl;
-	*povertaking = 0; }
-	
+    cout<<"Fifth statement " <<endl;
+    *povertaking = 0; }
+    
 }
 
         cerr << "Sensor 0 IR Front-Right: " << sbd.getValueForKey_MapOfDistances(0) << endl;
@@ -161,8 +162,8 @@ if (sbd.SensorBoardData::getValueForKey_MapOfDistances(0) < 0 && sbd.SensorBoard
                 Container c(Container::VEHICLECONTROL, vc); */
                 // Send container.
                 getConference().send(c);
-	        }
+            }
 
-	        return ModuleState::OKAY;
+            return ModuleState::OKAY;
         }
 } // msv
