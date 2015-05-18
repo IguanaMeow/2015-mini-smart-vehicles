@@ -1,0 +1,26 @@
+#include <Servo.h>
+
+Servo esc, wheel;
+int control=0;
+String inputString;
+int throttle=512;
+
+
+void setup() {
+  esc.attach(9);
+  wheel.attach(8);
+ 
+  Serial.begin(9600);
+   Serial.println("hi"); 
+  delay(1);
+}
+
+void loop() {
+   // throttle=map(control,0,1023,1000,2000);
+    //wheel.writeMicroseconds(1500);
+    //esc.writeMicroseconds(1500);
+    
+ 
+    
+ 
+}
