@@ -17,7 +17,7 @@
 #
 global.car = Scenarios/Models/FordEscape.objx
 #global.car = Scenarios/Models/RedRocketCar.objx
-global.scenario = file://Scenarios/NoObstacles_StopLines.scnx
+global.scenario = file://Scenarios/SEM_Test_Track.scnx
 global.showGrid = 0
 
 # The following attributes define the buffer sizes for recording and replaying.
@@ -160,7 +160,7 @@ recintegrity.input = file:///dev/stdin
 # CONFIGURATION FOR PROXY
 #
 proxy.debug = 0
-proxy.useRecorder = 1 # 1 = record all captured data directly, 0 otherwise. 
+proxy.useRecorder = 0 # 1 = record all captured data directly, 0 otherwise. 
 proxy.camera.name = WebCam
 proxy.camera.type = OpenCV # OpenCV or UEYE
 proxy.camera.id = 0 # Select here the proper ID for OpenCV
