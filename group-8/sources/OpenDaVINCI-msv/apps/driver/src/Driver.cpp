@@ -39,7 +39,10 @@ namespace msv {
         using namespace core::data::environment;
 
         Driver::Driver(const int32_t &argc, char **argv) :
-	        ConferenceClientModule(argc, argv, "Driver") {
+	        ConferenceClientModule(argc, argv, "Driver"),
+                state(1),
+                counter(0),
+                SPEED(2) {
         }
 
         Driver::~Driver() {}
@@ -78,10 +81,36 @@ namespace msv {
                 SteeringData sd = containerSteeringData.getData<SteeringData> ();
                 cerr << "Most recent steering data: '" << sd.toString() << "'" << endl;
 
-
-
                 // Design your control algorithm here depending on the input data from above.
+                switch(state) {
+                case 1:
+                        cout << "state 1" << endl;
+                        sd.setSpeedData(SPEED);
 
+                        if (sd.getIntersectionLine() > 0) {
+                                state = 2;
+                        }
+                        break;
+                case 2:
+                        cout << "state 2" << endl;
+                        
+                        sd.setSpeedData(0);
+                        counter++;
+                        cout << isObject() << endl;
+                        if (counter > 150 && !isObject()) {
+                                counter = 0;
+                                state = 3;
+                        }
+                        cout << counter << endl;
+                        break;
+                case 3:
+                        cout << "state 3" << endl;
+                        sd.setSpeedData(SPEED);
+                        if (sd.getIntersectionLine() < 1) {
+                                state = 1;
+                        }
+                        break;
+                }
 
 
                 // Create vehicle control data.
@@ -106,6 +135,21 @@ namespace msv {
 	        }
 
 	        return ModuleState::OKAY;
+        }
+
+        bool Driver::isObject() 
+        {     
+                SensorBoardData sbd;
+                KeyValueConfiguration kv = getKeyValueConfiguration();
+                double carLength = kv.getValue<double> ("global.carLength");
+
+                if (sbd.getValueForKey_MapOfDistances(3) > 0 && sbd.getValueForKey_MapOfDistances(3) < carLength * 3) {
+                        return true;
+                } else if (sbd.getValueForKey_MapOfDistances(4) > 0 && sbd.getValueForKey_MapOfDistances(4) < carLength * 3){
+                        return true;
+                } else {
+                        return false;
+                }
         }
 } // msv
 

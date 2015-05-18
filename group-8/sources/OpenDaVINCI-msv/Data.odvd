@@ -21,6 +21,7 @@ message msv.SteeringData {
     double exampleData;
     double headingData;
     double speedData;
+    double intersectionLine;
 }
 
 message msv.LaneData {

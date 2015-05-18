@@ -67,6 +67,10 @@ namespace msv {
             virtual void setUp();
 
             virtual void tearDown();
+            int state;
+            int counter;
+            double const SPEED;
+            bool isObject();
     };
 
 } // msv
