@@ -154,7 +154,7 @@ namespace msv {
 
         // Variable declarations
         Mat dst, cdst;
-        const int rows = 36 - (abs(prevAngle * 0.8) > 8 ? 8 : floor(abs(prevAngle * 0.8)));
+        const int rows = 36 - (abs(prevAngle * 1) > 10 ? 10 : floor(abs(prevAngle * 1)));
         const int rowdist = src.rows * 0.025;
         const int center = src.cols / 2;
         const int wbot = center * 18 / 20;
@@ -181,6 +181,7 @@ namespace msv {
 
         // Line detection
         vector<Vec4i> lines;
+        vector<Vec4i> stoplines;
         HoughLinesP(dst, lines, 1, CV_PI/180, 8, 10, 10);
 
         // Calculate angle of lines and filter horizontal ones
@@ -211,6 +212,7 @@ namespace msv {
             {
                 line(cdst, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0, 0, 64), 1, CV_AA);
                 lines.erase(lines.begin() + i);
+                stoplines.push_back(l);
                 i--;
             }
         }
@@ -361,11 +363,29 @@ namespace msv {
         total *= sign;
         total = pow(total, exp);
         total *= sign;
+        if(total < 0)
+            total *= 1.1;
         const double newAngle = total * -ratio;
+
+        // Calculate distance to stoplines
+        int frontDist = src.rows;
+        for(size_t i = 0; i < stoplines.size(); i++)
+        {
+            Vec4i l = stoplines[i];
+            if((l[0] < center && l[2] > center) || (l[0] > center && l[2] < center))
+            {
+                const int distance = src.rows - (l[1] + l[3]) / 2;
+                if(distance < frontDist)
+                {
+                    frontDist = distance;
+                }
+            }
+        }
 
         // Create SteeringData
         SteeringData sd;
         sd.setWheelAngle(newAngle);
+        sd.setFrontDistance(frontDist);
 
         // Show image
         if (m_debug)

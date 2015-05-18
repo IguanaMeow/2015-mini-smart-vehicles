@@ -43,12 +43,6 @@ namespace msv {
 //  using namespace libdata::generated::msv;
 
     int parkingMode = 0;
-    float usFrontRightArr[5] = {-1};
-    float usRearRightArr[5] =  {-1};
-    float usFrontCentreArr[5] =  {-1};
-    float irFrontRightArr[5] = {-1};
-    float irRearArr[5] = {-1};
-    float irRearRightArr[5] = {-1};
 
     Driver::Driver(const int32_t &argc, char **argv) :
         ConferenceClientModule(argc, argv, "Driver"),parking()   {
@@ -89,15 +83,22 @@ namespace msv {
     {
         Time *startTime = NULL;
         bool isReversing = false;
+        bool atStopline = false;
+        float usFrontRightArr[5] = {-1};
+        float usRearRightArr[5] =  {-1};
+        float usFrontCentreArr[5] =  {-1};
+        float irFrontRightArr[5] = {-1};
+        float irRearArr[5] = {-1};
+        float irRearRightArr[5] = {-1};
 
         while (getModuleState() == ModuleState::RUNNING)
         {
             // 1. Get most recent vehicle data:
-            VehicleData vd;
-            Container containerVehicleData = getKeyValueDataStore().get(Container::VEHICLEDATA);
-            vd = containerVehicleData.getData<VehicleData> ();
-            float headingAngle = vd.getHeading() * Constants :: RAD2DEG;
-            float currentSpeed = vd.getSpeed();
+            //VehicleData vd;
+            //Container containerVehicleData = getKeyValueDataStore().get(Container::VEHICLEDATA);
+            //vd = containerVehicleData.getData<VehicleData> ();
+            //float headingAngle = vd.getHeading() * Constants :: RAD2DEG;
+            //float currentSpeed = vd.getSpeed();
 
             // 2. Get most recent sensor board data:
             Container containerSensorBoardData = getKeyValueDataStore().get(Container::USER_DATA_0);
@@ -130,23 +131,8 @@ namespace msv {
             Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_1);
             SteeringData sd = containerSteeringData.getData<SteeringData> ();
 
-            cout << left << setfill('-') << setw(30) << "+" << "+" << endl << setfill(' ');
-            cout << setw(30) << "| VEHICLE & SENSOR DATA" << "|" << endl;
-            cout << setfill('-') << setw(22) << "+" << setw(8) << "+" << "+" << endl << setfill(' ');
-            cout << setw(22) << "| Heading Angle"       << "| " << setw(6) << headingAngle  << "|" << endl;
-            cout << setw(22) << "| current Speed"       << "| " << setw(6) << currentSpeed  << "|" << endl;
-            cout << setfill('-') << setw(22) << "+" << setw(8) << "+" << "+" << endl << setfill(' ');
-            cout << setw(22) << "| usFrontCentre value" << "| " << setw(6) << usFrontCentre << "|" << endl;
-            cout << setw(22) << "| usFrontRight value"  << "| " << setw(6) << usFrontRight  << "|" << endl;
-            cout << setw(22) << "| usRearRight value"   << "| " << setw(6) << usRearRight   << "|" << endl;
-            cout << setfill('-') << setw(22) << "+" << setw(8) << "+" << "+" << endl << setfill(' ');
-            cout << setw(22) << "| irFrontRight value"  << "| " << setw(6) << irFrontRight  << "|" << endl;
-            cout << setw(22) << "| irRearRight value"   << "| " << setw(6) << irRearRight   << "|" << endl;
-            cout << setw(22) << "| irRear value"        << "| " << setw(6) << irRear        << "|" << endl;
-            cout << setfill('-') << setw(22) << "+" << setw(8) << "+" << "+" << endl << setfill(' ');
-
-            float speed = 1;
-            float desiredSteeringWheelAngle = 0.0;
+            double speed = 5;
+            double desiredSteeringWheelAngle = 0.0;
 
 
             if(parkingMode)
@@ -181,16 +167,47 @@ namespace msv {
             else
             {
                 desiredSteeringWheelAngle = sd.getWheelAngle();
-                // emergency break
+
+                // Emergency break
                 if(usFrontCentre < 10 && usFrontCentre > 0
                 {
                     speed = 0;
+                }
+
+                // Stopping at stoplines
+                if(!atStopline && sd.getFrontDistance() < 180)
+                {
+                    atStopline = true;
+                    Time *t = TimeFactory::getInstance().now();
+                    startTime = t;
+                }
+
+                if(atStopline)
+                {
+                    Time *t = TimeFactory::getInstance().now();
+                    int sec = t->getSeconds() - startTime->getSeconds();
+                    if(sec > 8)
+                    {
+                        delete startTime;
+                        startTime = NULL;
+                        atStopline = false;
+                    }
+                    else if (sec < 4)
+                    {
+                        speed = 0;
+                    }
+
+                    if (t != startTime)
+                    {
+                        delete t;
+                    }
+                    t = NULL;
                 }
             }
 
             VehicleControl vc;
 
-            //Reversing car fix.
+            // Reversing car fix.
             if (speed < 0 && !isReversing) {
                 Time *t = TimeFactory::getInstance().now();
 
@@ -227,6 +244,22 @@ namespace msv {
             //vc.setBrakeLights(false);
             //vc.setLeftFlashingLights(false);
             //vc.setRightFlashingLights(false);
+
+            cout << left << setfill('-') << setw(34) << "+" << "+" << endl << setfill(' ');
+            cout << setw(34) << "| VEHICLE & SENSOR DATA" << "|" << endl;
+            cout << setfill('-') << setw(22) << "+" << setw(12) << "+" << "+" << endl << setfill(' ');
+            cout << setw(22) << "| Speed"               << "| " << setw(10) << speed  << "|" << endl;
+            cout << setw(22) << "| Heading Angle"       << "| " << setw(10) << desiredSteeringWheelAngle  << "|" << endl;
+            cout << setw(22) << "| Front Distance"      << "| " << setw(10) << sd.getFrontDistance()  << "|" << endl;
+            cout << setfill('-') << setw(22) << "+" << setw(12) << "+" << "+" << endl << setfill(' ');
+            cout << setw(22) << "| usFrontCentre value" << "| " << setw(10) << usFrontCentre << "|" << endl;
+            cout << setw(22) << "| usFrontRight value"  << "| " << setw(10) << usFrontRight  << "|" << endl;
+            cout << setw(22) << "| usRearRight value"   << "| " << setw(10) << usRearRight   << "|" << endl;
+            cout << setfill('-') << setw(22) << "+" << setw(12) << "+" << "+" << endl << setfill(' ');
+            cout << setw(22) << "| irFrontRight value"  << "| " << setw(10) << irFrontRight  << "|" << endl;
+            cout << setw(22) << "| irRearRight value"   << "| " << setw(10) << irRearRight   << "|" << endl;
+            cout << setw(22) << "| irRear value"        << "| " << setw(10) << irRear        << "|" << endl;
+            cout << setfill('-') << setw(22) << "+" << setw(12) << "+" << "+" << endl << setfill(' ');
 
             // Create container for finally sending the data.
             Container c(Container::VEHICLECONTROL, vc);
