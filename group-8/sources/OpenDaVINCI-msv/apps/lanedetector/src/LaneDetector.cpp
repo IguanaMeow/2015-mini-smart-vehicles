@@ -279,7 +279,6 @@ void LaneDetector::processImage() {
 		
 	// case 2:
 
-<<<<<<< HEAD
 	// 	sd.setSpeedData(0);
 	// 	counter++;
 	// 	if (counter > 50) {
@@ -289,17 +288,17 @@ void LaneDetector::processImage() {
 	// 	 cout << counter << endl;
 	// 	break;
 	// case 3:
-=======
-		sd.setSpeedData(0);
-		counter++;
-		if (counter > 50 && !isObject()) {
-			counter = 0;
-			state = 3;
-		}
-		 cout << counter << endl;
-		break;
-	case 3:
->>>>>>> 4959ba3a1935a91a8ccb2ff896f6835f59c1fb3d
+// =======
+// 		sd.setSpeedData(0);
+// 		counter++;
+// 		if (counter > 50 && !isObject()) {
+// 			counter = 0;
+// 			state = 3;
+// 		}
+// 		 cout << counter << endl;
+// 		break;
+// 	case 3:
+// >>>>>>> 4959ba3a1935a91a8ccb2ff896f6835f59c1fb3d
 
 	// 	sd.setSpeedData(SPEED);
 	// 	if (upline1.getYPos()>upline1.getCritical()){
