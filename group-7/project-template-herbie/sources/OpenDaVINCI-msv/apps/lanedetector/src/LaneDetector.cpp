@@ -472,9 +472,9 @@ namespace msv {
 				//Therefore sharp turn
 				//Else an less sharp turn
 				if ((diff * steer) < 0.000001){
-					steeringAngle = (diff/7 * Constants::DEG2RAD);
+					steeringAngle = (diff/6.3 * Constants::DEG2RAD);
 				} else {
-					steeringAngle = (diff/12.5 * Constants::DEG2RAD);
+					steeringAngle = (diff/11 * Constants::DEG2RAD);
 				}
 
 				//Check to prevent car from steering to early
@@ -505,9 +505,9 @@ namespace msv {
 				int diff = dist[1] - abs(left[3]);
 
 				if ((diff * steer) < 0.000001){
-					steeringAngle = (diff/7 * Constants::DEG2RAD);
+					steeringAngle = (diff/6.3 * Constants::DEG2RAD);
 				} else {
-					steeringAngle = (diff/12.5 * Constants::DEG2RAD);
+					steeringAngle = (diff/11 * Constants::DEG2RAD);
 				}
 
 				if(left[0] == dist[0] && abs(steer) < 0.001){
