@@ -39,6 +39,8 @@ namespace msv {
         using namespace core::data::control;
         using namespace core::data::environment;
 
+
+        // States for parking
         const int SCANNING = 0;
         const int MEASURING = 1;
         const int ALIGNING = 2;
@@ -69,13 +71,10 @@ namespace msv {
         ModuleState::MODULE_EXITCODE Parker::body() {
 
                 int mode = SCANNING;
-                int currentTraveledPath;
-                double distanceBackRight;
-                double distanceRear;
-                double absTraveledPath;
+                int counter = 0;
+                double currentTraveledPath;
                 double initialHeading;
-                double heading;
-                double steeringWheelAngle;
+
                 KeyValueConfiguration kv = getKeyValueConfiguration();
                 double carLength = kv.getValue<double> ("global.carLength");
                 
@@ -105,11 +104,6 @@ namespace msv {
 
 
                 // Design your control algorithm here depending on the input data from above.
-                distanceBackRight = sbd.getValueForKey_MapOfDistances(2);
-                distanceRear = sbd.getValueForKey_MapOfDistances(3);
-                absTraveledPath = vd.getAbsTraveledPath();
-                steeringWheelAngle = sd.getHeadingData();
-                heading = vd.getHeading();
 
                 // Create vehicle control data.
                 VehicleControl vc;
@@ -117,114 +111,132 @@ namespace msv {
                 switch (mode) {
 
                         case SCANNING:
-                        vc.setSpeed(1);
+                        cout << "Forward - Mode SCANNING" << endl;
+                        vc.setSpeed(2);
                         vc.setSteeringWheelAngle(sd.getHeadingData());
-                        if(distanceBackRight < 0){
+                        if(sbd.getValueForKey_MapOfDistances(0) < 0 && (sbd.getValueForKey_MapOfDistances(4) < 0 || sbd.getValueForKey_MapOfDistances(4) > carLength * 2)){
                                 mode = MEASURING;
-                                currentTraveledPath = absTraveledPath;
+                                currentTraveledPath = vd.getAbsTraveledPath();
                         }
                         break;
 
                         case MEASURING:
+                        
+                        cout << "Forward - Mode MEASURING" << endl;
+                        cout << "Measured distance: " << vd.getAbsTraveledPath() - currentTraveledPath << endl;
                         vc.setSpeed(1);
                         vc.setSteeringWheelAngle(sd.getHeadingData());
-                        if((distanceBackRight > -1 && (absTraveledPath - currentTraveledPath) < carLength * 1.75) || (steeringWheelAngle > 10 || steeringWheelAngle < -10)){
-                                vc.setSpeed(0);
+                        if((sbd.getValueForKey_MapOfDistances(0) > -1 && vd.getAbsTraveledPath() - currentTraveledPath < carLength * 1.50) || (sd.getHeadingData() > 10 || sd.getHeadingData() < -10)){
                                 mode = SCANNING;
                         }
-                        else if ((absTraveledPath - currentTraveledPath) >= carLength * 1.75){
+                        else if (vd.getAbsTraveledPath() - currentTraveledPath >= carLength * 1.50){
                                 mode = ALIGNING;
-                                currentTraveledPath = absTraveledPath;
+                                currentTraveledPath = vd.getAbsTraveledPath();
                         }
                         break;
 
+                        case ALIGNING:
+                        cout << "Reverse - Mode ALIGNING" << endl;
+                        cout << "Measured distance: " << vd.getAbsTraveledPath() - currentTraveledPath << endl;
+                        vc.setSpeed(1);
+                        if((vd.getAbsTraveledPath() - currentTraveledPath) > carLength * 0.9){
+                                counter = 0;
+                                mode = STOPPING;
+                                initialHeading = vd.getHeading();
+                        }
+                        
+                        break;
+
+
+                        
+                        case STOPPING:
+                        cout << "Reverse - Mode STOPPING" << endl;
+                        ++counter;
+                        vc.setSpeed(0);
+                        if(counter >= 30){
+                                mode = BACK_RIGHT;
+                                currentTraveledPath = vd.getAbsTraveledPath();
+                        }
+
+                        break;
+                        
+
                         case BACK_RIGHT:
+                        cout << "Reverse - Mode BACK_RIGHT" << endl;
+                        cout << "Measured distance: " << vd.getAbsTraveledPath() - currentTraveledPath << endl;
+                        cout << "Initial heading(): " << initialHeading * Constants::RAD2DEG << " Heading: " << vd.getHeading() * Constants::RAD2DEG << endl;
+                        cout << "Angle diff: " << angleDifference(initialHeading, vd.getHeading()) << endl;
                         vc.setSpeed(-0.5);
                         vc.setSteeringWheelAngle(25 * Constants::DEG2RAD);
-                        if (angleDifference(initialHeading, heading) > 45){
+                        if (angleDifference(initialHeading, vd.getHeading()) > 40){
                                 mode = BACK_STRAIGHT;
-                                currentTraveledPath = absTraveledPath;
+                                currentTraveledPath = vd.getAbsTraveledPath();
                                 vc.setSteeringWheelAngle(0);
                         }
-                        if(distanceRear < carLength * 0.25 && distanceRear > 0){
+                        if(sbd.getValueForKey_MapOfDistances(1) < carLength * 0.10 && sbd.getValueForKey_MapOfDistances(1) > 0){
                                 mode = ABORT;
-                                currentTraveledPath = absTraveledPath;
+                                currentTraveledPath = vd.getAbsTraveledPath();
                                 vc.setSpeed(0);
                         }
 
                         break;
 
                         case BACK_STRAIGHT:
+                        cout << "Reverse - Mode: BACK_STRAIGHT" << endl;
+                        cout << "Measured distance: " << vd.getAbsTraveledPath() - currentTraveledPath << endl;
                         vc.setSpeed(-0.5);
                         vc.setSteeringWheelAngle(0);
-                        if((absTraveledPath - currentTraveledPath) > carLength * 0.4){
+                        if((vd.getAbsTraveledPath() - currentTraveledPath) > carLength * 0.6){
                                 mode = BACK_LEFT;
-                                currentTraveledPath = absTraveledPath;
+                                currentTraveledPath = vd.getAbsTraveledPath();
                                 vc.setSteeringWheelAngle(-26 * Constants::DEG2RAD);
                         }
-                        if(distanceRear < carLength * 0.25 && distanceRear > 0){
-                                mode = ABORT;
-                                currentTraveledPath = absTraveledPath;
-                                vc.setSpeed(0);
-                        }
+
                         break;
 
                         case BACK_LEFT:
+                        cout << "Reverse - Mode: BACK_LEFT" << endl;
+                        cout << "Initial heading(): " << initialHeading * Constants::RAD2DEG << " Heading: " << vd.getHeading() * Constants::RAD2DEG << endl;
+                        cout << "Angle diff: " << angleDifference(initialHeading, vd.getHeading()) << endl;
+                        cout << "Rear: " << (sbd.getValueForKey_MapOfDistances(1) < (carLength * 0.5)) << endl;
+                        cout << "Rear: " << (sbd.getValueForKey_MapOfDistances(1) > 0) << endl;
                         vc.setSpeed(-0.5);
                         vc.setSteeringWheelAngle(-26 * Constants::DEG2RAD);
-                        if(angleDifference(initialHeading, heading) < 10){
+                        if(angleDifference(initialHeading, vd.getHeading()) < 5 || (sbd.getValueForKey_MapOfDistances(1) < (carLength * 0.5) && sbd.getValueForKey_MapOfDistances(1) > 0)){
                                 vc.setSpeed(0);
-                                currentTraveledPath = absTraveledPath;
                                 mode = STRAIGHTEN;
-                        }
-                        if(distanceRear < carLength * 0.25 && distanceRear > 0){
-                                mode = ABORT;
-                                currentTraveledPath = absTraveledPath;
-                                vc.setSpeed(0);
                         }
 
                         break;
 
                         case STRAIGHTEN:
+                        cout << "Forward - Mode: STRAIGHTEN" << endl;
+                        cout << "Initial heading: " << initialHeading * Constants::RAD2DEG << " Heading: " << vd.getHeading() * Constants::RAD2DEG << endl;
+                        cout << "Angle diff: " << angleDifference(initialHeading, vd.getHeading()) << endl;
                         vc.setSteeringWheelAngle(25);
                         vc.setSpeed(0.5);
-                        if(angleDifference(initialHeading, heading) < 0.5)
+                        //|| sbd.getValueForKey_MapOfDistances(3) < 0.1 * carLength
+                        if(angleDifference(initialHeading, vd.getHeading()) < 0.5){
+                                vc.setSpeed(-1);
                                 mode = STOP;
-
-                        break;
-
-                        case ALIGNING:
-                        vc.setSpeed(0.5);
-                        if((absTraveledPath - currentTraveledPath) > carLength * 0.625){
-                                mode = STOPPING;
-                                initialHeading = heading;
                         }
-                        
-                        break;
-
-                        case STOPPING:
-                        vc.setSpeed(0);
-                        if(vd.getSpeed() < 0.01){
-                                mode = BACK_RIGHT;
-                                currentTraveledPath = absTraveledPath;
+                        else if(sbd.getValueForKey_MapOfDistances(3) < (0.5 * carLength) && sbd.getValueForKey_MapOfDistances(3) > 0){
+                                mode = BACK_LEFT;
                         }
 
                         break;
 
                         case STOP:
+                        cout << "Mode: STOP" << endl;
                         vc.setSpeed(0);
                         break;
 
-                        case ABORT:
-                        vc.setSpeed(0.5);
-                        if((absTraveledPath - currentTraveledPath) > carLength * 0.67)
-                                mode = SCANNING;
-                        break;
-
                 }
-                cerr << "Heading: " << heading * Constants::RAD2DEG << endl;
-                cerr << "Mode: " << mode << endl;
-                cerr << "absTraveledPath" << absTraveledPath << endl;
+
+                cerr << "Rear right: " << sbd.getValueForKey_MapOfDistances(2) << endl;
+                cerr << "Front right: " << sbd.getValueForKey_MapOfDistances(0) << endl;
+                cerr << "US front right: " << sbd.getValueForKey_MapOfDistances(4) << endl;
+                cerr << "Rear: " << sbd.getValueForKey_MapOfDistances(1) << endl;
 
                 // Create container for finally sending the data.
                 Container c(Container::VEHICLECONTROL, vc);
@@ -237,12 +249,14 @@ namespace msv {
 
         double Parker::angleDifference(double initialHeading, double heading){
 
-                initialHeading = abs(initialHeading) * Constants::RAD2DEG;
-                heading = abs(heading) * Constants::RAD2DEG;
+                
+                return (180 - abs(abs(heading - initialHeading) - 180)) * Constants::RAD2DEG; 
+                //initialHeading = abs(initialHeading) * Constants::RAD2DEG;
+                //heading = abs(heading) * Constants::RAD2DEG;
 
-                if (heading < initialHeading)
-                        return heading + 360 - initialHeading;
-                return heading - initialHeading;
+                //if (heading < initialHeading)
+                //        return heading + 360 - initialHeading;
+                //return heading - initialHeading;
         }
 } // msv
 
