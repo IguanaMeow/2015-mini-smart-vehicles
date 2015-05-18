@@ -398,14 +398,14 @@ void  LaneDetector::setLines(IplImage* image)
         rightLine3.setYPos(round(imgHeight * 0.187));
         rightLine4.setYPos(round(imgHeight * 0.24));
         rightLine5.setYPos(round(imgHeight * 0.292));
-        rightLine6.setYPos(round(imgHeight * 0.344));
+        rightLine6.setYPos(round(imgHeight * 0.35));
 
         leftLine1.setYPos(round(imgHeight * 0.104));
         leftLine2.setYPos(round(imgHeight * 0.146));
         leftLine3.setYPos(round(imgHeight * 0.187));
         leftLine4.setYPos(round(imgHeight * 0.24));
         leftLine5.setYPos(round(imgHeight * 0.292));
-        leftLine6.setYPos(round(imgHeight * 0.344));
+        leftLine6.setYPos(round(imgHeight * 0.35));
 
         rightList[0].setYPos(rightLine1.getYPos());
         rightList[1].setYPos(rightLine2.getYPos());
@@ -446,17 +446,23 @@ void  LaneDetector::setLines(IplImage* image)
     leftLine5.setXPos(measureDistance(leftLine5.getYPos(), 0, m_image));
     leftLine6.setXPos(measureDistance(leftLine6.getYPos(), 0, m_image));
 
+    cout<< leftLine6.getXPos()<< "    is line 6 's x position" <<endl;
+
     if (critCounter < 12) {
-        for(vector<Lines>::iterator it = rightList.begin(); it != rightList.end(); it++) {
-            if (it->getCritical() < 1){
-                calculateCritical(it, 1, m_image);
+    	for(vector<Lines>::iterator itLeft = leftList.begin(); itLeft != leftList.end(); ++itLeft) {
+            if (itLeft->getCritical() < 1){
+                calculateCritical(itLeft, 0, m_image);
             }
         }
-        for(vector<Lines>::iterator it = leftList.begin(); it != leftList.end(); it++) {
-            if (it->getCritical() < 1){
-                calculateCritical(it, 0, m_image);
+        for(vector<Lines>::iterator itRight = rightList.begin(); itRight != rightList.end(); ++itRight) {
+            if (itRight->getCritical() < 1){
+                calculateCritical(itRight, 1, m_image);
+
             }
+
         }
+        
+
         rightLine1.setCritical(rightList[0].getCritical());
         rightLine2.setCritical(rightList[1].getCritical());
         rightLine3.setCritical(rightList[2].getCritical());
@@ -486,6 +492,20 @@ void  LaneDetector::setLines(IplImage* image)
         rightList[3].setXPos(rightLine4.getXPos());
         rightList[4].setXPos(rightLine5.getXPos());
         rightList[5].setXPos(rightLine6.getXPos());
+
+        cout << "left 1    crit: " << leftLine1.getCritical() << " X: " << leftLine1.getXPos() <<endl;
+        cout << "left 2    crit: " << leftLine2.getCritical() << " X: " << leftLine2.getXPos() <<endl;
+        cout << "left 3    crit: " << leftLine3.getCritical() << " X: " << leftLine3.getXPos() <<endl;
+        cout << "left 4    crit: " << leftLine4.getCritical() << " X: " << leftLine4.getXPos() <<endl;
+        cout << "left 5    crit: " << leftLine5.getCritical() << " X: " << leftLine5.getXPos() <<endl;
+        cout << "left 6    crit: " << leftLine6.getCritical() << " X: " << leftLine6.getXPos() <<endl;
+        cout << "right 1    crit: " << rightLine1.getCritical() << " X: " << rightLine1.getXPos() <<endl;
+        cout << "right 2    crit: " << rightLine2.getCritical() << " X: " << rightLine2.getXPos() <<endl;
+        cout << "right 3    crit: " << rightLine3.getCritical() << " X: " << rightLine3.getXPos() <<endl;
+        cout << "right 4    crit: " << rightLine4.getCritical() << " X: " << rightLine4.getXPos() <<endl;
+        cout << "right 5    crit: " << rightLine5.getCritical() << " X: " << rightLine5.getXPos() <<endl;
+        cout << "right 6    crit: " << rightLine6.getCritical() << " X: " << rightLine6.getXPos() <<endl;
+
 
        // cout << "rightList x " << rightList[0].getXPos() << "leftList x " << leftList[0].getXPos() << endl;
 }
@@ -521,13 +541,14 @@ void LaneDetector::validLines(std::vector<Lines>* lines, int LorR)
         validRight.clear();
     }
 	
-
+	int crop = (imgWidth-(imgHeight *1.333 ))/2;
+	//cout << crop << endl;
 	// Iterates through the vector of lines and stops when two validLeft lines have been found.
 	for(std::vector<Lines>::iterator it = lines->begin(); it != lines->end(); ++it )
 	{
 		if (LorR==0){
         // As long as the lines X-position isn't extremely out of bounds...
-		if(it->getXPos() > 1)
+		if(it->getXPos() > crop+1)
 		{
 			// ...add it to the vector.
 			validLeft.push_back(*it);
@@ -535,9 +556,9 @@ void LaneDetector::validLines(std::vector<Lines>* lines, int LorR)
 		}else{
             validLeft.push_back(Lines(-1,-1,-1));
         }
-       // cout << "the left list is " << validLeft[0] -> getXPos() << "," << it -> getYPos()<<endl;
+
     }else{
-        if(it->getXPos() < (imgWidth-2))
+        if(it->getXPos() < (imgWidth-crop-1))
         {
             // ...add it to the vector.
             validRight.push_back(*it);
@@ -555,9 +576,17 @@ void LaneDetector::calculateCritical(const vector<Lines>::iterator& line, int di
 	double result;
 	result = measureDistance(line->getYPos(), dir, image);
 	
-	if (result < (imgWidth-2)) {
+	if(dir == 0){
+		if (result > 1) {
 		line->setCritical(result);
-		critCounter++;
+		++critCounter;
+		}
+	}
+	else{
+		if (result < (imgWidth-1)) {
+		line->setCritical(result);
+		++critCounter;
+	}
 	}
 
 }
@@ -583,8 +612,11 @@ double LaneDetector::measureAngle(IplImage *image) {
             }
         }
         int length = tempListLeft.size();
+        if(length >1){
+    		length = 2;
+    	}
          //draw lines
-    for(int j=0; j<2; ++j){
+    for(int j=0; j<length; ++j){
         
         ptBegin.x = x/2;
       //  ptBegin.y = y-tempListLeft[0].getYPos();
@@ -602,9 +634,7 @@ double LaneDetector::measureAngle(IplImage *image) {
     double sum = 0.0;
     double array[length];
     
-    	if(length >1){
-    		length = 2;
-    	}
+    	
    		for (int i = 0; i < length; ++i){
         //int alphaX =(((tempListRight[i].getXPos()-tempListLeft[i].getXPos())/2)+tempListLeft[i].getXPos())-(((tempListRight[0].getXPos()-tempListLeft[0].getXPos())/2)+tempListLeft[0].getXPos());
         int alphaX =(((tempListRight[i].getXPos()-tempListLeft[i].getXPos())/2)+tempListLeft[i].getXPos())-x/2;
@@ -626,7 +656,7 @@ double LaneDetector::measureAngle(IplImage *image) {
     else if (angle* Constants::RAD2DEG < -26)
         angle = -26* Constants::DEG2RAD;
     
-    cout << "THE ANGLE WILL BE ----------->>>>>>>>>>    " << angle << " <-radius   degree->"<< angle* Constants::RAD2DEG <<endl;
+    //cout << "THE ANGLE WILL BE ----------->>>>>>>>>>    " << angle << " <-radius   degree->"<< angle* Constants::RAD2DEG <<endl;
     tempAngle = angle;
 
     
@@ -634,7 +664,7 @@ double LaneDetector::measureAngle(IplImage *image) {
 
 
 	}else if (!isEmpty(&validLeft)&& isEmpty(&validRight)){
-
+		
 		//follow left lane
 		tempListLeft.clear();
         tempListRight.clear();
@@ -644,33 +674,34 @@ double LaneDetector::measureAngle(IplImage *image) {
             }
         }
         int length = tempListLeft.size();
+        if(length >1){
+    		length = 2;
+    	}
 	for(int j=0; j<length; ++j){
         ptBegin.x = x/2;
       //  ptBegin.y = y-tempListLeft[0].getYPos();
         ptBegin.y= y;
-        ptEnd.x =tempListLeft[j].getCritical()-tempListLeft[j].getXPos()+x/2;
+        ptEnd.x =tempListLeft[j].getXPos()-tempListLeft[j].getCritical()+x/2;
         ptEnd.y =y-tempListLeft[j].getYPos();
         //cout << "THE baseline WILL BE ----------->>>>>>>>>>    " << tempListLeft[0].getXPos()<< "  ,  " <<tempListLeft[0].getYPos() <<endl;
         //cout << "Right X temp IS ----------->>>>>>>>>>    " << tempListRight[j].getXPos() <<endl;
-        cout << "Left X IS ----------->>>>>>>>>>    " << tempListLeft[j].getXPos() << "it's critical is " << tempListLeft[j].getCritical()<<endl;
-        cout << "Left Y IS ----------->>>>>>>>>>    " << tempListLeft[j].getYPos() <<endl;
+       // cout << "Left X IS ----------->>>>>>>>>>    " << tempListLeft[j].getXPos() << "it's critical is " << tempListLeft[j].getCritical()<<endl;
+       // cout << "Left Y IS ----------->>>>>>>>>>    " << tempListLeft[j].getYPos() <<endl;
         line(newImage, ptBegin, ptEnd, cvScalar(255, 100, 255), 2, 8);
 
     }
     double sum = 0.0;
     double array[length];
     
-    	if(length >1){
-    		length = 2;
-    	}
+    	
    		for (int i = 0; i < length; ++i){
         //int alphaX =(((tempListRight[i].getXPos()-tempListLeft[i].getXPos())/2)+tempListLeft[i].getXPos())-(((tempListRight[0].getXPos()-tempListLeft[0].getXPos())/2)+tempListLeft[0].getXPos());
-        int alphaX =tempListLeft[i].getCritical()-tempListLeft[i].getXPos();
+        int alphaX =tempListLeft[i].getXPos()-tempListLeft[i].getCritical();
         
         int alphaY = tempListLeft[i].getYPos()-y;
 
-         cout << "THE DELTA X  ----------->>>>>>>>>>    " << alphaX <<endl;
-         cout << "THE DELTA Y  ----------->>>>>>>>>>    " << -alphaY <<endl;
+          cout << "THE DELTA X  ----------->>>>>>>>>>    " << alphaX <<endl;
+          cout << "THE DELTA Y  ----------->>>>>>>>>>    " << -alphaY <<endl;
         if(alphaX == 0 ){
             array[i] = 0.0;
         }else{
@@ -702,7 +733,12 @@ double LaneDetector::measureAngle(IplImage *image) {
             }
         }
         int length = tempListRight.size();
-	for(int j=0; j<length; ++j){
+
+		if(length >1){
+    		length = 2;
+    	}	
+
+    	for(int j=0; j<length; ++j){
         ptBegin.x = x/2;
       //  ptBegin.y = y-tempListLeft[0].getYPos();
         ptBegin.y= y;
@@ -711,16 +747,16 @@ double LaneDetector::measureAngle(IplImage *image) {
         //cout << "THE baseline WILL BE ----------->>>>>>>>>>    " << tempListLeft[0].getXPos()<< "  ,  " <<tempListLeft[0].getYPos() <<endl;
         //cout << "Right X temp IS ----------->>>>>>>>>>    " << tempListRight[j].getXPos() <<endl;
         //cout << "Left X IS ----------->>>>>>>>>>    " << tempListLeft[j].getXPos() <<endl;
-        //cout << "Left Y IS ----------->>>>>>>>>>    " << tempListLeft[j].getYPos() <<endl;
+        // cout << "Left X IS ----------->>>>>>>>>>    " << tempListRight[j].getXPos() << "it's critical is " << tempListRight[j].getCritical()<<endl;
+        // cout << "Left Y IS ----------->>>>>>>>>>    " << tempListRight[j].getYPos() <<endl;
+
         line(newImage, ptBegin, ptEnd, cvScalar(255, 100, 255), 2, 8);
 
     }
     double sum = 0.0;
     double array[length];
     
-    	if(length >1){
-    		length = 2;
-    	}
+    	
    		for (int i = 0; i < length; ++i){
         //int alphaX =(((tempListRight[i].getXPos()-tempListLeft[i].getXPos())/2)+tempListLeft[i].getXPos())-(((tempListRight[0].getXPos()-tempListLeft[0].getXPos())/2)+tempListLeft[0].getXPos());
         int alphaX =tempListRight[i].getCritical()-tempListRight[i].getXPos();
@@ -761,7 +797,7 @@ double LaneDetector::measureAngle(IplImage *image) {
 
 double LaneDetector::measureDistance(int yPos, int dir, IplImage* image) {
 
-	int i = 0, distance = 0;
+	int i = 0;
 	int x = image->width;
 	int y = image->height;
 	int step = image->widthStep;
@@ -787,9 +823,8 @@ double LaneDetector::measureDistance(int yPos, int dir, IplImage* image) {
 
 	// Scans for full-white line to the right
 	if (dir == 1){
-        distance = x/2;
 
-		for(i = x/2; i<x; ++i){
+		for(i = x/2; i<x-1; ++i){
 			int r = data[(y-yPos)*step + i*channel + 0];
 			int g = data[(y-yPos)*step + i*channel + 1];
 			int b = data[(y-yPos)*step + i*channel + 2];
@@ -798,15 +833,18 @@ double LaneDetector::measureDistance(int yPos, int dir, IplImage* image) {
 				ptRight.x = i;
 				break;
 			}
-			++distance;
 		}
-		line(newImage, ptMiddle, ptRight, cvScalar(51,255,102), 3, 8);
+		if(ptRight.x > x/2){
+			line(newImage, ptMiddle, ptRight, cvScalar(51,255,102), 3, 8);
+		}else{
+			ptRight.x = x-1;
+			line(newImage, ptMiddle, ptRight, cvScalar(51,255,102), 3, 8);
+		}
 	}
 	// Scans for full-white line to the left
 	else if (dir==0){
-        distance = x/2;
 
-		for(i = x/2; i>0; --i){
+		for(i = x/2; i>1; --i){
 			int r = data[(y-yPos)*step + i*channel + 0];
 			int g = data[(y-yPos)*step + i*channel + 1];
 			int b = data[(y-yPos)*step + i*channel + 2];
@@ -815,11 +853,10 @@ double LaneDetector::measureDistance(int yPos, int dir, IplImage* image) {
 				ptLeft.x = i;
 				break;
 			}
-			--distance;
 
 		}
-
-		line(newImage, ptMiddle, ptLeft, cvScalar(204,51,255), 3, 8);
+		//cout << "ptleft.x is     " << ptLeft.x << "and i is      " <<i <<endl;
+		line(newImage, ptLeft,ptMiddle, cvScalar(204,51,255), 3, 8);
 	}
 	// Scans for upper full-white line
 	else {
@@ -832,7 +869,6 @@ double LaneDetector::measureDistance(int yPos, int dir, IplImage* image) {
 				ptUp.y = y-i;
 				break;
 			}
-			++distance;
 		}
 		ptDown.y -= rightLine1.getYPos();
 		line(newImage, ptDown, ptUp, cvScalar(0,184,245), 1, 8);
