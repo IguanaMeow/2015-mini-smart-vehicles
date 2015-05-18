@@ -181,9 +181,11 @@ namespace msv {
             else
             {
                 desiredSteeringWheelAngle = sd.getWheelAngle();
-		// emergency break
-		if(usFrontCentre < 10)
-		speed = 0;
+				// emergency break
+				if(usFrontCentre < 10 && usFrontCentre > 0)
+				{
+					speed = 0;
+				}
             }
 
             VehicleControl vc;
