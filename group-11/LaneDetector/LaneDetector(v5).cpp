@@ -168,9 +168,9 @@ namespace msv {
         pt4.x = pt3.x;
         pt4.y = pt3.y;
 	pt12.x=pt3.x;
-	pt12.y=450;
+	pt12.y=465;
         pt5.x = pt3.x;
-        pt5.y = 450;
+        pt5.y = 465;
 
         pt6.x = pt3.x;  
 	pt6.y = 420;
@@ -185,7 +185,7 @@ namespace msv {
 	pt10.y = 350;
 	pt11.x = pt3.x;  	//top left
 	pt11.y = 350;
-
+	
 	int d1, d2;
 	
      
@@ -205,7 +205,7 @@ d1 = 280;
 
         drawLine(mat_img, pt3,pt4, 1, 8, 240, 206, 81);
 
-        /*cv::Vec3b leftLaneColor = mat_img.at<cv::Vec3b>(pt5);
+       /* cv::Vec3b leftLaneColor = mat_img.at<cv::Vec3b>(pt5);
         while(true){
             pt5.x = pt5.x -1;
             leftLaneColor = mat_img.at<cv::Vec3b>(pt5);
@@ -214,7 +214,7 @@ d1 = 280;
             }
         }
 cout <<"pt5 = " <<pt5.x<<endl;
-        drawLine(mat_img, pt12,pt5, 1, 8, 240, 206, 81);*/
+        drawLine(mat_img, pt12,pt5, 1, 8, 240, 206, 81); */
 
     	cv::Vec3b topLeftLaneColor = mat_img.at<cv::Vec3b>(pt8);
         while(pt8.x != 0){
@@ -244,11 +244,11 @@ cout <<"p11 = " <<pt11.x<<endl;
         double angle = 0.0;
 	
 while(true){
-	if (pt8.x > 140) {
+	if (pt8.x > 120) {
 	d2 = 320 - pt8.x;
 	break; 
 }
-	else if (pt11.x > 130) {
+	else if (pt11.x > 110 && pt11.x < 300) {
 	d2 = 320 - pt11.x;
 	break;
 }
@@ -263,20 +263,34 @@ while(true){
 	cout <<"d1 = " <<d1<<endl;
 	cout <<"d2 = " <<d2<<endl;
 	
-	
-	
-	
 	angle = 0;
 	sd.setExampleData(angle);
-	if(d1 >= d2 + 100){
-	angle = pt8.x / 26 + 10;
+
+	if (pt4.x > 615 && pt8.x < 20){
+	angle =  20;
+	sd.setExampleData(angle);
+	cout << "TURN right emergency: " << angle <<endl;
+	}
+
+	else if(d1 >= d2 + 50){
+		if (pt11.x > 110 && pt11.x < 300){
+		angle = pt11.x / 26 + 6;
+		}
+		else{
+		angle = pt8.x / 26 + 10;
+		}
 	sd.setExampleData(angle);
 	cout << "TURN Right: " << angle <<endl;
 }
-	else if(d2 >= d1 + 100){
+	else if(d2 >= d1 + 50){
 	angle =  ((pt4.x - 320) / 9 - 23);
 	sd.setExampleData(angle);
 	cout << "TURN Left: " << angle <<endl;
+	}
+	else if(pt11.x == 0 && pt4.x == 640 && pt8.x == 0){
+	angle =  0;
+	sd.setExampleData(angle);
+	cout << "go straight: " << angle <<endl;
 	}
 	
 
