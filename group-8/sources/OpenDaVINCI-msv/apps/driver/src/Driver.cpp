@@ -107,6 +107,7 @@ namespace msv {
                         cout << "state 3" << endl;
                         sd.setSpeedData(SPEED);
                         if (sd.getIntersectionLine() < 1) {
+                                sd.setIntersectionLine(0);
                                 state = 1;
                         }
                         break;
