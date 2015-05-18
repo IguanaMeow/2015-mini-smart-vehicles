@@ -32,6 +32,7 @@
 #include "OpenCVCamera.h"
 
 #include "GeneratedHeaders_Data.h"
+#include "RunningMedian.h"
 
 #include "Proxy.h"
 
@@ -62,7 +63,12 @@ namespace msv {
         incomingSer(),
         oldIncomingSer(),
         speedOut(1521),
-        steeringOut(91)     
+        steeringOut(91),
+        irFrontRightMedian(),
+        irMiddleRightMedian(),
+        irBackMedian(),
+        usFrontMedian(),
+        usFrontRightMedian()     
     {}
 
     Proxy::~Proxy() {
@@ -259,7 +265,7 @@ namespace msv {
         SensorBoardData sbd;
         double irFrontRightDist;
         double irMiddleRightDist;
-        double irBackDist;
+        double irBackDist; 
 
         //Hardcodetest
         //uint16_t speed = 100;
@@ -271,6 +277,7 @@ namespace msv {
         // uint16_t irBack = 100;
 
         uint16_t absDistance = ((uint16_t)incomingSer[2] << 8) | incomingSer[1];
+        cout << (uint16_t)incomingSer[2] << " : " << (uint16_t)incomingSer[1] << endl;
         uint16_t absDirection = ((uint16_t)incomingSer[4] << 8) | incomingSer[3];
         uint16_t irFrontRight = ((uint16_t)incomingSer[6] << 8) | incomingSer[5];
         uint16_t irMiddleRight = ((uint16_t)incomingSer[8] << 8) | incomingSer[7];   
@@ -284,6 +291,18 @@ namespace msv {
         irFrontRightDist = (2914 / (irFrontRight +5))-1;
         irMiddleRightDist = (2914 / (irMiddleRight +5))-1;
         irBackDist = (2914 / (irBack +5))-1;
+
+        //Smooth out values with RunningMedian
+        irFrontRightMedian.addValue(irFrontRightDist);
+        irFrontRightDist = irFrontRightMedian.getMedian();
+        irMiddleRightMedian.addValue(irMiddleRightDist);
+        irMiddleRightDist = irMiddleRightMedian.getMedian();
+        irBackMedian.addValue(irBackDist);
+        irBackDist = irBackMedian.getMedian();
+        usFrontMedian.addValue(usFront);
+        usFront = usFrontMedian.getMedian();
+        usFrontRightMedian.addValue(usFrontRight);
+        usFrontRight = usFrontRightMedian.getMedian();
 
         if(irFrontRightDist > 40){
             sbd.putTo_MapOfDistances(0, -1);

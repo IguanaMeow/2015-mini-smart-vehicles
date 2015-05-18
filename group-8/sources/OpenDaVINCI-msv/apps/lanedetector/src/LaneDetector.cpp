@@ -279,6 +279,7 @@ void LaneDetector::processImage() {
 		
 	// case 2:
 
+<<<<<<< HEAD
 	// 	sd.setSpeedData(0);
 	// 	counter++;
 	// 	if (counter > 50) {
@@ -288,6 +289,17 @@ void LaneDetector::processImage() {
 	// 	 cout << counter << endl;
 	// 	break;
 	// case 3:
+=======
+		sd.setSpeedData(0);
+		counter++;
+		if (counter > 50 && !isObject()) {
+			counter = 0;
+			state = 3;
+		}
+		 cout << counter << endl;
+		break;
+	case 3:
+>>>>>>> 4959ba3a1935a91a8ccb2ff896f6835f59c1fb3d
 
 	// 	sd.setSpeedData(SPEED);
 	// 	if (upline1.getYPos()>upline1.getCritical()){
@@ -308,10 +320,6 @@ void LaneDetector::processImage() {
 		}
 	}
 
-
-	// Here, you see an example of how to send the data structure SteeringData to the ContainerConference. This data structure will be received by all running components. In our example, it will be processed by Driver. To change this data structure, have a look at Data.odvd in the root folder of this source.
-
-	//sd.setExampleData(1234.56);
 
 	// Create container for finally sending the data.
 	Container c(Container::USER_DATA_1, sd);
@@ -491,7 +499,20 @@ bool LaneDetector::isEmpty(std::vector<Lines>* lines){
         return true;
 }
 
+bool LaneDetector::isObject() 
+{
+  SensorBoardData sbd;
+  KeyValueConfiguration kv = getKeyValueConfiguration();
+  double carLength = kv.getValue<double> ("global.carLength");
 
+  if (sbd.getValueForKey_MapOfDistances(3) > 0 && sbd.getValueForKey_MapOfDistances(3) < carLength * 3) {
+    return true;
+  } else if (sbd.getValueForKey_MapOfDistances(4) > 0 && sbd.getValueForKey_MapOfDistances(4) < carLength * 3){
+    return true;
+  } else {
+    return false;
+  }
+}
 
 void LaneDetector::validLines(std::vector<Lines>* lines, int LorR)
 {

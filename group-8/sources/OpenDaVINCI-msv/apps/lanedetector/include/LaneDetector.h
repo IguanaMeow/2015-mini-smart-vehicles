@@ -103,6 +103,7 @@ namespace msv {
 
             void processImage();
             bool isEmpty(std::vector<Lines>* lines);
+            bool isObject();
             
 			Lines rightLine1;
         	Lines rightLine2;
