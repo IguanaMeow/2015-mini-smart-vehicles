@@ -22,7 +22,6 @@
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 #include <math.h>
-#include <algorithm>
 
 #include "core/data/Constants.h"
 #include "core/macros.h"
