@@ -69,13 +69,20 @@ namespace msv {
 
     float Driver::filter(float newData,float arr[]){
 
+        int temp[5];
+        for (int i = 0; i < 5; ++i)
+        {
+            temp[i] = arr[i];
+        }
+        sort(temp, temp + 5);
         for (int i = 0; i < 4; ++i)
         {   
             arr[i] = arr[i+1];
+
         }
         arr[4] = newData;
-        sort(arr, arr + 5);
-        return arr[2];
+
+        return temp[2];
     }
 
     // This method will do the main data processing job.
