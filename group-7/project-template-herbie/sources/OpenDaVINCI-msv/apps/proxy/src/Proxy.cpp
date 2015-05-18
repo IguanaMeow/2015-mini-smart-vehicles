@@ -28,7 +28,7 @@
 #include "core/data/TimeStamp.h"
 #include "core/data/control/VehicleControl.h"
 #include "OpenCVCamera.h"
-
+#include "core/data/environment/VehicleData.h"
 #include "GeneratedHeaders_Data.h"
 
 #include "Proxy.h"
@@ -43,10 +43,11 @@ namespace msv {
     using namespace core::base;
     using namespace core::data;
     using namespace core::data::control;
+    using namespace core::data::environment;
     using namespace tools::recorder;
 
     Proxy::Proxy(const int32_t &argc, char **argv) :
-	    ConferenceClientModule(argc, argv, "proxy"),
+        ConferenceClientModule(argc, argv, "proxy"),
         m_recorder(NULL),
         m_camera(NULL)
     {}
@@ -55,7 +56,7 @@ namespace msv {
     }
 
     void Proxy::setUp() {
-	    // This method will be call automatically _before_ running body().
+        // This method will be call automatically _before_ running body().
         if (getFrequency() < 20) {
             cerr << endl << endl << "Proxy: WARNING! Running proxy with a LOW frequency (consequence: data updates are too seldom and will influence your algorithms in a negative manner!) --> suggestions: --freq=20 or higher! Current frequency: " << getFrequency() << " Hz." << endl << endl << endl;
         }
@@ -98,7 +99,7 @@ namespace msv {
     }
 
     void Proxy::tearDown() {
-	    // This method will be call automatically _after_ return from body().
+        // This method will be call automatically _after_ return from body().
         OPENDAVINCI_CORE_DELETE_POINTER(m_recorder);
         OPENDAVINCI_CORE_DELETE_POINTER(m_camera);
     }
@@ -119,11 +120,12 @@ namespace msv {
     bool leftFlashingLights, rightFlashingLights, brakeLights = false;
     SensorBoardData sbd;
     VehicleControl vc;
+    VehicleData vd;
     string vcDataString, sensorData;
-    serial::Serial my_serial("/dev/ttyACM0", 9600, serial::Timeout::simpleTimeout(1000));
+    serial::Serial my_serial("/dev/ttyACM0", 14400, serial::Timeout::simpleTimeout(1000));
     stringstream ss;
     bool dataReceived = true;
-    int syncTest = 0;
+   
 
 
 
@@ -142,20 +144,18 @@ namespace msv {
 
             // TODO: Here, you need to implement the data links to the embedded system
             // to read data from IR/US.
-
+           
             Container containerVehicleControl = getKeyValueDataStore().get(Container::VEHICLECONTROL);
-            vc = containerVehicleControl.getData<VehicleControl> ();
-
+            vc = containerVehicleControl.getData<VehicleControl> ();     
             leftFlashingLights = vc.getLeftFlashingLights();
             rightFlashingLights = vc.getRightFlashingLights();
             brakeLights = vc.getBrakeLights();
-            Container containerSensorBoardData = Container(Container::USER_DATA_0, sbd);
-            distribute(containerSensorBoardData);
-
-
-
+            Container c1(Container::USER_DATA_0, sbd);
+            Container c2(Container::VEHICLEDATA, vd);
+            
+        
         if(dataReceived){
-	ss << (vc.getSteeringWheelAngle() *-1);
+        ss << (vc.getSteeringWheelAngle() * -1);
         vcDataString = "WA=" + ss.str();
         ss.str("");
         ss << vc.getSpeed();
@@ -186,11 +186,11 @@ namespace msv {
             sbd.putTo_MapOfDistances(0, extractData("IR1", sensorData)); // IR front right
             sbd.putTo_MapOfDistances(1, extractData("IR2", sensorData)); // IR rear
             sbd.putTo_MapOfDistances(2, extractData("IR3", sensorData)); // IR rear right
-            sbd.putTo_MapOfDistances(3, -1); // US front
-            sbd.putTo_MapOfDistances(4, -1); // US front right
-
- 	   // sbd.putTo_MapOfDistances(3, extractData("US1", sensorData)); // US front
-           // sbd.putTo_MapOfDistances(4, extractData("US2", sensorData)); // US front right
+            sbd.putTo_MapOfDistances(3, extractData("US1", sensorData)); // US front
+            sbd.putTo_MapOfDistances(4, extractData("US2", sensorData)); // US front right
+            vd.setAbsTraveledPath(75); // hardcoded to test
+            distribute(c1);
+            distribute(c2);
             dataReceived = true;
             }
         }
