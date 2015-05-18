@@ -85,29 +85,38 @@ namespace msv {
             bool m_debug;
 
 			/* Scans for two valid lines in a vector of lines */
-			void validateLines(std::vector<Lines>* lines);
+			void validLines(std::vector<Lines>* lines, int LorR);
             
             /* Measures the distance to full-white lines */
 			double measureDistance(int yPos, int dir, IplImage* image);
 
 			/* Measures the angle between delta X and delta Y */
-			double measureAngle(int yPos1, int xPos1, int yPos2, int xPos2, double error, double critAngle);
+			double measureAngle(IplImage *image);
 
 			void calculateCritical(const vector<Lines>::iterator& line, int dir, IplImage* image);
+
+			void setLines(IplImage* image);
 
 	        virtual void setUp();
 
 	        virtual void tearDown();
 
             void processImage();
+            bool isEmpty(std::vector<Lines>* lines);
             
 			Lines rightLine1;
         	Lines rightLine2;
+        	Lines rightLine3;
+        	Lines rightLine4;
+        	Lines rightLine5;
+        	Lines rightLine6;
 
         	Lines leftLine1;
         	Lines leftLine2;
         	Lines leftLine3;
         	Lines leftLine4;
+        	Lines leftLine5;
+        	Lines leftLine6;
         	Lines upline1;
         	Lines upline2;
 
@@ -121,6 +130,8 @@ namespace msv {
         	int imgHeight;
 
         	double const SPEED;
+        	
+      		double tempAngle;
 
         	double critAngleRight;
         	double critAngleLeft;
@@ -130,7 +141,9 @@ namespace msv {
 
 			vector<Lines> rightList;
       		vector<Lines> leftList;
-      		vector<Lines> valid;
+      		vector<Lines> validLeft;
+      		vector<Lines> validRight;
+
 
 
 	};
