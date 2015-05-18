@@ -1,3 +1,8 @@
+/*
+This code reads data from an infrared sensor GP2D120 
+and transforms the reading into Centimiters.
+AUthor: Neda Ashrafi Amiri
+*/
 const int irPin1 = 15;
 long ir1;
 

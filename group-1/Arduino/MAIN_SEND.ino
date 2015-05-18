@@ -1,4 +1,11 @@
+/*
+This code receievs data from three infrareds, 2 ultrasonics 
+of type srf08, one ultrasonic of type sr04 and a pololu wheel encoder.
+The received data is then encoded into Netstring messages and sent through
+Serial COM. 
 
+Author: Neda Ashrafi Amiri
+*/
 
 #include <Wire.h>
 

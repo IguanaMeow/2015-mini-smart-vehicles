@@ -1,4 +1,8 @@
- 
+/*
+This code reads data from Ultrasonic sensor SR04 and then 
+transforms the data to give results in inches and centimeters. 
+Author: Neda Ashrafi Amiri
+*/
 const int trigPin = 42;
 const int echoPin = 43;
  
