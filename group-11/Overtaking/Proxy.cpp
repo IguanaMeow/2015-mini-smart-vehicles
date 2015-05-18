@@ -21,6 +21,8 @@
 #include <cstring>
 #include <cmath>
 
+
+
 #include "core/base/KeyValueConfiguration.h"
 #include "core/data/Container.h"
 #include "core/data/TimeStamp.h"
@@ -41,22 +43,26 @@
 #include <termios.h>
 #include <errno.h>
 #include <sys/ioctl.h>
- #include <sstream>
+#include <sstream>
 
 namespace msv {
 
-    int fd, angle, counter=0;
-    // Declare sensor variables
-    int FUS, FRUS, IRT, IRB, IRR;  
- 
-    const char* z = "";  
+    int forwardAngle = 70;
+    double multiplier = 0.65;
+    int adjustedAngle = 0;   
+    const char* vehicleValue = "";
 
+    int sensorPort, vehiclePort;
+
+    // Declare sensor variables
+    int FUS, FRUS, IRT, IRB, IRR;
     struct termios toptions;
 
     using namespace std;
     using namespace core::base;
     using namespace core::data;
     using namespace core::data::environment;
+
     using namespace tools::recorder;
 
     Proxy::Proxy(const int32_t &argc, char **argv) :
@@ -129,12 +135,13 @@ namespace msv {
         getConference().send(c);
     }
 
-    int openSerial() {
+    int openSerial(const char* port) {
  
+      int fd;
 
-       fd = open("/dev/ttyACM2", O_RDWR | O_NOCTTY);
+      fd = open(port, O_RDWR | O_NOCTTY);
        /* wait for the Arduino to reboot */
-        usleep(3500000);
+      usleep(3500000);
   
       /* get current serial port settings */
       tcgetattr(fd, &toptions);
@@ -146,50 +153,55 @@ namespace msv {
       toptions.c_cflag &= ~CSTOPB;
       toptions.c_cflag &= ~CSIZE;
       toptions.c_cflag |= CS8;
+
+      toptions.c_cflag     &=  ~CRTSCTS;           //flow control
+      toptions.c_cc[VMIN]   =  1;                  // read doesn't block
+      toptions.c_cc[VTIME]  =  5;                  // 0.5 seconds read timeout
+      toptions.c_cflag     |=  CREAD | CLOCAL;
       /* Canonical mode */
       toptions.c_lflag |= ICANON;
       /* commit the serial port settings */
       tcsetattr(fd, TCSANOW, &toptions);
 
-       return fd; 
+      return fd; 
      } 
 
-    void writeByte(const char* inByte, int port) {
+    void writeVehicleValues(const char* value, int port) 
+    {
+    	// Go right
+		if (*value == 'a') {
+		write(port, "0", 1);
+		// Go left
+		} else if (*value == 'b') {
+		write(port, "1", 1);
+		} else {
+		// Go forwertz
+		write(port, "2", 1);
+		}
+        
+    }    
 
-
-	// Go right
-      if (*inByte == 'a') {
-        write(port, "0", 1);
-	// Go left
-      } else if (*inByte == 'b') {
-        write(port, "1", 1);
-      } else {
-	// Go forwertz
-	write(port, "2", 1);
-      }
-
-
-    }     
-    /* Receives and handles data from LLB */
-    void readByte(int port) {
-	
+    void readSensorValues(int port) 
+    {
         /* Send byte to trigger Arduino to send string back */
         write(port, "0", 1);
         int  n = 0, cSensor = 0;
         char buf[64];
+        
+        /* Receive string from Arduino */
+        n = read(port, buf, 64);  
 
-          /* Receive string from Arduino */
-          n = read(fd, buf, 64);  
+        /* insert terminating zero in the string */
+        buf[n] = 0;
 
-          /* insert terminating zero in the string */
-          buf[n] = 0;
+        //printf("buffer: %s\n", buf);
+        // Save to temporary char array
+        char sensorTemp[64];
 
-          // Save to temporary char array
-          char sensorTemp[64];
-
-         
-          /* The main exe. area */
-            int s = 0, k = 0;
+          
+            
+        /* The main exe. area */
+        int s = 0, k = 0;
 
          
             // While not stop-zero (space):
@@ -216,31 +228,31 @@ namespace msv {
 
                         // Adressing the correct sensor:
                         if(cSensor == 0)
-                        {   // Front US
+                        {
                             sscanf(sensorTemp, "%d", &FUS); 
                             memset(&sensorTemp[0], 0, sizeof(sensorTemp));
                             cSensor++;
                         }
                         else if(cSensor == 1)
-                        {   // Front-right US
+                        {
                             sscanf(sensorTemp, "%d", &FRUS); 
                             memset(&sensorTemp[0], 0, sizeof(sensorTemp));
                             cSensor++;
                         }
                         else if(cSensor == 2)
-                        {   // IR-top
+                        {
                             sscanf(sensorTemp, "%d", &IRT); 
                             memset(&sensorTemp[0], 0, sizeof(sensorTemp));
                             cSensor++;
                         }
                         else if(cSensor == 3)
-                        {   // IR-bottom
+                        {
                             sscanf(sensorTemp, "%d", &IRB); 
                             memset(&sensorTemp[0], 0, sizeof(sensorTemp));
                             cSensor++;
                         }
                         else if(cSensor == 4)
-                        {   // IR-rear
+                        {
                             sscanf(sensorTemp, "%d", &IRR); 
                             memset(&sensorTemp[0], 0, sizeof(sensorTemp));
                             cSensor++;
@@ -252,12 +264,13 @@ namespace msv {
                 s++; k++;
             }
 
-             //Making sure that each sensor attained the correct value by printing them.:
-            printf("FUS: %d\n", FUS); printf("FRUS: %d\n", FRUS);
+            // Making sure that each sensor attained the correct value by printing them.:
+          	printf("FUS: %d\n", FUS); printf("FRUS: %d\n", FRUS);
             printf("IRT: %d\n", IRT); printf("IRV: %d\n", IRB);
             printf("IRR: %d\n", IRR); 
-		
+            //printf("test: %d\n", n );
 
+                
             // Vacate buffer for new incoming values:
             fflush(stdin);
             fflush(stdout);
@@ -268,8 +281,13 @@ namespace msv {
     // This method will do the main data processing job.
     ModuleState::MODULE_EXITCODE Proxy::body() 
     {
-    	openSerial();
         uint32_t captureCounter = 0;
+        int angle;
+
+        /* Open usb ports, specify which port is for sensors and which port is for vehicle */
+        sensorPort = openSerial("/dev/ttyACM0");
+        vehiclePort = openSerial("/dev/ttyACM1");
+
         while (getModuleState() == ModuleState::RUNNING) 
         {
             // Capture frame.
@@ -282,57 +300,112 @@ namespace msv {
                 captureCounter++;
             }
 
-	    /* Reading Data from LLB */
-	    readByte(fd);
-	    SensorBoardData sbd;
-        
-	     // Map out real sensorboard data
-	         sbd.putTo_MapOfDistances(0, (int)IRT);
-             sbd.putTo_MapOfDistances(1, (int)IRR);
-             sbd.putTo_MapOfDistances(2, (int)IRB);
-             sbd.putTo_MapOfDistances(3, (int)FUS);
-             sbd.putTo_MapOfDistances(4, (int)FRUS);
+            // TODO: Here, you need to implement the data links to the embedded system
+            // to read data from IR/US.
 
-            // Distribute sensorBoardData through UDP
-	    Container contSBD(Container::USER_DATA_0, sbd);
-            distribute(contSBD); 
-	    /* End of Reading Data from LLB */
-
-            Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_2);
-            SteeringData sd = containerSteeringData.getData<SteeringData> ();
-
-            angle = sd.getExampleData();
-
-            printf("Angle is: %d", angle);
-            if (angle > 0) {
-        z = "a";
-        } else if (angle < 0) {
-        z = "b";
-        } else {
-        z = "c";
-        }
-
-        writeByte(z, fd);
-	    /* Sending Data to LLB */
-	  /*  Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_1);
- 	    SteeringData sd = containerSteeringData.getData<SteeringData> ();
-
-            angle = sd.getExampleData();
-
-            if (angle > 0) {
-		z = "a";
- 	    } else if (angle < 0) {
-		z = "b";
-	    } else {
-		z = "c";
- 	    }
-
+            /* Reading Data from LLB */
 
           
-         
-            writeByte(z, fd);  */
-            /* End of Sending Data to LLB */
+            readSensorValues(sensorPort);
+            SensorBoardData sbd;
 
+            // Map out real sensorboard data
+
+            sbd.putTo_MapOfDistances(0, (int)IRT);
+            sbd.putTo_MapOfDistances(1, (int)IRR);
+            sbd.putTo_MapOfDistances(2, (int)IRB);
+            sbd.putTo_MapOfDistances(3, (int)FUS);
+            sbd.putTo_MapOfDistances(4, (int)FRUS);
+
+            // Distribute sensorBoardData through UDP
+
+            Container contSBD(Container::USER_DATA_0, sbd);
+            distribute(contSBD); 
+
+
+            Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_2);
+			SteeringData sd = containerSteeringData.getData<SteeringData> ();
+			
+			angle = sd.getExampleData();
+			
+			printf("Angle is:  %d\n", angle);
+			
+			if (angle > 0) 
+			{
+				vehicleValue = "a";
+			} 
+			
+			else if (angle < 0) 
+			{
+				vehicleValue = "b";
+			} 
+
+			else 
+			{
+				vehicleValue = "c";
+			}
+
+			writeVehicleValues(vehicleValue, vehiclePort); 
+
+            
+
+        //  Send data to Arduino
+        
+     /*   Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_1);
+        SteeringData sd = containerSteeringData.getData<SteeringData> ();
+
+        angle = sd.getExampleData();
+        */
+        
+        /*
+            Lane detector sends a value between -26 and 26 to proxy. This converts it to a degree between max left for the servo
+            (30 degrees), forward (70 degrees) and max right (110 degrees).
+
+        */
+
+        /*
+            Turn left when angle is lower than 0, turn right when it is greater than 0 and drive straight when it equals 0
+        */
+
+    /*    if (angle < 0)
+        {
+            adjustedAngle = angle / multiplier;                 //  Get the angle to turn in degrees based on the steeringdata divided with a multiplier
+            adjustedAngle = -adjustedAngle;                     //  Turn adjusted angle into a positive value
+            adjustedAngle = forwardAngle - adjustedAngle;       //  Displace the angle based on the servo calibration, i.e. 70 - 20 = 50 degrees to turn
+        }
+
+        else if (angle == 0)
+        {
+            adjustedAngle = 70;
+        }
+
+        else if(angle > 0)
+        {
+            adjustedAngle = angle / multiplier;
+            adjustedAngle = forwardAngle + adjustedAngle;       //  Displace angle for the servo, i.e. 70 + 20 = 90 degrees to turn
+        }
+        
+        char buffer [10];
+        sprintf(buffer,"%d",adjustedAngle);     //  Convert int to string
+
+        char str1[16];
+        char str2[16];
+        strcpy(str1, buffer);
+        strcpy(str2, " ");
+        strcat(str1, str2);
+        
+        if (adjustedAngle > 99)
+        {
+            writeByte(buffer, fd, 4);  
+   
+        }
+
+        else 
+        {
+            writeByte(buffer, fd, 3);
+        }
+            
+        */
 
             cout << "Proxy: Captured " << captureCounter << " frames." << endl;
 
@@ -345,4 +418,6 @@ namespace msv {
 
 
 }
+
+
 
