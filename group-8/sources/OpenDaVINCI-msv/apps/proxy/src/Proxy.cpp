@@ -270,35 +270,54 @@ namespace msv {
         // uint16_t irMiddleRight = 100;
         // uint16_t irBack = 100;
 
-        uint16_t speed = ((uint16_t)incomingSer[2] << 8) | incomingSer[1];
-        uint16_t steering = ((uint16_t)incomingSer[4] << 8) | incomingSer[3];
+        uint16_t absDistance = ((uint16_t)incomingSer[2] << 8) | incomingSer[1];
+        uint16_t absDirection = ((uint16_t)incomingSer[4] << 8) | incomingSer[3];
         uint16_t irFrontRight = ((uint16_t)incomingSer[6] << 8) | incomingSer[5];
         uint16_t irMiddleRight = ((uint16_t)incomingSer[8] << 8) | incomingSer[7];   
         uint16_t irBack = ((uint16_t)incomingSer[10] << 8) | incomingSer[9];
         uint16_t usFront = ((uint16_t)incomingSer[12] << 8) | incomingSer[11];
         uint16_t usFrontRight = ((uint16_t)incomingSer[14] << 8) | incomingSer[13];
 
-        if(speed > 1520){
-            vd.setSpeed((double)speed - 1560);
-        }else if(speed < 1500){
-            vd.setSpeed(-1);
-        }else {
-            speed = 0;
-        }
-        //vd.setHeading((double)steering);
+        vd.setAbsTraveledPath((double)absDistance/100);
+
+        vd.setHeading((double)absDirection  * Constants::DEG2RAD);
         irFrontRightDist = (2914 / (irFrontRight +5))-1;
         irMiddleRightDist = (2914 / (irMiddleRight +5))-1;
         irBackDist = (2914 / (irBack +5))-1;
-        sbd.putTo_MapOfDistances(0, (double)irFrontRightDist);
-        sbd.putTo_MapOfDistances(1, (double)irBackDist);
-        sbd.putTo_MapOfDistances(2, (double)irMiddleRightDist);
-        sbd.putTo_MapOfDistances(3, (double)usFront);
-        sbd.putTo_MapOfDistances(4, (double)usFrontRight);
+
+        if(irFrontRightDist > 40){
+            sbd.putTo_MapOfDistances(0, -1);
+        }else{
+            sbd.putTo_MapOfDistances(0, (double)irFrontRightDist/100);
+        }
+        if(irBackDist > 40){
+            sbd.putTo_MapOfDistances(1, -1);
+        }else{
+            sbd.putTo_MapOfDistances(1, (double)irBackDist/100);
+        }
+        if(irMiddleRightDist > 40){
+            sbd.putTo_MapOfDistances(2, -1);
+        }else{
+            sbd.putTo_MapOfDistances(2, (double)irMiddleRightDist/100);
+        }
+        if(usFront > 120){
+            sbd.putTo_MapOfDistances(3, -1);
+        }else{
+            sbd.putTo_MapOfDistances(3, (double)usFront/100);
+        }
+        if(usFrontRight > 120){
+            sbd.putTo_MapOfDistances(4, -1);
+        }else{
+            sbd.putTo_MapOfDistances(4, (double)usFrontRight/100);
+        }
+        
+        
+        
 
 
 
-        cerr << "SPEED RECEIVED from Arduino: " << speed << endl;
-        cerr << "STEERING RECEIVED from Arduino: " << steering << endl;
+        cerr << "ABSDISTANCE RECEIVED from Arduino: " << absDistance << endl;
+        cerr << "ABSDIRECTION RECEIVED from Arduino: " << absDirection << endl;
 
         cerr << "Sensor 0 IR Front-Right: " << sbd.getValueForKey_MapOfDistances(0) << endl;
         cerr << " Sensor 1 IR Back: " << sbd.getValueForKey_MapOfDistances(1) << endl;
