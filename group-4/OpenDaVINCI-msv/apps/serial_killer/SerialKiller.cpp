@@ -218,7 +218,7 @@ namespace msv {
                 VehicleControl vc = vehicleControlData.getData<VehicleControl>();
 
                 double speed = vc.getSpeed();
-                double heading = vc.getSteeringWheelAngle();
+                double heading = vc.getSteeringWheelAngle() * Constants::RAD2DEG;
 
                 speed = ((speed * 100) + 1500);
                 if (speed > 1585) {

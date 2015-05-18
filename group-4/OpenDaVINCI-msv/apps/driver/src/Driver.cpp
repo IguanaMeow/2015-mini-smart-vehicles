@@ -25,6 +25,7 @@
 #include "core/data/Constants.h"
 #include "core/data/control/VehicleControl.h"
 #include "core/data/environment/VehicleData.h"
+#include "core/wrapper/Time.h"
 
 #include "GeneratedHeaders_Data.h"
 
@@ -37,6 +38,8 @@ namespace msv {
     using namespace core::data;
     using namespace core::data::control;
     using namespace core::data::environment;
+    using core::wrapper::Time;
+    using core::wrapper::TimeFactory;
 //  using namespace libdata::generated::msv;
 
     int parkingMode = 0;
@@ -81,10 +84,12 @@ namespace msv {
         return arr[2];
     }
 
-
     // This method will do the main data processing job.
     ModuleState::MODULE_EXITCODE Driver::body()
     {
+        Time *startTime = NULL;
+        bool isReversing = false;
+
         while (getModuleState() == ModuleState::RUNNING)
         {
             // 1. Get most recent vehicle data:
@@ -154,14 +159,14 @@ namespace msv {
 
                 if (parking.canTurnRight(usFrontRight,irFrontRight,irRearRight))
                 {
-                    speed = -0.5;
+                    speed = -3;
                     desiredSteeringWheelAngle = 26.0;
                     cout << "turn right turn right turn right" << endl;
                 }
 
                 if (parking.canTurnLeft(irRear,usRearRight))
                 {
-                    speed = -0.5;
+                    speed = -3;
                     desiredSteeringWheelAngle = -26;
                     cout << "turn left turn left turn left " <<endl;
                 }
@@ -182,6 +187,37 @@ namespace msv {
             }
 
             VehicleControl vc;
+
+            //Reversing car fix.
+            if (speed < 0 && !isReversing) {
+                Time *t = TimeFactory::getInstance().now();
+
+                if (startTime == NULL) {
+                    startTime = t;
+                    speed = -3;
+                } else {
+                    if ((t->getSeconds() - startTime->getSeconds()) <= 1) {
+                        speed = -3;
+                    } else if ((t->getSeconds() - startTime->getSeconds()) > 3) {
+                        delete startTime;
+                        startTime = NULL;
+                        speed = -3;
+                        isReversing = true;
+                    } else {
+                        speed = 0;
+                    }
+                    if (t != startTime) {
+                        delete t;
+                    }
+                    t = NULL;
+                }
+
+            } else if (speed > 0 && isReversing) {
+                isReversing = false;
+                delete startTime;
+                startTime = NULL;
+            }
+
             vc.setSpeed(speed);
             vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
 
