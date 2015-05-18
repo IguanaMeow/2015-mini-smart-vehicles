@@ -17,7 +17,7 @@
 #
 global.car = Scenarios/Models/FordEscape.objx
 #global.car = Scenarios/Models/RedRocketCar.objx
-global.scenario = file://Scenarios/SEM_Test_Track.scnx
+global.scenario = file://Scenarios/MissingOuterLaneMarking.scnx
 global.showGrid = 0
 global.headless = 1 #show video in proxy == 0
 global.carLength = 4.0
@@ -37,7 +37,7 @@ supercomponent.pulsetimeack.exclude = cockpit,monitor # List of modules that wil
 #
 # CONFIGURATION FOR LANEDETECTOR
 #
-lanedetector.debug = 0      # set to 0 to disable any windows and further output
+lanedetector.debug = 1      # set to 0 to disable any windows and further output
 
 
 # CONFIGURATION FOR VCR
@@ -171,9 +171,9 @@ proxy.camera.bpp = 1
 #
 # CONFIGURATION FOR VEHICLE
 #
-Vehicle.posX = -4                     # Initial position X in cartesian coordinates.
-Vehicle.posY = -15                     # Initial position Y in cartesian coordinates.
-Vehicle.headingDEG = 270
+Vehicle.posX = 0                     # Initial position X in cartesian coordinates.
+Vehicle.posY = 0                     # Initial position Y in cartesian coordinates.
+Vehicle.headingDEG = 90
 Vehicle.model=LinearBicycleModelNew  # Which motion model to be used: LinearBicycleModelNew or LinearBicycleModel (for CaroloCup 2013!).
 Vehicle.LinearBicycleModelNew.withSpeedController=1          # iff 1: use the VehicleControl.m_speed field; otherwise, ignore m_speed and use VehicleControl.m_acceleration field
 Vehicle.LinearBicycleModelNew.minimumTurningRadiusLeft=4.85  # Minimum turning radius to the left (for calculating maximum steering angle to the left); Attention! we used data from the miniature vehicle Meili and thus, all values are scaled by factor 10 to be compatible with the simulation!

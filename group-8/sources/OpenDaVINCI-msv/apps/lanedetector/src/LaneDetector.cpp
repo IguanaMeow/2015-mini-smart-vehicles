@@ -262,39 +262,53 @@ void LaneDetector::processImage() {
   // cout<<"left validLeft begin xpos is" <<validLeft[1].getXPos()<<"  its critical is " << validLeft[1].getCritical()<<"    LEFT ERROR 2 IS           "<<validLeft[1].getXPos()-validLeft[1].getCritical()<<endl; 
 
 	
-	switch (state) {
-	case 1: // Lanedetection state
+	// switch (state) {
+	// //case 1: // Lanedetection state
 
-		sd.setSpeedData(SPEED);
+	// 	sd.setSpeedData(SPEED);
 
         
-        if (isEmpty(&validLeft) && isEmpty(&validRight)){
-            state = 2;
-        }else {
-            //following both lanes
-            sd.setHeadingData(measureAngle(m_image));
+ //        if (isEmpty(&validLeft) && isEmpty(&validRight)){
+ //            state = 2;
+ //        }else {
+ //            //following both lanes
+ //            sd.setHeadingData(measureAngle(m_image));
 
-        }
-        break;
+ //        }
+ //        break;
 		
-	case 2:
+	// case 2:
 
-		sd.setSpeedData(0);
-		counter++;
-		if (counter > 50 && !isObject()) {
-			counter = 0;
-			state = 3;
-		}
-		 cout << counter << endl;
-		break;
-	case 3:
+	// 	sd.setSpeedData(0);
+	// 	counter++;
+	// 	if (counter > 50) {
+	// 		counter = 0;
+	// 		state = 3;
+	// 	}
+	// 	 cout << counter << endl;
+	// 	break;
+	// case 3:
+// =======
+// 		sd.setSpeedData(0);
+// 		counter++;
+// 		if (counter > 50 && !isObject()) {
+// 			counter = 0;
+// 			state = 3;
+// 		}
+// 		 cout << counter << endl;
+// 		break;
+// 	case 3:
+// >>>>>>> 4959ba3a1935a91a8ccb2ff896f6835f59c1fb3d
 
-		sd.setSpeedData(SPEED);
-		if (upline1.getYPos()>upline1.getCritical()){
-			state = 1;
-		}
-		break;
-	} //switch end
+	// 	sd.setSpeedData(SPEED);
+	// 	if (upline1.getYPos()>upline1.getCritical()){
+	// 		state = 1;
+	// 	}
+	// 	break;
+	// } //switch end
+  	 	sd.setSpeedData(SPEED);
+
+        sd.setHeadingData(measureAngle(m_image));
 
 
 	// Shows the image.
@@ -587,7 +601,7 @@ double LaneDetector::measureAngle(IplImage *image) {
 
     double sum = 0.0;
     double array[length];
-    if(length != 0 ){
+    
     	if(length >1){
     		length = 2;
     	}
@@ -612,17 +626,16 @@ double LaneDetector::measureAngle(IplImage *image) {
     else if (angle* Constants::RAD2DEG < -26)
         angle = -26* Constants::DEG2RAD;
     
-    //cout << "THE ANGLE WILL BE ----------->>>>>>>>>>    " << angle << " <-radius   degree->"<< angle* Constants::RAD2DEG <<endl;
+    cout << "THE ANGLE WILL BE ----------->>>>>>>>>>    " << angle << " <-radius   degree->"<< angle* Constants::RAD2DEG <<endl;
     tempAngle = angle;
 
-    }else{
-    	angle = tempAngle;
-    //    cout << "THE TEMP ANGLE WILL BE ----------->>>>>>>>>>    " << angle << " <-radius   degree->"<< angle* Constants::RAD2DEG <<endl;
-
-    }
+    
     	
 
 
+}else{
+    angle = tempAngle;
+    cout << "THE TEMP ANGLE WILL BE ----------->>>>>>>>>>    " << angle << " <-radius   degree->"<< angle* Constants::RAD2DEG <<endl;
 }
     
     
