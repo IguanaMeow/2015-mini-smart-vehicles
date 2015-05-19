@@ -418,7 +418,7 @@ void LaneDetector::validLines(std::vector<Lines>& lines, int LorR)
 	{
 		if (LorR==0){
         // As long as the lines X-position isn't extremely out of bounds...
-		if(lines[i].getXPos() > crop+1)
+		if(lines[i].getXPos() > crop+1 && lines[i].getXPos() < imgWidth/2)
 		{
 			// ...add it to the vector.
 			validLeft.push_back(lines[i]);
@@ -429,7 +429,7 @@ void LaneDetector::validLines(std::vector<Lines>& lines, int LorR)
         }
 
     }else{
-        if(lines[i].getXPos() < (imgWidth-crop-1))
+        if(lines[i].getXPos() < (imgWidth-crop-1) && lines[i].getXPos() > imgWidth/2)
         {
             // ...add it to the vector.
             validRight.push_back(lines[i]);
