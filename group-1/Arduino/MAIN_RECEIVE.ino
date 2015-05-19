@@ -54,7 +54,6 @@ String decodedString(String string){
   int controlDigits = 6; // we always have a checksum of 6 by default
   String command = string; 
   if (!command.length()) return "error"; // if it's an empty string, return "error"
-  if (command.substring(command.length() -1) == ",") command.remove(command.length()-1); //if last character is a comma, remove it
   if (command.length() != controlDigits) return "error"; //if string's length isn't equal with the control digits, it's an invalid Netstring
   return command;
 }
