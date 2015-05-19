@@ -256,74 +256,95 @@ namespace msv {
         /****************************** parking control *****************************/
                 if(menuChoice == 1){
                     switch(parkingState){ // using switch-case to change state
-                        case 0: // find space for parking and right place to park (found the obstacle)
+                            case 0: // find space for parking and right place to park (found the obstacle)
                                //get speed data and wheelangle from the lane detector through container
-                        speed = spd.getSpeedData();
+                                speed = spd.getSpeedData();
                                 //make sure that it is not curve, before going to the next state.
-                        if((fr_us < 0 || fr_us > (car_length * 1.6)) && laneFollowAngle <= 0.02 && laneFollowAngle >= 0) parkingState = 1; 
-                        break;
-                        case 1:
-                        doLaneFollowing = false;
-                        if((fr_us <0 || fr_us > (car_length * 0.8)) && fr_ir < 0 && rr_ir < 0){
-                            parkingState = 2; //state gap enough
-                            distance_1 = vd.getAbsTraveledPath();
-                        }
-                        if(fr_us > 0 && fr_us < (car_length * 0.8)) parkingState = 0;
-                        break;
-                            
-                        case 2: //gap enough sate, then drive more around 2 times of the car length to find appropriate distance to park to start parking state
-                        speed = 1;
-                        desiredSteeringWheelAngle = 0;
+                                state = "parking: state 0 - drive normal";
+                                if((fr_us < 0 || fr_us > (car_length * 1.6)) && laneFollowAngle <= 0.02 && laneFollowAngle >= 0) parkingState = 1;
+                                break;
+                            case 1:
+                                state = "parking: state 1 - finding enough gap";
+                                laneFollow = false;
+                                if((fr_us <0 || fr_us > (car_length * 0.8)) && fr_ir < 0 && rr_ir < 0){
+
+                                    speed = 0;
+                                    desiredSteeringWheelAngle = 0;
+                                    parkingState = 2; //state gap enough
+                                    distance_1 = vd.getAbsTraveledPath();
+                                }
+                                if(fr_us > 0 && fr_us < (car_length * 0.8))
+                                {
+                                    parkingState = 0;
+                                } 
+                                break;
+
+                            case 2: //gap enough sate, then drive more around 2 times of the car length to find appropriate distance to park to start parking state
+
+                                if(vd.getAbsTraveledPath() < distance_1 + (car_length * 1.9)){
+                                    speed = 1;
+                                    desiredSteeringWheelAngle = 0;
+                                }
                                 
-                        if(vd.getAbsTraveledPath() >= distance_1 + (car_length * 2.096)){
-                            parkingState = 3;
-                            distance_2 = vd.getAbsTraveledPath();
-                        }
-                        break;
+                                state = "parking: state 2";
+                                if(vd.getAbsTraveledPath() >= distance_1 + (car_length * 1.9)){
+                                    parkingState = 3;
+                                    distance_2 = vd.getAbsTraveledPath();
+                                }
+                                break;
 
-                        case 3: // start parking state, drive backward.
-                        speed = -1.5;
-                        desiredSteeringWheelAngle = 16;
-                        if(vd.getAbsTraveledPath() >= distance_2 + (car_length * 1.5)){
-                            parkingState = 4;
-                            distance_3 = vd.getAbsTraveledPath();
-                        }
-                        break;
+                            case 3: // start parking state, drive backward.
+                                speed = -0.6;
+                                desiredSteeringWheelAngle = 15.5;
+                                state = "parking: state 3";
+                                if(vd.getAbsTraveledPath() >= distance_2 + (car_length * 1.6)){
+                                    parkingState = 4;
+                                    distance_3 = vd.getAbsTraveledPath();
+                                }
+                                break;
 
-                        case 4: // parking state 3 (The car detect behind object or drive more 1.5 times of the car length)
-                        speed = -1;
-                        desiredSteeringWheelAngle = -26;
+                            case 4: // parking state 3 (The car detect behind object or drive more 1.5 times of the car length)
+                                speed = -0.5;
+                                desiredSteeringWheelAngle = -26;
                                 //if it doesn't detect any car behind after drive 10 meters more.
-                        if(vd.getAbsTraveledPath() >= distance_3 + (car_length * 0.81) && rear_ir < 0) parkingState = 7;
-                        if(rear_ir <= (car_length * 0.4) && rear_ir > 0){
-                            speed = 0;
-                            desiredSteeringWheelAngle = 0;
-                            parkingState = 5;
-                        } 
-                        break;
+                                if(vd.getAbsTraveledPath() >= distance_3 + (car_length * 0.82) && rear_ir < 0)
+                                {
+                                    state = "parking: state 4 to 7 - don't find obstacle behind";
+                                    parkingState = 7;
+                                }
+                                if(rear_ir <= (car_length * 0.39) && rear_ir > 0){
+                                    state = "parking: state 4 - find an obstacle behind";
+                                    speed = 0;
+                                    desiredSteeringWheelAngle = 0;
+                                    parkingState = 5;
+                                }
+                                break;
 
-                        case 5:// move 1 to make the car park right
-                        speed = 1;
-                        desiredSteeringWheelAngle = 25;
-                                //if IF_Rear doesn't detect any object Or fr_usont detect any object
-                        if(rear_ir < 0 ||(fr_us < (car_length * 0.40) && fr_us > 0)){
-                            speed = 0;
-                            desiredSteeringWheelAngle = 0;
-                            parkingState = 6;
+                            case 5:// move 1 to make the car park right
+                                speed = 0.5;
+                                desiredSteeringWheelAngle = 25;
+                                state = "parking state 5";
+                                //if IF_Rear doesn't detect any object Or fr_us not detect any object
+                             if(rear_ir < 0 ||(front_us < (car_length * 0.3) && front_us > 0)){
+                                    
+                                    state = "parking state 5 to 6";
+                                    parkingState = 6;
+                                }
+                                break;
+
+                            case 6: // finding the appropriated position of the car
+                                speed = -0.4;
+                                desiredSteeringWheelAngle = -26;
+                                state = "parking state 6";
+                                if(rear_ir <= (car_length * 0.39) && rear_ir > 0) parkingState = 7;
+                                break;
+
+                            case 7:
+                                 state = "parking state 7";
+                                speed = 0;
+                                desiredSteeringWheelAngle = 0;
+                                break;
                         }
-                        break;
-
-                        case 6: // finding the appropriated position of the car
-                        speed = -0.4;
-                        desiredSteeringWheelAngle = -26;                   
-                        if(rear_ir <= (car_length * 0.398) && rear_ir > 0) parkingState = 7;                         
-                        break;
-
-                        case 7:
-                        speed = 0;
-                        desiredSteeringWheelAngle = 0;
-                        break;                           
-                    }
                 } 
                 
                if(doLaneFollowing && canFollowLane){
