@@ -117,7 +117,6 @@ namespace msv {
     }
 
     double front_us, fr_ir, rr_ir, fr_us, rear_ir; // values to pass to HLB
-    bool leftFlashingLights, rightFlashingLights, brakeLights = false;
     SensorBoardData sbd;
     VehicleControl vc;
     VehicleData vd;
@@ -126,9 +125,6 @@ namespace msv {
     stringstream ss;
     bool dataReceived = true;
    
-
-
-
  // This method will do the main data processing job.
     ModuleState::MODULE_EXITCODE Proxy::body() {
         uint32_t captureCounter = 0;
@@ -147,9 +143,6 @@ namespace msv {
            
             Container containerVehicleControl = getKeyValueDataStore().get(Container::VEHICLECONTROL);
             vc = containerVehicleControl.getData<VehicleControl> ();     
-            leftFlashingLights = vc.getLeftFlashingLights();
-            rightFlashingLights = vc.getRightFlashingLights();
-            brakeLights = vc.getBrakeLights();
             Container c1(Container::USER_DATA_0, sbd);
             Container c2(Container::VEHICLEDATA, vd);
             
@@ -160,18 +153,6 @@ namespace msv {
         ss.str("");
         ss << vc.getSpeed();
         vcDataString += "SP=";
-        vcDataString += ss.str();
-        ss.str("");
-        ss << vc.getLeftFlashingLights();
-        vcDataString += "LFL=";
-        vcDataString += ss.str();
-        ss.str("");
-        ss << vc.getRightFlashingLights();
-        vcDataString += "RFL=";
-        vcDataString += ss.str();
-        ss.str("");
-        ss << vc.getBrakeLights();
-        vcDataString += "BL=";
         vcDataString += ss.str();
         ss.str("");
         my_serial.write(encodeNetstring(vcDataString));
