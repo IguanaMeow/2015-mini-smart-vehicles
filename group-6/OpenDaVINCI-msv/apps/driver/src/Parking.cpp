@@ -32,6 +32,11 @@
 
 #include "Driver.h"
 
+#define HOLA 0
+#define LETS_PARK 1
+#define PARKING 2
+#define ALMOST 3
+#define DONE 4 
 
 namespace msv {
 
@@ -43,8 +48,9 @@ namespace msv {
 
 /*Calculate distance between obstacles*/
         int counter = -1;
-        int parkingParallel, init;
-        double gap;
+        int parkingParallel; 
+        int init;
+      
         double distanceBetweenObjects;
         double distance;
         timeval curTime;
@@ -55,10 +61,6 @@ namespace msv {
         double Infrared_RearRight;
         double Infrared_Rear;
         double UltraSonic_FrontCenter;
-
-/*Parking mode*/
-        // int gap; 
-        bool parking;       
         
 
         Driver::Driver(const int32_t &argc, char **argv) :
@@ -68,15 +70,12 @@ namespace msv {
         Driver::~Driver() {}
 
         void Driver::setUp() {
-            parkingParallel = 0;
+            parkingParallel = HOLA;
             init = 0;
-            // distance = 0;
-            parking = true;
             // This method will be call automatically _before_ running body().
         }
 
         void Driver::tearDown() {
-             gap = 0;
             // This method will be call automatically _after_ return from body().
         }
 
@@ -109,9 +108,6 @@ namespace msv {
 
                 
                 //Sensors aoutput
-                Infrared_FrontRight = sbd.getValueForKey_MapOfDistances(0);
-                cout << "Infrared_FrontRight distance:" << Infrared_FrontRight <<endl;
-
                 Infrared_RearRight = sbd.getValueForKey_MapOfDistances(2);
                 cout << "Infrared_RearRight distance:" << Infrared_RearRight <<endl;
 
@@ -125,56 +121,61 @@ namespace msv {
                 gettimeofday(&curTime,NULL);
                 distanceBetweenObjects = (curTime.tv_sec - timer.tv_sec) * 1000.0;
                 distanceBetweenObjects += (curTime.tv_usec - timer.tv_usec)/1000.0;
-                // distanceBetweenObjects = gap * vc.setSpeed();
+                distanceBetweenObjects /=1000.0;
 
                 // Design your control algorithm here depending on the input data from above.
                 // Create vehicle control data.
                 VehicleControl vc;
-                // // PARKING = get distance between the spaces 
+               
                 double desiredSteeringWheelAngle = 0;
                 vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
                 vc.setSpeed(0);
                 //Measure the distance between each space.
+                 // // PARKING = get distance between the spaces 
                 switch(parkingParallel){
 
-                    case 0:
+                    case HOLA:
+                        vc.setSpeed(2);
                         if(init == 0){
                             gettimeofday(&timer, NULL);
                             init = 1;
                         }
 
-                        vc.setSpeed(2.4);
-
-                        if((sbd.getValueForKey_MapOfDistances(2) <= -1) && (distanceBetweenObjects * vc.getSpeed() < 6000)){
+                        if((sbd.getValueForKey_MapOfDistances(2) <= -1) && (distanceBetweenObjects * vc.getSpeed() < 8)){
                             cerr << "Gap: ";
                             cerr << "Current distance: '" << distanceBetweenObjects * vc.getSpeed() << " cm' " << endl;
-                        }else if(distanceBetweenObjects * vc.getSpeed() >= 6000){
+                        }else if(distanceBetweenObjects * vc.getSpeed() >= 8){
                             cerr << "Spot found..." << endl;
                             vc.setSpeed(0);
                             distance = distanceBetweenObjects * vc.getSpeed();
-
                             cerr << "Distance: '" << distanceBetweenObjects << " cm'" << endl;
                         }else {
                             gettimeofday(&timer, NULL);
                         }
-                        
-                        break;
                     
-
-                    case 1: 
-                        if((distanceBetweenObjects >= 7000) && (distanceBetweenObjects < 14900)){
+                    case LETS_PARK: 
+                        if((distanceBetweenObjects >= 8.5) && (distanceBetweenObjects < 16)){
                             cerr << "Let's park...!";
                             vc.setSpeed(-1);
-                            vc.setSteeringWheelAngle(19 * Constants::DEG2RAD);    
-                        }else if((distanceBetweenObjects >= 14900) && (distanceBetweenObjects < 24000) ){//&& (sbd.getValueForKey_MapOfDistances(1) <= 1.4) 
+                            vc.setSteeringWheelAngle(17 * Constants::DEG2RAD);    
+                        }
+
+                    case PARKING:
+                        if((distanceBetweenObjects >= 16) && (distanceBetweenObjects < 23)){//&& (sbd.getValueForKey_MapOfDistances(1) <= 1.4) 
                             cerr << "Parking...!";
                             vc.setSpeed(-0.3);
                             vc.setSteeringWheelAngle(-26 * Constants::DEG2RAD);    
-                        }else if((distanceBetweenObjects >= 24000) && (distanceBetweenObjects < 30300)){
+                        }
+                    
+                    case ALMOST:
+                        if((distanceBetweenObjects >= 23) && (distanceBetweenObjects < 31)){
                             cerr << "Almost...!";
                             vc.setSpeed(0.3);
                             vc.setSteeringWheelAngle(19 * Constants::DEG2RAD);   
-                        }else if(distanceBetweenObjects >= 30300){
+                        }
+
+                    case DONE:
+                        if(distanceBetweenObjects >= 30){
                             cerr << "Done!!!"; 
                         }
 
@@ -215,4 +216,5 @@ namespace msv {
                 4 = UltraSonic_FrontRight
                 5 = UltraSonic_RearRight
                 */
+
 
