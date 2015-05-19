@@ -117,8 +117,8 @@ namespace msv {
         	int imgWidth;
         	int imgHeight;
 
-        	double const SPEED;
-        	int const SIZE;
+        	const double SPEED;
+        	const int SIZE;
         	
       		double tempAngle;
 
