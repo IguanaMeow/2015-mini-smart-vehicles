@@ -1,29 +1,25 @@
 /*
-Generic example for the SRF modules 02, 08, 10 and 235.
-Only the SRF08 uses the light sensor so when any other 
-range finder is used with this code the light reading will 
-be a constant value. 
+Generic example for the SRF modules  08.
+Only the SRF08 uses the light sensor. 
 */
  
 #include <Wire.h>
  
-#define srfAddress1 0x70                           // Address of the SRF08
-#define srfAddress2 0x73                           // Address of the SRF08
+#define srfAddress1 0x70                          // Address of the SRF08
+#define srfAddress2 0x73                          // Address of the SRF08
 
 #define cmdByte 0x00                              // Command byte
-#define lightByte 0x01                            // Byte to read light sensor
 #define rangeByte 0x02                            // Byte for start of ranging data
  
 void setup(){
   Wire.begin();                                   // Initialize the I2C bus
-  Serial.begin(9600);                           // Initialize the serial connection
+  Serial.begin(9600);                             // Initialize the serial connection
   delay(100);                                     // Waits to make sure everything is powered up before sending or receiving data
 }
  
 void loop(){
-  //int rangeData = getSoft();                     // Calls a function to get software version
-  int rangeData1 = getRange(srfAddress1);                      // Calls a function to get the range data
-  int rangeData2 = getRange(srfAddress2);                      // Calls a function to get the range data
+  int rangeData1 = getRange(srfAddress1);         // Calls a function to get the range data
+  int rangeData2 = getRange(srfAddress2);         // Calls a function to get the range data
  
   Serial.print("Range1: ");
   Serial.print(rangeData1);
@@ -33,12 +29,10 @@ void loop(){
   Serial.print(rangeData2);
   Serial.println("cm");
  
- 
- 
   delay(100);                                      // Wait before looping
 }
  
-int getRange(int srfAddress){                                   // This function gets a ranging from the SRF08
+int getRange(int srfAddress){                      // This function gets a ranging from the SRF08
   int range = 0; 
  
   Wire.beginTransmission(srfAddress);             // Start communicating with SRF08
@@ -54,11 +48,9 @@ int getRange(int srfAddress){                                   // This function
  
   Wire.requestFrom(srfAddress, 2);                // Request 2 bytes from SRF module
   while(Wire.available() < 2);                    // Wait for data to arrive
-  byte highByte = Wire.read();                 // Get high byte
-  byte lowByte = Wire.read();                  // Get low byte
- 
+  byte highByte = Wire.read();                    // Get high byte
+  byte lowByte = Wire.read();                     // Get low byte
   range = (highByte << 8) + lowByte;              // Put them together
- 
   return(range);                                  // Returns Range
 }
  
