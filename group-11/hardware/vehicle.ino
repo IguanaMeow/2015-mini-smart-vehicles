@@ -18,54 +18,76 @@ void setup() {
   delay(100);
 }
 
-void loop() {
-  
-  if(Serial.available() > 0) 
+void setSpeed(char value)
+{
+  switch(value)
   {
     
-   char inByte = Serial.read();
+    case 's':
+    
+      control = 512;
+      throttle = map(control, 0, 1023, 1000, 2000); 
+      esc.writeMicroseconds(throttle);
+      delay(10); 
+      break;
+      
+    case 'r':
+      
+      control = 280;
+      throttle = map(control, 0, 1023, 1000, 2000); 
+      esc.writeMicroseconds(throttle);
+      delay(10); 
+      break;
+    
+    case 'f':
+    
+      control = 580;
+      throttle = map(control, 0, 1023, 1000, 2000); 
+      esc.writeMicroseconds(throttle);
+      delay(10);  
+      break;
+         
+  }
+}
 
-   
-   /* Determine angle and speed in relation to receiving bytes from Proxy */ 
-   
-           if (inByte == 48) 
-           {
-      	     degree = 100;
-      	     myservo.write(degree); 
-      	     //("Turning Right");
-      	     control = 585;
-      	     throttle = map(control, 0, 1023, 1000, 2000); 
-      	     esc.writeMicroseconds(throttle);  
-      	     delay(10);
-           } 
-           
-           else if (inByte == 49) 
-           {
-      	     degree = 35;
-      	     myservo.write(degree);
-      	     //("Turning Left");
-      	     control = 585;
-      	     throttle = map(control, 0, 1023, 1000, 2000); 
-      	     esc.writeMicroseconds(throttle);  
-      	     delay(10); 
-          
-            }  
-            
-            else if (inByte == 50) 
-            {
-    	     degree = 70;
-    	     myservo.write(degree); 
-    	     //("Forwards");
-    	     control = 585;
-    	     throttle = map(control, 0, 1023, 1000, 2000); 
-    	     esc.writeMicroseconds(throttle);  
-    	     delay(10);
-          
-            } 
-            
-            else 
-            {
-             control = 585;
-            }
+void setAngle(char value)
+{
+  switch(value)
+  {
+    
+    case 'l':
+    
+      degree = 35;
+      myservo.write(degree);
+      break;
+      
+    case 'r':
+      
+      degree = 100;
+      myservo.write(degree);
+      break;
+    
+    case 'f':
+    
+      degree = 70;
+      myservo.write(degree); 
+      break;
+         
+  }
+}
+
+void loop() {
+  
+  while(Serial.available() > 0)
+  {
+      char inByte = Serial.read();
+      setAngle(inByte);
+      
+      if (inByte == ' ')
+      {
+         inByte = Serial.read();
+         setSpeed(inByte);
+         if(Serial.read() == ' ') break;    
+      }
   }
 }
