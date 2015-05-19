@@ -16,18 +16,18 @@ namespace msv {
 				      double &desiredSteeringWheelAngle) {
 		if(getOvertakingState() == 0) {
 			hasObstacle(us_front, pathTraveled);
-			desiredSteeringWheelAngle = desiredSteeringWheelAngle;
+			//desiredSteeringWheelAngle = desiredSteeringWheelAngle;
 		}
 		else if (getOvertakingState() == 1) {
-			desiredSteeringWheelAngle = -22;
+			desiredSteeringWheelAngle = -20;
 			overtaking_start(pathTraveled);
 		}
 		else if(getOvertakingState() == 2){
 			overtaking_uk_mode(pathTraveled);
-			desiredSteeringWheelAngle = 20;
+			desiredSteeringWheelAngle = 22;
 		}							
 		else if(getOvertakingState() == 3){
-			desiredSteeringWheelAngle = desiredSteeringWheelAngle;
+			//desiredSteeringWheelAngle = desiredSteeringWheelAngle;
 			overtaking_turn_right(pathTraveled, us_front_right, ir_front_right);
 		}
 		else if(getOvertakingState() == 4) {
@@ -40,7 +40,7 @@ namespace msv {
 		}
 		else
 		{
-			desiredSteeringWheelAngle = desiredSteeringWheelAngle;
+			//desiredSteeringWheelAngle = desiredSteeringWheelAngle;
 			cout << "Do we get here?" << endl;
 		}
 	}
@@ -52,7 +52,7 @@ namespace msv {
 	bool Overtaking::hasObstacle(float usfront, float path)
 	{
 		// usfront > 8 (worked 30% of the time)
-		bool success = (usfront < 15) && (usfront > 0); 
+		bool success = (usfront < 12) && (usfront > 0); 
 		if(success){
 			overtaking_state = 1;
 			distance = path;
@@ -73,7 +73,7 @@ namespace msv {
 	}
 	
 	bool Overtaking::overtaking_uk_mode(float path) {
-		bool success = path > distance + 4;
+		bool success = path > distance + 0.5;	//4
 		if(success){
 			overtaking_state = 3;
 			cout << "step 3, Lane Detection started" << endl;
@@ -81,8 +81,8 @@ namespace msv {
 		return success;
 	}
 	
-	bool Overtaking::overtaking_turn_right(float path, float us_front, float frontirsensor) {
-		bool success = (us_front < 0 || us_front > 10) && (frontirsensor < 0); 
+	bool Overtaking::overtaking_turn_right(float path, float us_front_right, float frontirsensor) {
+		bool success = (us_front_right < 0 || us_front_right > 10) && (frontirsensor < 0); 
 		if(success) {
 			distance = path;
 			overtaking_state = 4;
