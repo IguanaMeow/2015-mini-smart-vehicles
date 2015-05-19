@@ -58,8 +58,8 @@ LaneDetector::LaneDetector(const int32_t &argc, char **argv) : ConferenceClientM
 	merge_image(NULL),
 	m_debug(false),
 
-	upline1(0.0, 0.0, 130),
-	upline2(0.0, 0.0, 130),
+	upline1(0.0, 0.0, 0.0),
+	upline2(0.0, 0.0, 0.0),
 	state(1),
 	counter(0),
 	critCounter(0),
@@ -334,19 +334,19 @@ void  LaneDetector::setLines(IplImage* image)
 	    rightList[2].setYPos(round(imgHeight * 0.187));
 	    rightList[3].setYPos(round(imgHeight * 0.24));
 	    rightList[4].setYPos(round(imgHeight * 0.292));
-	    rightList[5].setYPos(round(imgHeight * 0.35));
+	    rightList[5].setYPos(round(imgHeight * 0.36));
 
 	    leftList[0].setYPos(round(imgHeight * 0.104));
 	    leftList[1].setYPos(round(imgHeight * 0.146));
 	    leftList[2].setYPos(round(imgHeight * 0.187));
 	    leftList[3].setYPos(round(imgHeight * 0.24));
 	    leftList[4].setYPos(round(imgHeight * 0.292));
-	    leftList[5].setYPos(round(imgHeight * 0.35));
+	    leftList[5].setYPos(round(imgHeight * 0.36));
 
 	    upline1.setXPos((imgWidth / 2) - (imgWidth * 0.04));
 	    upline2.setXPos((imgWidth / 2) + (imgWidth * 0.04));
-	    upline1.setCritical(imgHeight * 0.3);
-	    upline2.setCritical(imgHeight * 0.3);
+	    upline1.setCritical(imgHeight * 0.2);
+	    upline2.setCritical(imgHeight * 0.2);
 
 	    yCount = 1;
     }
@@ -485,6 +485,9 @@ double LaneDetector::measureAngle(IplImage *image) {
             }
         }
         int length = tempListLeft.size();
+        if (length >0){
+
+
         if(length >1){
     		length = 2;
     	}
@@ -536,7 +539,11 @@ double LaneDetector::measureAngle(IplImage *image) {
     	
 
 
-	}else if (!isEmpty(validLeft)&& isEmpty(validRight)){
+	}else {
+		angle = tempAngle;
+	}
+
+}else if (!isEmpty(validLeft)&& isEmpty(validRight)){
 		
 		//follow left lane
 		tempListLeft.clear();
