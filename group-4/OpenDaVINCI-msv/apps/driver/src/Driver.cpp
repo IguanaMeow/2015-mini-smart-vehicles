@@ -107,20 +107,28 @@ namespace msv {
             
             
         
+            float usFrontCentreData = sbd.getValueForKey_MapOfDistances(US_FrontCenter);
             float usFrontRightData = sbd.getValueForKey_MapOfDistances(US_FrontRight);
             float usRearRightData = sbd.getValueForKey_MapOfDistances(US_RearRight);
-            float usFrontCentreData = sbd.getValueForKey_MapOfDistances(US_FrontCenter);
             float irFrontRightData = sbd.getValueForKey_MapOfDistances(IR_FrontRight);
-            float irRearData = sbd.getValueForKey_MapOfDistances(IR_Rear);
             float irRearRightData = sbd.getValueForKey_MapOfDistances(IR_RearRight);
+            float irRearData = sbd.getValueForKey_MapOfDistances(IR_Rear);
 
+            float usFrontCentre = filter(usFrontCentreData,usFrontCentreArr);
             float usFrontRight = filter(usFrontRightData,usFrontRightArr);
             float usRearRight = filter(usRearRightData,usRearRightArr);
-            float usFrontCentre = filter(usFrontCentreData,usFrontCentreArr);
             float irFrontRight = filter(irFrontRightData,irFrontRightArr);
-            float irRear = filter(irRearData,irRearArr);
             float irRearRight = filter(irRearRightData,irRearRightArr);
+            float irRear = filter(irRearData,irRearArr);
 
+            float sensorData[6] = {
+                usFrontCentre,
+                usFrontRight,
+                usRearRight,
+                irFrontRight,
+                irRearRight,
+                irRear
+            };
 
             // 3. Get most recent user button data:
             //Container containerUserButtonData = getKeyValueDataStore().get(Container::USER_BUTTON);
@@ -132,50 +140,24 @@ namespace msv {
             SteeringData sd = containerSteeringData.getData<SteeringData> ();
 
             double speed = 5;
-            double desiredSteeringWheelAngle = 0.0;
-
+            double steeringWheelAngle = 0.0;
 
             if(parkingMode)
             {
-                if(parking.hasGap(usRearRight, irFrontRight,irRearRight))
-                {
-                    speed = 0;
-                    cout << "stop stop stop stop " << endl;
-                }
-
-                if (parking.canTurnRight(usFrontRight,irFrontRight,irRearRight))
-                {
-                    speed = -3;
-                    desiredSteeringWheelAngle = 26.0;
-                    cout << "turn right turn right turn right" << endl;
-                }
-
-                if (parking.canTurnLeft(irRear,usRearRight))
-                {
-                    speed = -3;
-                    desiredSteeringWheelAngle = -26;
-                    cout << "turn left turn left turn left " <<endl;
-                }
-
-                if (parking.stop(usRearRight, irRear))
-                {
-                    speed = 0;
-                    desiredSteeringWheelAngle = 0;
-                    cout << "stop stop stop stop " <<endl;
-                }
+                parking.doParking(speed, steeringWheelAngle, sensorData);
             }
             else
             {
-                desiredSteeringWheelAngle = sd.getWheelAngle();
+                steeringWheelAngle = sd.getWheelAngle();
 
                 // Emergency break
-                if(usFrontCentre < 10 && usFrontCentre > 0
+                if(usFrontCentre < 10 && usFrontCentre > 0)
                 {
                     speed = 0;
                 }
 
                 // Stopping at stoplines
-                if(!atStopline && sd.getFrontDistance() < 180)
+                if(!atStopline && sd.getFrontDistance() < 40)
                 {
                     atStopline = true;
                     Time *t = TimeFactory::getInstance().now();
@@ -186,13 +168,13 @@ namespace msv {
                 {
                     Time *t = TimeFactory::getInstance().now();
                     int sec = t->getSeconds() - startTime->getSeconds();
-                    if(sec > 8)
+                    if(sec > 6)
                     {
                         delete startTime;
                         startTime = NULL;
                         atStopline = false;
                     }
-                    else if (sec < 4)
+                    else if (sec < 3)
                     {
                         speed = 0;
                     }
@@ -238,7 +220,7 @@ namespace msv {
             }
 
             vc.setSpeed(speed);
-            vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
+            vc.setSteeringWheelAngle(steeringWheelAngle * Constants::DEG2RAD);
 
             // You can also turn on or off various lights:
             //vc.setBrakeLights(false);
@@ -248,9 +230,9 @@ namespace msv {
             cout << left << setfill('-') << setw(34) << "+" << "+" << endl << setfill(' ');
             cout << setw(34) << "| VEHICLE & SENSOR DATA" << "|" << endl;
             cout << setfill('-') << setw(22) << "+" << setw(12) << "+" << "+" << endl << setfill(' ');
-            cout << setw(22) << "| Speed"               << "| " << setw(10) << speed  << "|" << endl;
-            cout << setw(22) << "| Heading Angle"       << "| " << setw(10) << desiredSteeringWheelAngle  << "|" << endl;
-            cout << setw(22) << "| Front Distance"      << "| " << setw(10) << sd.getFrontDistance()  << "|" << endl;
+            cout << setw(22) << "| Speed"               << "| " << setw(10) << speed         << "|" << endl;
+            cout << setw(22) << "| Heading Angle"       << "| " << setw(10) << steeringWheelAngle << "|" << endl;
+            cout << setw(22) << "| Front Distance"      << "| " << setw(10) << sd.getFrontDistance() << "|" << endl;
             cout << setfill('-') << setw(22) << "+" << setw(12) << "+" << "+" << endl << setfill(' ');
             cout << setw(22) << "| usFrontCentre value" << "| " << setw(10) << usFrontCentre << "|" << endl;
             cout << setw(22) << "| usFrontRight value"  << "| " << setw(10) << usFrontRight  << "|" << endl;

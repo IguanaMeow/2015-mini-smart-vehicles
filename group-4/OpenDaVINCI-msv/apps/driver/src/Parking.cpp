@@ -12,7 +12,42 @@ namespace msv {
 
     }
 
+    void Parking::doParking(double &speed, double &steeringWheelAngle, float sensorData[])
+    {
+        //float usFrontCentre = sensorData[0];
+        float usFrontRight = sensorData[1];
+        float usRearRight = sensorData[2];
+        float irFrontRight = sensorData[3];
+        float irRearRight = sensorData[4];
+        float irRear = sensorData[5];
+        
+        if(hasGap(usRearRight, irFrontRight,irRearRight))
+        {
+            speed = 0;
+            cout << "stop stop stop stop " << endl;
+        }
 
+        if (canTurnRight(usFrontRight,irFrontRight,irRearRight))
+        {
+            speed = -3;
+            steeringWheelAngle = 26.0;
+            cout << "turn right turn right turn right" << endl;
+        }
+
+        if (canTurnLeft(irRear,usRearRight))
+        {
+            speed = -3;
+            steeringWheelAngle = -26;
+            cout << "turn left turn left turn left " <<endl;
+        }
+
+        if (stop(usRearRight, irRear))
+        {
+            speed = 0;
+            steeringWheelAngle = 0;
+            cout << "stop stop stop stop " <<endl;
+        }
+    }
 
     bool Parking::hasGap(float usRearRight, float irFrontRight, float irRearRight){
 
