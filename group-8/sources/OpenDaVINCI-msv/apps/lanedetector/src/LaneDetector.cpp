@@ -63,7 +63,7 @@ LaneDetector::LaneDetector(const int32_t &argc, char **argv) : ConferenceClientM
 	state(1),
 	counter(0),
 	critCounter(0),
-    critAngleCounter(0),
+  critAngleCounter(0),
 	yCount(0),
 
 	imgWidth(0),
@@ -76,14 +76,14 @@ LaneDetector::LaneDetector(const int32_t &argc, char **argv) : ConferenceClientM
 
 	critAngleRight(0.0),
 	critAngleLeft(0.0),
-    rightError(0.0),
-    leftError(0.0),
+  rightError(0.0),
+  leftError(0.0),
 
-    leftLength(0),
-    rightLength(0),
+  leftLength(0),
+  rightLength(0),
 
-    rightList(6, Lines(0.0, 0.0, 0.0)),
-    leftList(6, Lines(0.0, 0.0, 0.0))
+  rightList(6, Lines(0.0, 0.0, 0.0)),
+  leftList(6, Lines(0.0, 0.0, 0.0))
 
 {}
 
@@ -191,14 +191,10 @@ bool LaneDetector::readSharedImage(Container &c) {
 
 void LaneDetector::processImage() {
 
-    setLines(m_image);
-	
-//	cout << "crit distance: " << rightLine1.getCritical() << "critAngle: " << critAngleRight << endl;
-//	cout << "x1: " << rightLine1.getXPos() << " x2: " << rightLine2.getXPos() << " y1: " << rightLine1.getYPos() << " y2: " << rightLine2.getYPos() << endl;
-
+  setLines(m_image);
 
 	validLines(leftList,0);
-    validLines(rightList,1);
+  validLines(rightList,1);
     ///***********************************************************************CHAGE THIS)
             // critAngleRight = (atan2(rightLine2.getYPos() - rightLine1.getYPos(), rightLine1.getXPos() - rightLine2.getXPos()) * Constants::RAD2DEG);
   if (critAngleCounter < 2 ) {
@@ -236,62 +232,17 @@ void LaneDetector::processImage() {
 	LaneData ld;
 	ld.setRightLine1(rightLength);
 	ld.setLeftLine(leftLength);
-
-
 	
+  if((abs(upline1.getYPos()-upline2.getYPos())<10)&& upline1.getYPos()<upline1.getCritical()){
+    sd.setIntersectionLine(1);
+  } else {
+    sd.setIntersectionLine(0);
+  }
+
 	rightError = rightList[0].getCritical() - rightList[0].getXPos();
-  	leftError = validLeft.begin()->getXPos()-validLeft.begin()->getCritical();
-  // cout<<"left validLeft begin xpos is" <<validLeft.begin()->getXPos()<<"  its critical is " << validLeft.begin()->getCritical()<<"    LEFT ERROR IS           "<<leftError<<endl; 
-  // cout<<"left validLeft begin xpos is" <<validLeft[1].getXPos()<<"  its critical is " << validLeft[1].getCritical()<<"    LEFT ERROR 2 IS           "<<validLeft[1].getXPos()-validLeft[1].getCritical()<<endl; 
+  leftError = validLeft.begin()->getXPos()-validLeft.begin()->getCritical();
 
-	
-	// switch (state) {
-	// //case 1: // Lanedetection state
-
-	// 	sd.setSpeedData(SPEED);
-
-        
- //        if (isEmpty(&validLeft) && isEmpty(&validRight)){
- //            state = 2;
- //        }else {
- //            //following both lanes
- //            sd.setHeadingData(measureAngle(m_image));
-
- //        }
- //        break;
-		
-	// case 2:
-
-	// 	sd.setSpeedData(0);
-	// 	counter++;
-	// 	if (counter > 50) {
-	// 		counter = 0;
-	// 		state = 3;
-	// 	}
-	// 	 cout << counter << endl;
-	// 	break;
-	// case 3:
-// =======
-// 		sd.setSpeedData(0);
-// 		counter++;
-// 		if (counter > 50 && !isObject()) {
-// 			counter = 0;
-// 			state = 3;
-// 		}
-// 		 cout << counter << endl;
-// 		break;
-// 	case 3:
-// >>>>>>> 4959ba3a1935a91a8ccb2ff896f6835f59c1fb3d
-
-	// 	sd.setSpeedData(SPEED);
-	// 	if (upline1.getYPos()>upline1.getCritical()){
-	// 		state = 1;
-	// 	}
-	// 	break;
-	// } //switch end
-  	 	sd.setSpeedData(SPEED);
-
-        sd.setHeadingData(measureAngle(m_image));
+  sd.setHeadingData(measureAngle(m_image));
 
 
 	// Shows the image.
