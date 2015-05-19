@@ -121,7 +121,7 @@ namespace msv {
     VehicleControl vc;
     VehicleData vd;
     string vcDataString, sensorData;
-    serial::Serial my_serial("/dev/ttyACM0", 14400, serial::Timeout::simpleTimeout(1000));
+    serial::Serial my_serial("/dev/ttyACM0", 9600, serial::Timeout::simpleTimeout(1000));
     stringstream ss;
     bool dataReceived = true;
    
