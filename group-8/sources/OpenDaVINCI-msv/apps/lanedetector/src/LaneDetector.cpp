@@ -327,30 +327,31 @@ void  LaneDetector::setLines(IplImage* image)
 {
     imgWidth = image->width;
     imgHeight = image->height;
+    double distance = 0.04;
     if(yCount < 1) {
 
-	    rightList[0].setYPos(round(imgHeight * 0.104));
-	    rightList[1].setYPos(round(imgHeight * 0.146));
-	    rightList[2].setYPos(round(imgHeight * 0.187));
-	    rightList[3].setYPos(round(imgHeight * 0.24));
-	    rightList[4].setYPos(round(imgHeight * 0.292));
-	    rightList[5].setYPos(round(imgHeight * 0.36));
-	    rightList[6].setYPos(round(imgHeight * 0.41));
-	    rightList[7].setYPos(round(imgHeight * 0.46));
-	    rightList[8].setYPos(round(imgHeight * 0.51));
-	    rightList[9].setYPos(round(imgHeight * 0.56));
+	    rightList[0].setYPos(round(imgHeight * distance *2));
+	    rightList[1].setYPos(round(imgHeight * distance *3));
+	    rightList[2].setYPos(round(imgHeight * distance *4));
+	    rightList[3].setYPos(round(imgHeight * distance *5));
+	    rightList[4].setYPos(round(imgHeight * distance *6));
+	    rightList[5].setYPos(round(imgHeight * distance *7));
+	    rightList[6].setYPos(round(imgHeight * distance *8));
+	    rightList[7].setYPos(round(imgHeight * distance *9));
+	    rightList[8].setYPos(round(imgHeight * distance *10));
+	    rightList[9].setYPos(round(imgHeight * distance *11));
 
 
-	    leftList[0].setYPos(round(imgHeight * 0.104));
-	    leftList[1].setYPos(round(imgHeight * 0.146));
-	    leftList[2].setYPos(round(imgHeight * 0.187));
-	    leftList[3].setYPos(round(imgHeight * 0.24));
-	    leftList[4].setYPos(round(imgHeight * 0.292));
-	    leftList[5].setYPos(round(imgHeight * 0.36));
-	    leftList[6].setYPos(round(imgHeight * 0.41));
-	    leftList[7].setYPos(round(imgHeight * 0.46));
-	    leftList[8].setYPos(round(imgHeight * 0.51));
-	    leftList[9].setYPos(round(imgHeight * 0.56));
+	    leftList[0].setYPos(round(imgHeight * distance *2));
+	    leftList[1].setYPos(round(imgHeight * distance *3));
+	    leftList[2].setYPos(round(imgHeight * distance *4));
+	    leftList[3].setYPos(round(imgHeight * distance *5));
+	    leftList[4].setYPos(round(imgHeight * distance *6));
+	    leftList[5].setYPos(round(imgHeight * distance *7));
+	    leftList[6].setYPos(round(imgHeight * distance *8));
+	    leftList[7].setYPos(round(imgHeight * distance *9));
+	    leftList[8].setYPos(round(imgHeight * distance *10));
+	    leftList[9].setYPos(round(imgHeight * distance *11));
 
 
 	    upline1.setXPos((imgWidth / 2) - (imgWidth * 0.04));
