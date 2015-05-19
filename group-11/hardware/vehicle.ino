@@ -46,7 +46,13 @@ void setSpeed(char value)
       esc.writeMicroseconds(throttle);
       delay(10);  
       break;
-         
+    
+    default:
+      
+      control = 512;
+      throttle = map(control, 0, 1023, 1000, 2000); 
+      esc.writeMicroseconds(throttle);
+      delay(10);    
   }
 }
 
@@ -59,20 +65,31 @@ void setAngle(char value)
     
       degree = 35;
       myservo.write(degree);
+      Serial.println(value);
+      delay(10);
       break;
       
     case 'r':
       
       degree = 100;
       myservo.write(degree);
+      Serial.println(value);
+      delay(10);
       break;
     
     case 'f':
     
       degree = 70;
       myservo.write(degree); 
+      Serial.println(value);
+      delay(10);
       break;
-         
+    
+    default:
+
+      degree = 70;
+      myservo.write(degree);
+      delay(10);    
   }
 }
 
@@ -81,13 +98,14 @@ void loop() {
   while(Serial.available() > 0)
   {
       char inByte = Serial.read();
-      setAngle(inByte);
       
-      if (inByte == ' ')
+      if (inByte == 32)
       {
          inByte = Serial.read();
          setSpeed(inByte);
-         if(Serial.read() == ' ') break;    
+         if(Serial.read() == 44) break;    
       }
+      
+         setAngle(inByte);
   }
 }
