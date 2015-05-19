@@ -81,7 +81,8 @@ namespace msv {
                 cout << "Enter 1 if using simulator, any key for real car." << endl;
                 cin >> menuChoice;
                 if(menuChoice == 1) inSimulator = true;
-
+                cin.clear();
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
                 cout << "Enter 1 for parking mode, 2 for hardware demo or any key for normal mode." << endl;
                 cin >> menuChoice;
                 
@@ -149,13 +150,13 @@ namespace msv {
               
                 if((laneFollowAngle < -9 || laneFollowAngle > 9) && !obstacleFound){
                     distToObject = 8;
-                    rightTurnSteerAngle = 21; 
+                    rightTurnSteerAngle = 22; 
                     turnSpeed = 0.5;
                 }
                 if((laneFollowAngle > -9 && laneFollowAngle < 9) && !obstacleFound){
                     distToObject = 6;
-                    rightTurnSteerAngle = 23; 
-                    turnSpeed = 0.7;
+                    rightTurnSteerAngle = 24; 
+                    turnSpeed = 0.6;
                 }
 
 
@@ -215,7 +216,7 @@ namespace msv {
                     if(rr_ir > -1 && rr_ir <= 3){
                         state = "seen by rear IR"; 
                         overtakingState = 3; 
-                        desiredSteeringWheelAngle = 25;
+                        desiredSteeringWheelAngle = 22;
                     }
                     break;
                     case 3: // follow left lane
@@ -405,17 +406,17 @@ namespace msv {
                } 
                if(inSimulator){
                 vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
-                   if (laneFollowAngle < 0 ) {      
-                    desiredSteeringWheelAngle = laneFollowAngle -3;     
+                }
+                else{
+                   if(laneFollowAngle < 0) {      
+                    desiredSteeringWheelAngle = (laneFollowAngle - 3);     
                   }     
-                  else if (laneFollowAngle > 0 ) {      
-                    desiredSteeringWheelAngle = laneFollowAngle +3;     
-                  }
-                }else{
-                    
+                  else if(laneFollowAngle > 0) {      
+                    desiredSteeringWheelAngle = (laneFollowAngle + 3);     
+                  }   
                 vc.setSteeringWheelAngle(desiredSteeringWheelAngle);
                 }
-                
+
                 vc.setSpeed(speed);
                
                 // Create container for finally sending the data.
