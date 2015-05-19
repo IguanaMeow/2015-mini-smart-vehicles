@@ -60,6 +60,8 @@ namespace msv {
                 double posA;
                 double posB;
                 double desiredSteeringWheelAngle;
+                double heading;
+                double headingCorr;
 
                 while (getModuleState() == ModuleState::RUNNING) {
                 // In the following, you find example for the various data sources that are available:
@@ -128,6 +130,7 @@ namespace msv {
                 desiredSteeringWheelAngle = 0;
                 vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
                 if(posB - posA > 4) {
+                    heading = vd.getHeading();
                     state = STOP;
                 }
                 else {
@@ -137,6 +140,7 @@ namespace msv {
 
                 //State for stopping the vehicle before going into the parking trajectory, necessary for slowing down the brake-path and getting a better starting position
                 case STOP:
+                cout << "STATE: STOP" << endl;
                 vc.setSpeed(0.0);
                 if (vd.getSpeed() < 0.5) {
                         state = REVERSE_RIGHT;
@@ -146,10 +150,14 @@ namespace msv {
                 //Initial state of the parking trajectory, the vehicle starts reversing to the right
                 case REVERSE_RIGHT:
                 cout << "STATE: REVERSE_RIGHT" << endl;
-                desiredSteeringWheelAngle = 30;
+                desiredSteeringWheelAngle = 26;
                 vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
                 vc.setSpeed(-0.5);
-                if(vd.getHeading() * Constants::RAD2DEG > 150) {
+                headingCorr = (heading * Constants::RAD2DEG) + 60;
+                if (headingCorr > 359) {
+                        headingCorr -= 359;
+                }
+                if(vd.getHeading() * Constants::RAD2DEG > headingCorr) {
                     state = STRAIGHTEN_UP_REVERSE;
                 }
                 break;
@@ -160,10 +168,14 @@ namespace msv {
                 desiredSteeringWheelAngle = -30;
                 vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
                 vc.setSpeed(-0.3);
-                if(vd.getHeading() * Constants::RAD2DEG > 90 && vd.getHeading() * Constants::RAD2DEG < 91) {
+                headingCorr = (heading * Constants::RAD2DEG) + 1;
+                if (headingCorr > 359) {
+                        headingCorr -= 359;
+                }
+                if(vd.getHeading() * Constants::RAD2DEG > (heading * Constants::RAD2DEG) && vd.getHeading() * Constants::RAD2DEG < headingCorr) {
                     state = FINAL_TOUCH;                    
                 }
-                if(sbd.getValueForKey_MapOfDistances(1) < 2 && sbd.getValueForKey_MapOfDistances(1) > 0) {
+                if(sbd.getValueForKey_MapOfDistances(1) < 2.5 && sbd.getValueForKey_MapOfDistances(1) > 0) {
                     state = STRAIGHTEN_UP_FORWARD;
                 }
                 break;
@@ -173,8 +185,12 @@ namespace msv {
                 cout<< "STATE: STRAIGHTEN_UP_FORWARD" << endl;
                 desiredSteeringWheelAngle = 30;
                 vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
-                vc.setSpeed(0.3); 
-                if(vd.getHeading() * Constants::RAD2DEG > 90 && vd.getHeading() * Constants::RAD2DEG < 91) {
+                vc.setSpeed(0.3);
+                headingCorr = (heading * Constants::RAD2DEG) + 1;
+                if (headingCorr > 359) {
+                        headingCorr -= 359;
+                } 
+                if(vd.getHeading() * Constants::RAD2DEG > (heading * Constants::RAD2DEG) && vd.getHeading() * Constants::RAD2DEG < headingCorr) {
                     state = FINAL_TOUCH;
                 } 
                 if(sbd.getValueForKey_MapOfDistances(3) < 2) {
