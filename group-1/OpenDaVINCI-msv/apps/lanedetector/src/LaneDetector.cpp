@@ -49,7 +49,8 @@ namespace msv {
     using namespace core::data::image;
     using namespace tools::player;
     using namespace cv;
-int threshold_value = 170;
+//int threshold_value = 170;
+int threshold_ratio = 170;
 int threshold_type = 0;
 int const max_value = 255;
 int const max_type = 4;
@@ -128,7 +129,7 @@ int numOfInt=0;
                 m_sharedImageMemory->unlock();
 
                 // Mirror the image.
-         //     cvFlip(m_image, 0, -1);
+            //    cvFlip(m_image, 0, -1);
 
                 retVal = true;
             }
@@ -251,13 +252,31 @@ void drawLine(Mat atom_image, int line1line, int count, int &line1leftLineLength
        Mat src,dst,color_dst,atom_image,edge,blured;
        src=m_image;
        //atom_image=src;
+       
        blur(src , blured, Size(3,3) );
        cvtColor( blured, color_dst, COLOR_RGB2GRAY );
-       
-     Canny( color_dst, dst, 50, 170, 3);
+    //   roi = color_dst( Rect(0,479,639,220) );   
+    Canny(color_dst, dst, 50, threshold_ratio, 3); //was 170 , 
     dst.convertTo(edge, CV_8U);
     // threshold( color_dst, dst, threshold_value, max_BINARY_value,threshold_type );
-      cvtColor( edge, atom_image, COLOR_GRAY2RGB );
+    
+   
+    cvtColor( edge, atom_image, COLOR_GRAY2RGB );
+    cvNamedWindow("exposure");
+    Mat roi = edge( Rect(0,220,639,259) );
+    imshow("exposure",roi);
+    cv::Mat mask;    //image is CV_8UC1
+    cv::inRange(roi, 255, 255, mask);
+    int whiteCount = cv::countNonZero(mask);
+    cout << "No: white pixels " << whiteCount << endl;
+    if(whiteCount < 1600) // 2138
+        threshold_ratio = 160;
+    else if(whiteCount > 3000)
+        threshold_ratio = 200;
+        else
+            threshold_ratio = 170;
+
+
 
    
    

@@ -20,13 +20,8 @@
 message msv.SteeringData {
     double exampleData;
 }
-
-message msv.LongDistanceData {
-    double longDistanceData;
-}
-
-message msv.ShortDistanceData {
-    double shortDistanceData;
+message msv.IntersectionFound {
+    bool intersectionFound;
 }
 
 message msv.UserButtonData {
