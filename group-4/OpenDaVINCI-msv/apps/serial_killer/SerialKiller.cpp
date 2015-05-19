@@ -220,10 +220,12 @@ namespace msv {
                 double speed = vc.getSpeed();
                 double heading = vc.getSteeringWheelAngle() * Constants::RAD2DEG;
 
-                speed = ((speed * 100) + 1500);
-                if (speed > 1585) {
-                    speed = 1585;
-                }
+                if(speed > 0)
+                    speed = 1590;
+                else if(speed < 0)
+                    speed = 1300;
+                else
+                    speed = 1500;
                 heading = heading + 45;
                 if (heading > 90) {
                     heading = 90;
