@@ -166,7 +166,7 @@ int getRange(int srfAddress){
 
 
 //  This function checks the length of a sensor value (or any other string)
-//  and adds 0 or 00 accordingly
+//  and adds 0 or 00 accordingly to make the length of the string precisely 3
 String checkLength(String value){
     //  then if the length of the string is 2 it adds a 0 to the beginning of that string
     if(value.length()==2){
