@@ -265,7 +265,7 @@ namespace msv {
                                 break;
                             case 1:
                                 state = "parking: state 1 - finding enough gap";
-                                laneFollow = false;
+                                laneFollowAngle = false;
                                 if((fr_us <0 || fr_us > (car_length * 0.8)) && fr_ir < 0 && rr_ir < 0){
 
                                     speed = 0;
