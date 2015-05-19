@@ -56,6 +56,7 @@ namespace msv {
 
     // Declare sensor variables
     int FUS, FRUS, IRT, IRB, IRR;
+    double distance;
     struct termios toptions;
 
     using namespace std;
@@ -221,7 +222,7 @@ namespace msv {
                         s = -1;
 
                         // Controlling correct sensor:
-                        if(cSensor > 4)
+                        if(cSensor > 5)
                         {
                             cSensor = 0;
                         }
@@ -256,7 +257,13 @@ namespace msv {
                             sscanf(sensorTemp, "%d", &IRR); 
                             memset(&sensorTemp[0], 0, sizeof(sensorTemp));
                             cSensor++;
-                        }   
+                        }
+                        else if(cSensor == 5)
+                        {
+                        	sscanf(sensorTemp, "%lf", &distance); 
+                            memset(&sensorTemp[0], 0, sizeof(sensorTemp));
+                            cSensor++;
+                        }
 
                     }
                             
@@ -267,7 +274,7 @@ namespace msv {
             // Making sure that each sensor attained the correct value by printing them.:
           	printf("FUS: %d\n", FUS); printf("FRUS: %d\n", FRUS);
             printf("IRT: %d\n", IRT); printf("IRV: %d\n", IRB);
-            printf("IRR: %d\n", IRR); 
+            printf("IRR: %d\n", IRR); printf("Distance traveled: %f\n", distance); 
             //printf("test: %d\n", n );
 
                 
@@ -320,8 +327,17 @@ namespace msv {
             // Distribute sensorBoardData through UDP
 
             Container contSBD(Container::USER_DATA_0, sbd);
-            distribute(contSBD); 
+            distribute(contSBD);
 
+            // Set distance traveled for parking
+
+            VehicleData vd;
+            vd.setAbsTraveledPath(distance);
+
+            Container contVD(Container::USER_DATA_3, vd);
+            distribute(contVD);
+
+            // Send steering data to LLB
 
             Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_2);
 			SteeringData sd = containerSteeringData.getData<SteeringData> ();
