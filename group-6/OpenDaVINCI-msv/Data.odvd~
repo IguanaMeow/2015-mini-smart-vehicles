@@ -19,7 +19,7 @@
 
 message msv.SteeringData {
     double exampleData;
-    double speedData; //Lane detection
+    double speedData //Lane detection
 }
 
 message msv.UserButtonData {
