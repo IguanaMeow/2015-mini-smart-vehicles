@@ -6,8 +6,12 @@ unsigned long diff;
 #define FRONT_RIGHT_IR 2
 #define REAR_RIGHT_IR 1
 #define VoltsToCentimeters(volts) ((2914 / (volts + 5)) - 1)
+#define CentimetersPerPulse 100.0 / 59.0
 
 int IR_front_right, IR_rear_right, IR_rear;
+int time;
+volatile int pulses = 0;
+double traveledDistance = 0;
 
 // this constant won't change.  It's the pin number
 // of the sensor's output:
@@ -22,6 +26,7 @@ int sonarFrontRight;
 
 void setup() {
   
+  attachInterrupt(1, increment, CHANGE);    // Interrupt pin for wheel encoder on digital pin 3
   Serial.begin(9600);
   pinMode(USFecho, INPUT); 
   pinMode(USFtrig, OUTPUT);
@@ -30,9 +35,22 @@ void setup() {
   delay(100);
 }
 
+void increment()
+{
+    pulses++; 
+}
+
+double getTraveledDistance()
+{
+     return CentimetersPerPulse * pulses; 
+}
+
 void loop()
 {
-   before= millis(); 
+   before= millis();
+   traveledDistance += getTraveledDistance();
+   pulses = 0;
+   
    String format = "";
    
      // IRT, IRB & IRR
@@ -51,16 +69,16 @@ void loop()
      String IRT = String(IR_front_right);
      String IRB = String(IR_rear_right);
      String IRR = String(IR_rear);
+     String distance = String(traveledDistance);
 
       
-     format = FUS + " " + FRUS + " " + IRT + " " + IRB + " " + IRR + " ";
+     format = FUS + " " + FRUS + " " + IRT + " " + IRB + " " + IRR + " " + distance + " ";
      //  format = IRT + " " + IRB + " " + IRR + " ";
     
      Serial.println(format);  
     
     after=millis();
     diff = after - before;
-    int time;
     
     if(diff < 50 )
     {
@@ -77,7 +95,7 @@ int IR_Distance(int IR_sensor)
   sensorValue = analogRead(IR_sensor);
   int distance = VoltsToCentimeters(sensorValue);
   
-  if(distance < 40)
+  if(distance < 17)
   {
     return(distance);
   }
@@ -95,6 +113,7 @@ int US_getRange(int trigPin, int echoPin)
   distance= distance/58; //Calculate distance 
   
   if(distance <= 0 ) return -1;
+  if(distance > 70 ) return -1;
   return distance;  
 }
 
