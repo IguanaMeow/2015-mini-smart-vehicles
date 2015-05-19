@@ -57,13 +57,6 @@ void loop()
   us2= getRange(srfAddress1);   // assign getrange function return to us2
   us3= getRange(srfAddress2);   // assign getrange function return to us3
 
-  //Serial.print("Range1: ");
-  //Serial.print(us1);
-  //Serial.println("cm");
-
-  //Serial.print("Range2: ");
-  //Serial.print(us2);
-  //Serial.println("cm");
   inf1=checkLength(String(ir1));
   inf2=checkLength(String(ir2));
   inf3=checkLength(String(ir3));
