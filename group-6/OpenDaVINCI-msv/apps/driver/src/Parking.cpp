@@ -50,7 +50,13 @@ namespace msv {
         int counter = -1;
         int parkingParallel; 
         int init;
-      
+
+        bool spot_found = false;
+        bool lets_park = true;
+        bool parking = true;
+        bool almost = true;
+        bool done = true;
+       
         double distanceBetweenObjects;
         double distance;
         timeval curTime;
@@ -60,7 +66,7 @@ namespace msv {
         double Infrared_FrontRight;
         double Infrared_RearRight;
         double Infrared_Rear;
-        double UltraSonic_FrontCenter;
+        double UltraSonic_FrontCenter;       
         
 
         Driver::Driver(const int32_t &argc, char **argv) :
@@ -108,11 +114,13 @@ namespace msv {
 
                 
                 //Sensors aoutput
-                Infrared_RearRight = sbd.getValueForKey_MapOfDistances(2);
-                cout << "Infrared_RearRight distance:" << Infrared_RearRight <<endl;
-
+                // Infrared_FrontRight = sbd.getValueForKey_MapOfDistances(0);
+                // cout << "Infrared_FrontRight distance:" << Infrared_FrontRight <<endl;
                 Infrared_Rear = sbd.getValueForKey_MapOfDistances(1);
                 cout << "Infrared_Rear distance: " << Infrared_Rear << endl;
+
+                Infrared_RearRight = sbd.getValueForKey_MapOfDistances(2);
+                cout << "Infrared_RearRight distance:" << Infrared_RearRight <<endl;
 
                 UltraSonic_FrontCenter = sbd.getValueForKey_MapOfDistances(3);
                 cout << "UltraSonic_FrontCenter distance: " << UltraSonic_FrontCenter << endl;
@@ -126,56 +134,66 @@ namespace msv {
                 // Design your control algorithm here depending on the input data from above.
                 // Create vehicle control data.
                 VehicleControl vc;
-               
+            
                 double desiredSteeringWheelAngle = 0;
                 vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
                 vc.setSpeed(0);
+                // PARKING = get distance between the spaces 
                 //Measure the distance between each space.
-                 // // PARKING = get distance between the spaces 
                 switch(parkingParallel){
 
                     case HOLA:
-                        vc.setSpeed(2);
+                         vc.setSpeed(2);
                         if(init == 0){
                             gettimeofday(&timer, NULL);
                             init = 1;
                         }
 
-                        if((sbd.getValueForKey_MapOfDistances(2) <= -1) && (distanceBetweenObjects * vc.getSpeed() < 8)){
+                        if((sbd.getValueForKey_MapOfDistances(2) <= -1) && (distanceBetweenObjects * vc.getSpeed() < 8) && (spot_found == true)){
                             cerr << "Gap: ";
                             cerr << "Current distance: '" << distanceBetweenObjects * vc.getSpeed() << " cm' " << endl;
                         }else if(distanceBetweenObjects * vc.getSpeed() >= 8){
+                            spot_found = true;
                             cerr << "Spot found..." << endl;
                             vc.setSpeed(0);
                             distance = distanceBetweenObjects * vc.getSpeed();
                             cerr << "Distance: '" << distanceBetweenObjects << " cm'" << endl;
+                            lets_park = false;
+
                         }else {
                             gettimeofday(&timer, NULL);
                         }
-                    
+
                     case LETS_PARK: 
-                        if((distanceBetweenObjects >= 8.5) && (distanceBetweenObjects < 16)){
+                        if((distanceBetweenObjects >= 8) && (distanceBetweenObjects < 15) && (lets_park == false)){
                             cerr << "Let's park...!";
                             vc.setSpeed(-1);
-                            vc.setSteeringWheelAngle(17 * Constants::DEG2RAD);    
+                            vc.setSteeringWheelAngle(19 * Constants::DEG2RAD);    
+                           parking = false;
                         }
 
                     case PARKING:
-                        if((distanceBetweenObjects >= 16) && (distanceBetweenObjects < 23)){//&& (sbd.getValueForKey_MapOfDistances(1) <= 1.4) 
+                        if((distanceBetweenObjects >= 15) && (distanceBetweenObjects < 24.5) && (parking == false) && 
+                        (sbd.getValueForKey_MapOfDistances(1) >= -1 || sbd.getValueForKey_MapOfDistances(1) > 1.9)){//&&   (distanceBetweenObjects >= 16) && (distanceBetweenObjects < 23)
                             cerr << "Parking...!";
+                            cout << "Infrared_Rear distance: " << Infrared_Rear << endl;
                             vc.setSpeed(-0.3);
-                            vc.setSteeringWheelAngle(-26 * Constants::DEG2RAD);    
+                            vc.setSteeringWheelAngle(-26 * Constants::DEG2RAD);  
+                            almost = false;  
                         }
                     
                     case ALMOST:
-                        if((distanceBetweenObjects >= 23) && (distanceBetweenObjects < 31)){
+                        if((distanceBetweenObjects >= 24.5) && (distanceBetweenObjects < 33) && (almost == false) &&
+                           (sbd.getValueForKey_MapOfDistances(3) >= -1 || sbd.getValueForKey_MapOfDistances(3) >= 3)){
                             cerr << "Almost...!";
+                            cout << "UltraSonic_FrontCenter distance: " << UltraSonic_FrontCenter << endl;
                             vc.setSpeed(0.3);
-                            vc.setSteeringWheelAngle(19 * Constants::DEG2RAD);   
+                            vc.setSteeringWheelAngle(10 * Constants::DEG2RAD); 
+                            almost = false;  
                         }
 
                     case DONE:
-                        if(distanceBetweenObjects >= 30){
+                        if((distanceBetweenObjects >= 33) && (almost == false)){
                             cerr << "Done!!!"; 
                         }
 
