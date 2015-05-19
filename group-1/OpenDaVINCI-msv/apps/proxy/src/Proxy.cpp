@@ -71,7 +71,9 @@ struct termios oldW;
 const char *MODEMDEVICE ;
 string readings;
 double distance;
+string userInput="6:512060,";
 
+void close(int x);
 
 bool open1(const char* x,int y);
 
@@ -81,6 +83,7 @@ void write(string text);
 string read();
     
     using namespace std;
+    using namespace core::wrapper;
     using namespace core::base;
     using namespace core::data;
     using namespace tools::recorder;
@@ -97,8 +100,8 @@ using namespace core::data::control;
     }
 
     void Proxy::setUp() {
-   //   msv::connect("/dev/ttyACM3",1); // connect to arduino reading from
-      msv::connect("/dev/ttyACM2",2); // connect to arduino sending to
+    //  msv::connect("/dev/ttyACM7",1); // connect to arduino reading from
+     msv::connect("/dev/ttyACM0",2); // connect to arduino sending to
 
 
 	    // This method will be call automatically _before_ running body().
@@ -164,15 +167,11 @@ using namespace core::data::control;
 
     // This method will do the main data processing job.
     ModuleState::MODULE_EXITCODE Proxy::body() {
-
-
-
-
+     
         uint32_t captureCounter = 0;
+        msv::SensorBoardData sensorBoardData;
         while (getModuleState() == ModuleState::RUNNING) {
 
-  
-  
             // Capture frame.
             if (m_camera != NULL) {
                 core::data::image::SharedImage si = m_camera->capture();
@@ -181,12 +180,14 @@ using namespace core::data::control;
                 distribute(c);
                 captureCounter++;
             }
-	Container containerVehicleControl = getKeyValueDataStore().get(Container::VEHICLECONTROL);
+	           Container containerVehicleControl = getKeyValueDataStore().get(Container::VEHICLECONTROL);
              VehicleControl vc = containerVehicleControl.getData<VehicleControl> ();
+             
              cerr << "Speed data: " << vc.getSpeed() << endl;
              cout << "Angle : " << vc.getSteeringWheelAngle()<<endl;
             // TODO: Here, you need to implement the data links to the embedded system
             // to read data from IR/US.
+
              int angle=60;
              int angleFromDriver= (int)vc.getSteeringWheelAngle();
              if(angleFromDriver <0)
@@ -197,19 +198,23 @@ using namespace core::data::control;
              stringstream ss;
               ss << angle;
              string convertedAngle="0"+ss.str();
-             //cout<<convertedAngle<<endl;
+          
+            if(vc.getSpeed()>0)
+              userInput="6:600"+convertedAngle+",";
+            else if(vc.getSpeed()<1 && vc.getSpeed()>-1)
+              userInput="6:512"+convertedAngle+",";
+            else if(vc.getSpeed()<-1)
+              userInput="6:200"+convertedAngle+"0,";
+              
+              
+              cout<<userInput<<endl;
+                    
+
+              msv::write(userInput);
 
 
-	msv::SensorBoardData sensorBoardData;
-   string userInput="6:600"+convertedAngle+",";
-   cout<<userInput<<endl;
-    
-
-    msv::write(userInput);
-
-
-    //  readings=msv::read();
-	//distance=msv::decode(readings);
+      if(fd!=0){
+readings=msv::read();
 	
 	
   
@@ -254,18 +259,25 @@ using namespace core::data::control;
 
 sensorBoardData.putTo_MapOfDistances(4,valUs2);
 sensorBoardData.putTo_MapOfDistances(3,valUs1);
-sensorBoardData.putTo_MapOfDistances(1,valIr3/10);
-sensorBoardData.putTo_MapOfDistances(2,valIr2/10);
-sensorBoardData.putTo_MapOfDistances(0,valIr1/10);
+sensorBoardData.putTo_MapOfDistances(1,valIr3);
+sensorBoardData.putTo_MapOfDistances(2,valIr2);
+sensorBoardData.putTo_MapOfDistances(0,valIr1);
 sensorBoardData.putTo_MapOfDistances(5,valUs3);
 
 Container c = Container(Container::USER_DATA_0, sensorBoardData);
   distribute(c);
  tcflush(fd, TCIFLUSH);
+}
+
 //usleep(2000000);
 
  }
-
+        msv::write("6:512060,");
+        if(wd!=0)
+        msv::close(wd);
+        if(fd!=0)
+        msv::close(fd);
+        
         cout << "Proxy: Captured " << captureCounter << " frames." << endl;
 
         return ModuleState::OKAY;
@@ -324,7 +336,7 @@ if(x==2){
   CLOCAL  : local connection, no modem contol
   CREAD   : enable receiving characters
   */
-  newtio.c_cflag =  B9600 | CRTSCTS | CS8 | CLOCAL | CREAD;
+  newtio.c_cflag =  B115200 | CRTSCTS | CS8 | CLOCAL | CREAD;
 
   /*
   IGNPAR  : ignore bytes with parity errors
@@ -403,6 +415,9 @@ string read()
 void write(string text)
 {
   ::write(  wd,(char*)text.c_str(),(size_t)text.length() );
+}
+void close(int x){
+  ::close(x);
 }
 } // msv
 
