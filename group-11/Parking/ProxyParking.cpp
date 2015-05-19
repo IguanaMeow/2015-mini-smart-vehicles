@@ -255,7 +255,7 @@ namespace msv {
                         }
                         else if(cSensor == 5)
                         {
-                        	sscanf(sensorTemp, "%lf", &distance); 
+                            sscanf(sensorTemp, "%lf", &distance); 
                             memset(&sensorTemp[0], 0, sizeof(sensorTemp));
                             cSensor++;
                         }
@@ -350,7 +350,7 @@ namespace msv {
 			if (speed < 0.0)
 			{
 				strcpy(escValue, "");
-				strcpy(escValue, "r ");
+				strcpy(escValue, "r,");
 			}
 
 			// Drive car
@@ -358,7 +358,7 @@ namespace msv {
 			else if (speed > 0.0)
 			{
 				strcpy(escValue, "");
-				strcpy(escValue, "f ");
+				strcpy(escValue, "f,");
 			}
 
 			// Stop car
@@ -366,7 +366,7 @@ namespace msv {
 			else
 			{
 				strcpy(escValue, "");
-				strcpy(escValue, "s ");
+				strcpy(escValue, "s,");
 			}
 
 
