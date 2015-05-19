@@ -63,7 +63,7 @@ LaneDetector::LaneDetector(const int32_t &argc, char **argv) : ConferenceClientM
 	state(1),
 	counter(0),
 	critCounter(0),
-  critAngleCounter(0),
+  	critAngleCounter(0),
 	yCount(0),
 
 	imgWidth(0),
@@ -76,14 +76,14 @@ LaneDetector::LaneDetector(const int32_t &argc, char **argv) : ConferenceClientM
 
 	critAngleRight(0.0),
 	critAngleLeft(0.0),
-  rightError(0.0),
-  leftError(0.0),
+	rightError(0.0),
+	leftError(0.0),
 
-  leftLength(0),
-  rightLength(0),
+	leftLength(0),
+	rightLength(0),
 
-  rightList(6, Lines(0.0, 0.0, 0.0)),
-  leftList(6, Lines(0.0, 0.0, 0.0))
+	rightList(6, Lines(0.0, 0.0, 0.0)),
+	leftList(6, Lines(0.0, 0.0, 0.0))
 
 {}
 
@@ -622,7 +622,7 @@ double LaneDetector::measureAngle(IplImage *image) {
         ptBegin.x = x/2;
       //  ptBegin.y = y-tempListLeft[0].getYPos();
         ptBegin.y= y;
-        ptEnd.x =tempListRight[j].getCritical()-tempListRight[j].getXPos()+x/2;
+        ptEnd.x =tempListRight[j].getXPos() - tempListRight[j].getCritical()+x/2;
         ptEnd.y =y-tempListRight[j].getYPos();
         //cout << "THE baseline WILL BE ----------->>>>>>>>>>    " << tempListLeft[0].getXPos()<< "  ,  " <<tempListLeft[0].getYPos() <<endl;
         //cout << "Right X temp IS ----------->>>>>>>>>>    " << tempListRight[j].getXPos() <<endl;
@@ -639,7 +639,7 @@ double LaneDetector::measureAngle(IplImage *image) {
     	
    		for (int i = 0; i < length; ++i){
         //int alphaX =(((tempListRight[i].getXPos()-tempListLeft[i].getXPos())/2)+tempListLeft[i].getXPos())-(((tempListRight[0].getXPos()-tempListLeft[0].getXPos())/2)+tempListLeft[0].getXPos());
-        int alphaX =tempListRight[i].getCritical()-tempListRight[i].getXPos();
+        int alphaX = tempListRight[i].getXPos() - tempListRight[i].getCritical();
         
         int alphaY = tempListRight[i].getYPos()-y;
 
