@@ -49,11 +49,16 @@ void serialEvent() {
 
 
 String decodedString(String string){
-  if (string.length() < 8) return "error"; //if string is less than 8 chars, it's either invalid or empty string
-                                              //e.g. 512030, ---> this is alltogether 8 characters containing /0
-  int controlDigits = 6; // we always have a checksum of 6 by default
+  //if string is less than 8 chars, it's either invalid or empty string
+  //e.g. 512030, ---> this is alltogether 8 characters containing /0
+  if (string.length() < 8) return "error"; 
+  // we always have a checksum of 6 by default
+  int controlDigits = 6;
   String command = string; 
-  if (!command.length()) return "error"; // if it's an empty string, return "error"
-  if (command.length() != controlDigits) return "error"; //if string's length isn't equal with the control digits, it's an invalid Netstring
+  // if it's an empty string, return "error"
+  if (!command.length()) return "error"; 
+   //if string's length isn't 
+   //equal with the control digits, it's an invalid Netstring
+  if (command.length() != controlDigits) return "error"; 
   return command;
 }
