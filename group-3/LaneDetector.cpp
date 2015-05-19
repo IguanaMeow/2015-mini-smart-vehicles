@@ -35,7 +35,6 @@
 #include "LaneDetector.h"
 
 using namespace cv;
-using namespace std;
 
 namespace msv {
 
@@ -104,9 +103,46 @@ namespace msv {
 		    }
 	    }
 	    return retVal;
+
     }
-
-
+// finds the white line
+bool FindWhiteLine(Vec3b white)
+{ 
+	bool color =  false;
+	uchar blue = white.val[0];
+    uchar green = white.val[1];
+    uchar red = white.val[2];
+    if(blue == 255 && green == 255 && red == 255)
+            {
+                color = true;
+            }
+            return color;
+}
+// extends the line until whiteline is found
+Point DrawingLines(Mat img , Point point,bool right)
+{
+	       int cols = img.cols;
+	       Vec3b drawingLine = img.at<Vec3b>(point); //defines the color at current positions
+           while(point.x != cols){
+           	if(right == true)
+           	{
+            point.x = point.x +1; //increases the line too the right
+            drawingLine = img.at<cv::Vec3b>(point); 
+            if(FindWhiteLine(drawingLine)){ // quites incase white line is found
+                break; 
+            }
+        }
+        else if(right == false)
+           	{
+            point.x = point.x -1; //Decrease the line too the left
+            drawingLine = img.at<cv::Vec3b>(point); 
+            if(FindWhiteLine(drawingLine)){ // quites incase white line is found
+                break; 
+            }
+        }
+    }
+           return point;
+}
     // You should start your work in this method.
     // written by Nicolas Kheirallah
     void LaneDetector::processImage() {
@@ -127,176 +163,83 @@ namespace msv {
 
         //Points 
         // Needs more points
+        // Be prepaired for a mindfuck
         // currently 3 lines per side
         Point centerPoint;             
         Point centerPointEnd;  
-
         Point bRightPoint;  
-        Point rightPointEnd; 
-
+        Point bRightPointEnd; 
         Point bRightPointmid;
         Point rightPointMidEnd; 
-
         Point rightPointTop;
         Point rightPointTopEnd;
-
-
         Point bLeftPoint;         
-
         Point lMidPoint; 
         Point lMidPointEnd;  
-
         Point ltopPoint; 
         Point ltopPointEnd;  
 
         centerPoint.x=cols/2;   
         centerPoint.y=0; 
-
         centerPointEnd.x=cols/2;   
         centerPointEnd.y=rows; 
-
         bRightPoint.x = cols/2; 
         bRightPoint.y = 350;
-
 		bRightPointmid.x=cols/2; 
         bRightPointmid.y =325;
-
         rightPointTop.x = cols/2; 
         rightPointTop.y = 275; 
 
         rightPointTopEnd.x =rightPointTop.x;
         rightPointTopEnd.y = rightPointTop.y;
-
         rightPointMidEnd.x = bRightPointmid.x; 
         rightPointMidEnd.y = bRightPointmid.y;
 
-
-
-        rightPointEnd.x = bRightPoint.x; 
-        rightPointEnd.y = bRightPoint.y;
-
+        bRightPointEnd.x = bRightPoint.x; 
+        bRightPointEnd.y = bRightPoint.y;
         bLeftPoint.x = bRightPoint.x;
-         bLeftPoint.y = bRightPoint.y;
+        bLeftPoint.y = bRightPoint.y;
 
         ltopPoint.x = bRightPoint.x; 
         ltopPoint.y = 275;
-
         ltopPointEnd.x = bRightPoint.x;  
         ltopPointEnd.y = ltopPoint.y;
 
         lMidPoint.x = bRightPoint.x; 
-         lMidPoint.y = 325;
-
+        lMidPoint.y = 325;
         lMidPointEnd.x = bRightPoint.x;  
         lMidPointEnd.y = lMidPoint.y;
 
-
-
-// I really need to make a function for Vec3b...
-
-        Vec3b bottomRightLine = matImg.at<Vec3b>(rightPointEnd); //defines the color at current positions
-        while(rightPointEnd.x != cols){
-            rightPointEnd.x = rightPointEnd.x +1; //increases the line too the right
-            uchar blue = bottomRightLine.val[0];
-    		uchar green = bottomRightLine.val[1];
-    		uchar red = bottomRightLine.val[2];
-            bottomRightLine = matImg.at<cv::Vec3b>(rightPointEnd); 
-            if(blue == 255 && green == 255 && red == 255){ // quites incase white line is found
-                break; 
-            }
-        }
-
-  Vec3b midRightLine = matImg.at<Vec3b>(rightPointTopEnd); //defines the color at current positions
-        while(rightPointTopEnd.x != cols){
-            rightPointTopEnd.x = rightPointTopEnd.x +1; //increases the line too the right
-            uchar blue = midRightLine.val[0];
-    		uchar green = midRightLine.val[1];
-    		uchar red = midRightLine.val[2];
-            midRightLine = matImg.at<cv::Vec3b>(rightPointTopEnd);
-            if(blue == 255 && green == 255 && red == 255){// quites incase white line is found
-                break; 
-            }
-        }
-  Vec3b topRightLine = matImg.at<Vec3b>(bRightPointmid); //defines the color at current positions
-        while(bRightPointmid.x != cols){
-            bRightPointmid.x = bRightPointmid.x +1; //increases the line too the right
-            uchar blue = topRightLine.val[0];
-    		uchar green = topRightLine.val[1];
-    		uchar red = topRightLine.val[2];
-            topRightLine = matImg.at<cv::Vec3b>(bRightPointmid); 
-            if(blue == 255 && green == 255 && red == 255){// quites incase white line is found
-                break; 
-            }
-        }
-
-      Vec3b botLeftLine = matImg.at<Vec3b>(bLeftPoint);
-        while(bLeftPoint.x != 0){
-            bLeftPoint.x = bLeftPoint.x -1;//increases the line too the Left
-            uchar blue = botLeftLine.val[0];
-    		uchar green = botLeftLine.val[1];
-    		uchar red = botLeftLine.val[2];
-            botLeftLine = matImg.at<Vec3b>(bLeftPoint);
-            if(blue == 255 && green == 255 && red == 255){// quites incase white line is found
-                break;
-            }
-        }
-
-        Vec3b midLeftLine = matImg.at<Vec3b>(lMidPointEnd);
-        while(lMidPointEnd.x != 0){
-            lMidPointEnd.x = lMidPointEnd.x - 1;//increases the line too the Left
-            uchar blue = midLeftLine.val[0];
-    		uchar green = midLeftLine.val[1];
-    		uchar red = midLeftLine.val[2];
-            midLeftLine = matImg.at<Vec3b>(lMidPointEnd);
-            if(blue == 255 && green == 255 && red == 255){// quites incase white line is found
-                break;
-            }
-        }
-
-       Vec3b topLeftLine = matImg.at<Vec3b>(ltopPointEnd);
-        while(lMidPoint.x != 0){
-            ltopPointEnd.x = ltopPointEnd.x - 1;//increases the line too the Left
-             uchar blue = topLeftLine.val[0];
-    		uchar green = topLeftLine.val[1];
-    		uchar red = topLeftLine.val[2];
-            topLeftLine = matImg.at<Vec3b>(ltopPointEnd);
-            if(blue == 255 && green == 255 && red == 255){// quites incase white line is found
-                break;
-            }
-        }
+// assigns the point the extended value 
+		bLeftPoint =DrawingLines(matImg,bLeftPoint,false);
+		bRightPointEnd=DrawingLines(matImg,bRightPointEnd,true);
+		bRightPointmid=DrawingLines(matImg,bRightPointmid,true);
+		rightPointTopEnd =DrawingLines(matImg,rightPointTopEnd,true);
+		lMidPointEnd =DrawingLines(matImg,lMidPointEnd,false);
+		ltopPointEnd =DrawingLines(matImg,ltopPointEnd,false);
 
        if (m_debug) {
        	  //http://docs.opencv.org/doc/tutorials/core/basic_geometric_drawing/basic_geometric_drawing.html
-        //draws the lines
-        /*
-                matImg = the img
-        centerRight = startpoint
-        Right, = endpoint
-        cv::Scalar(255,0,0)= color of the line (Red ,Green ,Blue)
-        1,// Linethickness
-        8
-        */
        	       line(matImg, centerPoint,centerPointEnd,cvScalar(0, 0, 255),2, 8); //centralline
-       	       line(matImg, bRightPoint,rightPointEnd,cvScalar(0, 165, 255),1, 8); //bottom right line
+       	       line(matImg, bRightPoint,bRightPointEnd,cvScalar(0, 165, 255),1, 8); //bottom right line
        	       line(matImg, lMidPoint,lMidPointEnd,cvScalar(255, 225, 0),1, 8); //LeftMid line
        	       line(matImg, bRightPoint,bLeftPoint,cvScalar(255, 0, 0),1, 8);//LeftBottom line
        	       line(matImg, ltopPoint,ltopPointEnd,cvScalar(130, 0, 75),1, 8); //TopLeft line
        	       line(matImg, bRightPointmid,rightPointMidEnd,cvScalar(238, 130, 238),1, 8); //rightmid line
        	       line(matImg, rightPointTop,rightPointTopEnd,cvScalar(52, 64, 76),1, 8); //TopRight line
-
          imshow("Lanedetection", matImg);
          cvWaitKey(10);
-
 }
         //Need too make dynamic steering
         SteeringData sd;
-        if(rightPointEnd.x < 470 && rightPointTopEnd.x>320)
+        //((bRightPointEnd.x < 478 && rightPointTopEnd.x>280)
+        if(bRightPointmid.x < 478 && rightPointTopEnd.x>300)
         {
         sd.setExampleData(-10);
         }
-        else if(bLeftPoint.x > 190 || lMidPointEnd.x > 190 || ltopPointEnd.x > 190)
+        else if(bLeftPoint.x > 190 || lMidPointEnd.x > 190 || ltopPointEnd.x > 200)
         {
-        sd.setExampleData(20);
+        sd.setExampleData(14);
         }
 
         //TODO: Start here.
