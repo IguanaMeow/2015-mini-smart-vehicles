@@ -76,4 +76,3 @@ ADD_SUBDIRECTORY (examples)
 
 # Apps contains msv, carolocup2013, ...
 ADD_SUBDIRECTORY (apps)
-
