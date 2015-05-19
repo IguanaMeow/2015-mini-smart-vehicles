@@ -150,12 +150,12 @@ void serialEvent() {
       angle = intVal + 90;
 
       equalsIndex = getData.indexOf('=');
-      String speedData = getData.substring(equalsIndex + 1);
-      int acceleration = speedData.toInt();
+      String speedData = getData.substring(equalsIndex + 1); 
+      float acceleration = speedData.toFloat();
 
       if (acceleration == 0) throttle = 1500;
       if (acceleration > 0) throttle = 1600;
-      if (acceleration < 0) throttle = 1200;
+      if (acceleration < 0) throttle = 1100;
     }
     inputString = "";
   }
