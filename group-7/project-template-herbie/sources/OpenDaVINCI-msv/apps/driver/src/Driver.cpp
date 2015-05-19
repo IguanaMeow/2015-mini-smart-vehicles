@@ -57,7 +57,7 @@ namespace msv {
                 double front_us, fr_ir, rr_ir, fr_us, rear_ir;
                 
                 bool intersect = false;
-                int intersectionState, overtakingState, parkingState = 0;
+                int intersectionState, overtakingState, parkingState, demoState = 0;
                 bool obstacleFound = false;
                 bool inSimulator = false;
                 double speed = 1;
@@ -82,7 +82,7 @@ namespace msv {
                 cin >> menuChoice;
                 if(menuChoice == 1) inSimulator = true;
 
-                cout << "Enter 1 for parking mode, any key for normal mode." << endl;
+                cout << "Enter 1 for parking mode, 2 for hardware demo or any key for normal mode." << endl;
                 cin >> menuChoice;
                 
             
@@ -143,7 +143,7 @@ namespace msv {
                 // Design your control algorithm here depending on the input data from above.
 
                 /* Normal driving mode, car handles overtaking and intersections */
-                if(menuChoice != 1){
+                if(menuChoice != 1  && menuChoice != 2){
 
                 /* changes steering angle used when overtaking based on the current angle */
               
@@ -251,7 +251,7 @@ namespace msv {
                             overtakingState = 0;  
                         }      
                     
-                }        
+                }      
             }                
         /****************************** parking control *****************************/
                 if(menuChoice == 1){
@@ -346,14 +346,64 @@ namespace msv {
                                 break;
                         }
                 } 
+         /****************************** proxy / hardware deḿo code ******************************/
+                if(menuChoice == 2){
+                    doLaneFollowing = false;
+                    switch(demoState){
+                        case 0:
+                        speed = 1;
+                        desiredSteeringWheelAngle = 0;
+                        delay ++;
+                        if(delay >= 100){
+                            demoState = 1;
+                            delay = 0;
+                        }
+                        break;
+                        case 1:
+                        speed = 0;
+                        delay ++;
+                        if(delay >= 100){
+                            demoState = 2;
+                            delay = 0;
+                        }
+                        break;
+                        case 2:
+                        speed = -1;
+                        delay ++;
+                        if(delay >= 100){
+                            demoState = 3;
+                            delay = 0;
+                        }
+                        break;
+                        case 3:
+                        speed = 1;
+                        desiredSteeringWheelAngle = -25;
+                        delay ++;
+                        if(delay >= 100){
+                            demoState = 4;
+                            delay = 0;
+                        }
+                        break;
+                        case 4:
+                        desiredSteeringWheelAngle = 25;
+                        delay ++;
+                        if(delay >= 100){
+                            speed = 0;
+                            desiredSteeringWheelAngle = 0;
+                            delay = 0;
+                            demoState = 0;
+                        }
+                        break;
+                    }
+                }
+        /************ end of demo ************/
                 
                if(doLaneFollowing && canFollowLane){
                     desiredSteeringWheelAngle = laneFollowAngle;
-                  //  passingObs ? speed = 0.4 : speed = 0.8;
-                    speed = 0.6;//spd.getSpeedData();
+                    speed = 0.6;
                     state = "normal driving";
                } 
-               if(inSimulator){
+               if(!inSimulator){
                 vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
                    if (laneFollowAngle < 0 ) {      
                     desiredSteeringWheelAngle = laneFollowAngle -3;     
@@ -367,11 +417,7 @@ namespace msv {
                 }
                 
                 vc.setSpeed(speed);
-                // You can also turn on or off various lights:
-                vc.setBrakeLights(false);
-                vc.setLeftFlashingLights(true);
-                vc.setRightFlashingLights(true);
-
+               
                 // Create container for finally sending the data.
                 Container c(Container::VEHICLECONTROL, vc);
                 // Send container.
