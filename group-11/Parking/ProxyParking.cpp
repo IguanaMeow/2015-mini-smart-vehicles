@@ -374,7 +374,7 @@ namespace msv {
         	char str2[16];
 
 			
-			angle = sd.getExampleData();
+			angle = vc.getSteeringWheelAngle();
 			
 			printf("Angle is:  %d\n", angle);
 			
