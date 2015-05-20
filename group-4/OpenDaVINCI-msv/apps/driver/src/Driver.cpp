@@ -55,11 +55,9 @@ namespace msv {
     Driver::~Driver() {}
 
     void Driver::setUp() {
-        // This method will be called automatically _before_ running body().
     }
 
     void Driver::tearDown() {
-        // This method will be called automatically _after_ returning from body().
         VehicleControl vc;
         vc.setSpeed(0);
         vc.setSteeringWheelAngle(0);
@@ -69,34 +67,37 @@ namespace msv {
 
     float Driver::filter(float newData,float arr[]){
 
-        int temp[5];
-        for (int i = 0; i < 5; ++i)
+        float temp[3];
+        for (int i = 0; i < 3; ++i)
         {
             temp[i] = arr[i];
+
         }
-        sort(temp, temp + 5);
-        for (int i = 0; i < 4; ++i)
+        sort(temp, temp + 3);
+        for (int i = 0; i < 2; ++i)
         {   
             arr[i] = arr[i+1];
 
         }
-        arr[4] = newData;
+        arr[2] = newData;
 
-        return temp[2];
+        return temp[1];
     }
 
     // This method will do the main data processing job.
     ModuleState::MODULE_EXITCODE Driver::body()
     {
         Time *startTime = NULL;
-        bool isReversing = false;
+        //bool isReversing = false;
         bool atStopline = false;
-        float usFrontRightArr[5] = {-1};
-        float usRearRightArr[5] =  {-1};
-        float usFrontCentreArr[5] =  {-1};
-        float irFrontRightArr[5] = {-1};
-        float irRearArr[5] = {-1};
-        float irRearRightArr[5] = {-1};
+
+        float usFrontRightArr[3] = {-1};
+        float usRearRightArr[3] =  {-1};
+        float usFrontCentreArr[3] =  {-1};
+        float irFrontRightArr[3] = {-1};
+        float irRearArr[3] = {-1};
+        float irRearRightArr[3] = {-1};
+
 
         while (getModuleState() == ModuleState::RUNNING)
         {
@@ -112,8 +113,6 @@ namespace msv {
             SensorBoardData sbd = containerSensorBoardData.getData<SensorBoardData> ();
             sbd.setNumberOfSensors(6);
             
-            
-        
             float usFrontCentreData = sbd.getValueForKey_MapOfDistances(US_FrontCenter);
             float usFrontRightData = sbd.getValueForKey_MapOfDistances(US_FrontRight);
             float usRearRightData = sbd.getValueForKey_MapOfDistances(US_RearRight);
@@ -146,7 +145,7 @@ namespace msv {
             Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_1);
             SteeringData sd = containerSteeringData.getData<SteeringData> ();
 
-            double speed = 5;
+            double speed = 1;
             double steeringWheelAngle = 0.0;
 
             if(parkingMode)
@@ -196,7 +195,7 @@ namespace msv {
 
             VehicleControl vc;
 
-            // Reversing car fix.
+/*            // Reversing car fix.
             if (speed < 0 && !isReversing) {
                 Time *t = TimeFactory::getInstance().now();
 
@@ -224,7 +223,7 @@ namespace msv {
                 isReversing = false;
                 delete startTime;
                 startTime = NULL;
-            }
+            }*/
 
             vc.setSpeed(speed);
             vc.setSteeringWheelAngle(steeringWheelAngle * Constants::DEG2RAD);

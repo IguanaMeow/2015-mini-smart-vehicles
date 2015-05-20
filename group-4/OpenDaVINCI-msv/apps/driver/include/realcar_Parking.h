@@ -7,13 +7,15 @@ namespace msv {
         public:
             Parking();
             void doParking(double&, double&, float[]);
+
         private:
             int step;
             bool hasGap(float, float);
-            bool canTurnRight(float);
-            bool canTurnLeft(float,float);
-            bool goForward(float);
-            bool stop(float,float,float);
+            bool canBackRight(float,float);
+            bool canGoBack(float);
+            bool canForwardRight(float);
+            bool stop(float);
+            //bool stop(float, float);
     };
 }
 #endif /*PARKING_H_*/
