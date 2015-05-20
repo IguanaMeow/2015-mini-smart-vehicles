@@ -33,9 +33,12 @@ static Thread *ThreadSteering = NULL;
 #define TIM3_CHANNEL3 2
 #define TIM3_CHANNEL4 3
 
-static int steeringServo = 0; // 1265 mapping required 
+static int steeringServo = CENTER_STEERING + (45 * 11.75) ;
 static int desiredSpeed = NO_ACCELERATION;
 static int cut_speed = 0;
+
+extern icucnt_t last_width_CH0, last_period_CH0;
+extern icucnt_t last_width_CH1, last_period_CH1;
 
 // Configuration for the PWM output.
 static PWMConfig pwmConfiguration = {
@@ -112,10 +115,18 @@ static msg_t Thread_Acceleration(void *arg) {
 
     while (TRUE) {
 
-        if (cut_speed) {
-            pwmEnableChannel(&PWMD3, TIM3_CHANNEL3, 1500);
+        if (last_width_CH1 >= 10) {
+            if (last_width_CH1 == 16) {
+                pwmEnableChannel(&PWMD3, TIM3_CHANNEL3, 1500);
+            } else {
+                pwmEnableChannel(&PWMD3, TIM3_CHANNEL3, ((last_width_CH1 - 12) * (1000/9)) + 1000 ); //steeringServo);
+            }
         } else {
-            pwmEnableChannel(&PWMD3, TIM3_CHANNEL3, desiredSpeed);
+            if (cut_speed) {
+                pwmEnableChannel(&PWMD3, TIM3_CHANNEL3, 1500);
+            } else {
+                pwmEnableChannel(&PWMD3, TIM3_CHANNEL3, desiredSpeed);
+            }
         }
 
         chThdSleepMilliseconds(10);  
@@ -134,7 +145,12 @@ static msg_t Thread_Steering(void *arg) {
  
     while (TRUE) {
    
-        pwmEnableChannel(&PWMD3, TIM3_CHANNEL4, steeringServo); //steeringServo);
+        if (last_width_CH1 >= 10) {
+            int new_steering = CENTER_STEERING +  (((last_width_CH0 - 11) * 11.25) * 11.75);
+            pwmEnableChannel(&PWMD3, TIM3_CHANNEL4, (new_steering > CENTER_STEERING) ? new_steering : CENTER_STEERING);
+        } else {
+            pwmEnableChannel(&PWMD3, TIM3_CHANNEL4, steeringServo);
+        }
         chThdSleepMilliseconds(10);
 
     }

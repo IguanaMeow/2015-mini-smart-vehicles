@@ -215,6 +215,21 @@ void prepareDataFeed(void) {
         //}
         myData.length += i;
     }
+
+    if (0) {
+        int8_t data[3];
+        getRCReceiverData(data);
+
+        chsprintf(buffer, "[RC(%d;%d)]$", data[0], data[1]);
+        for(i = 0; i < 50; i++) {
+            if (buffer[i] != '$')
+                myData.payload[myData.length + i] = buffer[i];
+            else
+                break;
+
+            }
+        myData.length += i;
+    }
 }
 
 void produceDataForHost_WithoutConsumption(DataT *ptrToDataForHost, int maxBufferLength) {
