@@ -68,18 +68,16 @@ namespace msv {
 
             virtual void tearDown();
             
-            const int followLane;
-            const int turnOut;
-            const int straighten;
-            const int turnBack;
-            int curve;
-            int counter;
-            double steering;
-            int straCount;
-            int straCounter;
-            int sensor;
-            double prevHeading;
-            double newHeading;
+            const int m_followLane;
+            const int m_turnOut;
+            const int m_straighten;
+            const int m_turnBack;
+            int m_counter;
+            double m_steering;
+            int m_straCounter;
+            int m_sensor;
+            double m_carLength;
+            int m_speed;
 
     };
 
