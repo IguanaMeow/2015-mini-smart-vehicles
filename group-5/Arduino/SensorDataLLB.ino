@@ -1,7 +1,10 @@
 #include <Wire.h>
- 
+
+// address of srf08 ultrasonic sensor 
 #define srfAddress1 0x73
-#define srfAddress2 0x70
+// digital pins used to connect srf04 ultrasound sensor
+int trigPin = 2;   
+int echoPin= 3; 
 
 // analog pin used to connect the sharp sensor
 int irPin1 = 0;
@@ -18,7 +21,7 @@ String us1_str, us2_str;
 String us1_data, us2_data;
 
 int distance;
-float val;
+long val, duration;
 String sensorData, netString;
 
 
@@ -26,6 +29,9 @@ String sensorData, netString;
 void setup(){
   Wire.begin();
   Serial.begin(9600); 
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+ 
   delay(100);  
 }
  
@@ -46,8 +52,8 @@ void loop(){
   ir3_data = fourDigit(ir3_str);
   
   // read ultrasonic sensors
-  us1_value = getUltrasonic(srfAddress1);
-  us2_value = getUltrasonic(srfAddress2);
+  us1_value = getUltrasonic1(srfAddress1);
+  us2_value = getUltrasonic2(trigPin, echoPin);
    
   //convert values to string
   us1_str = String(us1_value);
@@ -57,13 +63,13 @@ void loop(){
   us1_data = fourDigit(us1_str);
   us2_data = fourDigit(us2_str);
   
-  sensorData = ir1_data + " " + ir2_data + " " + ir3_data + " " + us1_data + " " + us2_data + ",";
+  sensorData = ir1_data + " " + ir2_data + " " + ir3_data + " " + us1_data + " " + us2_data;
   
   
   //encode sensor data to netstring
   netString = String(sensorData.length()) + ":" + sensorData + ",";
   Serial.println(netString);
-  delay(100);
+  delay(1000);
 }
 
 
@@ -76,13 +82,13 @@ int getInfrared(int pin){
 }
 
 
-int getUltrasonic(int srfAddress){
+int getUltrasonic1(int srfAddress){
   // source: http://www.arduino.cc/en/Tutorial/SFRRangerReader  
   Wire.beginTransmission(srfAddress);             
   Wire.write(byte(0x00));                             
   Wire.write(0x51);                                
   Wire.endTransmission();
-  delay(10);                                     
+  delay(100);                                     
   Wire.beginTransmission(srfAddress);            
   Wire.write(byte(0x02));                           
   Wire.endTransmission();
@@ -95,6 +101,20 @@ int getUltrasonic(int srfAddress){
   distance = (highByte << 8) + lowByte;              // Put them together
  
   return(distance);                                  // Returns Range
+}
+
+int getUltrasonic2(int trigPin, int echoPin){
+  long duration,  cm;
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  duration = pulseIn(echoPin, HIGH);
+  // convert the time into a distance
+  distance = duration/58;
+  return distance;
 }
 
 String fourDigit(String str){
