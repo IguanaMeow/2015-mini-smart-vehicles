@@ -11,7 +11,7 @@ unsigned long diff;
 int IR_front_right, IR_rear_right, IR_rear;
 int time;
 volatile int pulses = 0;
-double traveledDistance = 0;
+float traveledDistance = 0;
 
 // this constant won't change.  It's the pin number
 // of the sensor's output:
@@ -52,6 +52,8 @@ void loop()
    pulses = 0;
    
    String format = "";
+   char TempString[100];
+   dtostrf(traveledDistance,2,2,TempString);
    
      // IRT, IRB & IRR
     IR_front_right = IR_Distance(FRONT_RIGHT_IR);
@@ -69,7 +71,7 @@ void loop()
      String IRT = String(IR_front_right);
      String IRB = String(IR_rear_right);
      String IRR = String(IR_rear);
-     String distance = String(traveledDistance);
+     String distance = String(TempString);
 
       
      format = FUS + " " + FRUS + " " + IRT + " " + IRB + " " + IRR + " " + distance + " ";
