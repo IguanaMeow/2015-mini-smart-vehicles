@@ -109,7 +109,7 @@ namespace msv {
 			    m_sharedImageMemory->unlock();
 
 			    // Mirror the image.
-			    //cvFlip(m_image, 0, -1);
+			    cvFlip(m_image, 0, -1);
 
 			    retVal = true;
 		    }
@@ -168,10 +168,10 @@ namespace msv {
 
 		for (i= 0; i<2; i++){
 			diff_1[i] = abs(diff[i] - diff[i+1]);
-			//if (diff_1[i]>7) return false;
+			if (abs(diff_1[i])>7) return false;
 		}
 
-		return (abs(diff_1[0] - diff_1[1])> 5 || diff_1[0]*diff_1[1] < 0) ? false : true;
+		return !(abs(diff_1[0] - diff_1[1])> 5 || diff_1[0]*diff_1[1] < 0);
 
 	}
 
@@ -329,7 +329,7 @@ namespace msv {
 		if (checkLane(left, w) == 1 && checkLane(right,w) == 1){ //No lane detected
 
 			//If car is going quite straight, possibly car is at intersection, go straight
-			if (abs(steer)< 0.02) sd.setExampleData(0);
+			if (abs(steer)< 2.5*Constants::DEG2RAD) sd.setExampleData(0);
 			//else do what it did before (for seeing no right lane)
 			else sd.setExampleData(steer + 0.01*steer );
 			spd.setSpeedData(1);
@@ -339,7 +339,7 @@ namespace msv {
 			cout<<"Mode 1: Detect no line"<<endl;
 
 		} else if (right[3] == w/2 && right[2] == w/2 && right[1] != w/2 && right[0] != w/2
-				   && abs(steer) < 0.02){
+				   && abs(steer) < 2.1*Constants::DEG2RAD){
 
 			//Try to detect intersection
 			//Try to detect intersection line
@@ -370,7 +370,7 @@ namespace msv {
 		} else if(checkLane(left,w) == 3 && checkLane(right,w) != 2) {
 			//When left is not detected and we can only get some data from right
 
-			if (abs(steer) < 0.001 ) {
+			if (abs(steer) < 2.1*Constants::DEG2RAD ) {
 				//If car is going quite straight, it probably in the middle of intersection
 				//sd.setExampleData(0);
 				cout << "Mode 11: Middle of intersection" << endl;
@@ -383,7 +383,7 @@ namespace msv {
 					sd.setExampleData(steer);
 				} else {
 					cout << "Angle: " << angle << endl;
-					sd.setExampleData(abs(angle) > 1.5 ? steer : angle / 4);
+					sd.setExampleData(abs(angle) > 1.5 ? steer : angle / 3.5);
 				}
 				cout << "Mode 12: Follow left side" << endl;
 			}
@@ -411,7 +411,7 @@ namespace msv {
 			//This case, either left or right lane is fully detected
 			laneDetected = true;
 
-			if (checkLane(right, w) == 2 && straightLine(right, y_pos) == true) {
+			if (checkLane(right, w) == 2 && straightLine(right, y_pos)) {
 				//right lane detected and is a straight line
 
 				if ((right[3] == dist[1] || dist[0] == 0)
@@ -428,7 +428,7 @@ namespace msv {
 
 					//else balance itself
 					int diff = right[3] - dist[1];
-					sd.setExampleData(diff /(abs(diff) < 70? 30: 15) * Constants::DEG2RAD);
+					sd.setExampleData(diff /(abs(diff) < 70? 25: 15) * Constants::DEG2RAD);
 					spd.setSpeedData(1.5);
 					ldd.setLongDistanceData(dist[0]);
 					sdd.setShortDistanceData(dist[1]);
@@ -436,7 +436,7 @@ namespace msv {
 
 				}
 
-			} else if (checkLane(left, w) == 2 && straightLine(left, y_pos) == true) {
+			} else if (checkLane(left, w) == 2 && straightLine(left, y_pos)) {
 				//left lane detected and is a straight line
 
 				if ((left[3] == dist[1] || dist[0] == 0)
@@ -453,7 +453,7 @@ namespace msv {
 
 					//Balance the car
 					int diff = dist[1] - abs(left[3]);
-					sd.setExampleData(diff /(abs(diff) < 70? 30: 15) * Constants::DEG2RAD);
+					sd.setExampleData(diff /(abs(diff) < 70? 25: 15) * Constants::DEG2RAD);
 					spd.setSpeedData(1.5);
 					ldd.setLongDistanceData(dist[0]);
 					sdd.setShortDistanceData(dist[1]);
