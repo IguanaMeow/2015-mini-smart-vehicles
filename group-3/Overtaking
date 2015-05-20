@@ -135,7 +135,7 @@ namespace msv {
                     
                     
                     //int Lanedetectionmode=1;
-            //   double steeringAngle=sd.getExampleData();
+                   int steeringAngle=sd.getExampleData();
 
 
 
@@ -150,8 +150,8 @@ namespace msv {
 
                   vc.setSpeed(2);
   //Overtaking at straight line
-              //  if ((steeringAngle>=-0.00000001)&& (steeringAngle<=0.00000001)){
-             /*   if (ultraSonicFrontCenter < 6) {
+                if ((steeringAngle>=-2)&& (steeringAngle<=2)){
+                if (ultraSonicFrontCenter < 6) {
                          Overtakingmode=1;
                         
                 }
@@ -178,11 +178,12 @@ namespace msv {
                 	}
                  Overtakingmode=0;
                 	
-                } */
+                } 
                 
-            //   }
+               }
+               else if( steeringAngle>=-10) {
               //Overtaking at curve.// need to fix steering data at lanedetector and get them at overtaking. Else it doesnt work.
-              if((ultraSonicFrontCenter<8)&&(infraredFrontRight<0)&&(infraredRearRight<0)){
+              if((ultraSonicFrontCenter<5)&&(infraredFrontRight<0)&&(infraredRearRight<0)){
                  Overtakingmode=1;
               
                 }
@@ -206,7 +207,7 @@ namespace msv {
                 }
                 Overtakingmode=0;
                 }
-
+                }
                // else if(steeringAngle
 
 
