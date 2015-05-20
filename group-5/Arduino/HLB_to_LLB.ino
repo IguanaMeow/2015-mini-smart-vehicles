@@ -5,8 +5,8 @@ int str = 90;
 String input;
 
 void setup() { 
-  esc.attach(9);
-  servo.attach(8);
+  esc.attach(8);
+  servo.attach(9);
   Serial.begin(9600); 
   
  Serial.println(input.toInt()); 
