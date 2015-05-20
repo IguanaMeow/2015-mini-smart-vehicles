@@ -74,7 +74,6 @@ namespace msv {
             const int m_turnBack;
             int m_counter;
             double m_steering;
-            int m_straCounter;
             int m_sensor;
             double m_carLength;
             int m_speed;
