@@ -60,23 +60,16 @@ namespace msv {
     {
       line( img, start_point, end_Point, Scalar( 255, 0, 0),  2, 8);
     }
-/* void p5_6( Mat img, Point start_point, Point end_Point ) 
-    {
-      line( img, start_point, end_Point, Scalar( 255, 0, 250),  2, 8);
-    }
-void p6_7( Mat img, Point start_point, Point end_Point ) 
-    {
-      line( img, start_point, end_Point, Scalar( 128, 0, 128),  2, 8);
-   }  */
-void p5_7( Mat img, Point start_point, Point end_Point ) 
+
+    void p5_7( Mat img, Point start_point, Point end_Point ) 
     {
       line( img, start_point, end_Point, Scalar( 128, 0, 128),  2, 8);
     }
 // distance between p5  and p7
-double Distance(double dX0, double dY0, double dX1, double dY1)
-{
+    double Distance(double dX0, double dY0, double dX1, double dY1)
+    {
     return sqrt((dX1 - dX0)*(dX1 - dX0) + (dY1 - dY0)*(dY1 - dY0));
-}
+    }
     LaneDetector::LaneDetector(const int32_t &argc, char **argv) : ConferenceClientModule(argc, argv, "lanedetector"),
         m_hasAttachedToSharedImageMemory(false),
         m_sharedImageMemory(),
@@ -153,7 +146,7 @@ double Distance(double dX0, double dY0, double dX1, double dY1)
     void LaneDetector::processImage() {
 
 
-     double count_green = 0.0;
+    double count_green = 0.0;
     double count_yellow = 0.0;
   // double   count_inter=0.0;// for intersection
   // double  count_inter2=0.0;
@@ -162,6 +155,7 @@ double Distance(double dX0, double dY0, double dX1, double dY1)
     double count_green3 = 0.0;
     double count_green4 = 0.0;
     double count_green_medel = 0.0;
+   
     // Example: Show the image.
         if (m_debug) {
             if (m_image != NULL) {
@@ -173,7 +167,7 @@ double Distance(double dX0, double dY0, double dX1, double dY1)
         //TODO: Start here.
 
         Mat img, dst, cdst;
-        img = cvarrToMat(m_image, true);
+        img = cvarrToMat(m_image, true); //Convet the IplImage to Mat
         
         //int centerLine = img.cols/2;
         int rows = img.rows;
@@ -202,7 +196,7 @@ double Distance(double dX0, double dY0, double dX1, double dY1)
         vector<Vec4i> lines;
        HoughLinesP(dst, lines, 1, CV_PI/180, 8, 10, 10);
 
-        //Remove lines 
+        //Remove lines unwanted upper half lines on the image
         for(size_t i = lines.size(); i > 0; i--) {
             Vec4i l = lines[i -1];
             if(l[1] < img.rows/2 && l[3] < img.rows/2) {
@@ -218,73 +212,76 @@ double Distance(double dX0, double dY0, double dX1, double dY1)
         }
 
         //Draw center line
-       // line(cdst, Point(center, 0), Point(center, img.rows), Scalar(255,0,0), 2, 8);
-
         vertical_Line(cdst, p1, p2);
 
 
         //horizental_green_Line
-  for (int j=p3.x; j<img.cols; j++)
-        {  int i=p3.y/1.5;
-  // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
-        if(cdst.at<Vec3b>(i,j)[0] == 255 && cdst.at<Vec3b>(i,j)[1] == 255 && cdst.at<Vec3b>(i,j)[2]  ==255)
+  for (int j = p3.x; j < img.cols; j++)
+        { int i = p3.y/1.5;
+  
+  // start drawing the horizental_green_Line until it detect a white color(long lane),by then stop drawing
+        if(cdst.at<Vec3b>(i,j)[0] == 255 && cdst.at<Vec3b>(i,j)[1] == 255 && cdst.at<Vec3b>(i,j)[2]  == 255)
    {
-   p5.x=j;
-   p5.y=i;
+   p5.x = j;
+   p5.y = i;
         break; }
 
-                else{cdst.at<Vec3b>(i,j)[0] = 0;
+           else{cdst.at<Vec3b>(i,j)[0] = 0;
                 cdst.at<Vec3b>(i,j)[1] = 200;
                 cdst.at<Vec3b>(i,j)[2] = 0;
         
         count_green1++; }
   
-//cut<<count_green<<endl; 
            
         }
-  for (int j=p3.x; j<img.cols; j++)
-        {  int i=p3.y/1.4;
-  // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
-        if(cdst.at<Vec3b>(i,j)[0] == 255 && cdst.at<Vec3b>(i,j)[1] == 255 && cdst.at<Vec3b>(i,j)[2]  ==255)
+ 
+ //horizontal_green_Line2
+  for (int j = p3.x; j < img.cols; j++)
+        { int i = p3.y/1.4;
+ 
+  // start drawing the horizental_green_Line2 until it detect a white color(long lane),by then stop drawing
+        if(cdst.at<Vec3b>(i,j)[0] == 255 && cdst.at<Vec3b>(i,j)[1] == 255 && cdst.at<Vec3b>(i,j)[2]  == 255)
    {
-   p5.x=j;
-   p5.y=i;
+   p5.x = j;
+   p5.y = i;
         break; }
 
-                else{cdst.at<Vec3b>(i,j)[0] = 0;
+           else{cdst.at<Vec3b>(i,j)[0] = 0;
                 cdst.at<Vec3b>(i,j)[1] = 200;
                 cdst.at<Vec3b>(i,j)[2] = 0;
         
         count_green2++; }
-  
-//cut<<count_green<<endl; 
            
         }
-  for (int j=p3.x; j<img.cols; j++)
-        {  int i=p3.y/1.2;
-  // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
-        if(cdst.at<Vec3b>(i,j)[0] == 255 && cdst.at<Vec3b>(i,j)[1] == 255 && cdst.at<Vec3b>(i,j)[2]  ==255)
+  
+  //horizontal_green_Line3
+  for (int j = p3.x; j < img.cols; j++)
+        { int i = p3.y/1.2;
+  
+  // start drawing the horizental_green_Line3 until it detect a white color(long lane),by then stop drawing
+        if(cdst.at<Vec3b>(i,j)[0] == 255 && cdst.at<Vec3b>(i,j)[1] == 255 && cdst.at<Vec3b>(i,j)[2]  == 255)
    {
-   p5.x=j;
-   p5.y=i;
+   p5.x = j;
+   p5.y = i;
         break; }
 
-                else{cdst.at<Vec3b>(i,j)[0] = 0;
+           else{cdst.at<Vec3b>(i,j)[0] = 0;
                 cdst.at<Vec3b>(i,j)[1] = 200;
                 cdst.at<Vec3b>(i,j)[2] = 0;
         
         count_green3++; }
   
-//cut<<count_green<<endl; 
-           
         }
-  for (int j=p3.x; j<img.cols; j++)
-        {  int i=p3.y/1.1;
-  // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
-        if(cdst.at<Vec3b>(i,j)[0] == 255 && cdst.at<Vec3b>(i,j)[1] == 255 && cdst.at<Vec3b>(i,j)[2]  ==255)
+  
+  //horizontal_green_Line4
+  for (int j = p3.x; j < img.cols; j++)
+        { int i = p3.y/1.1;
+ 
+  // start drawing the horizental_green_Line4 until it detect a white color(long lane),by then stop drawing
+        if(cdst.at<Vec3b>(i,j)[0] == 255 && cdst.at<Vec3b>(i,j)[1] == 255 && cdst.at<Vec3b>(i,j)[2]  == 255)
    {
-   p5.x=j;
-   p5.y=i;
+   p5.x = j;
+   p5.y = i;
         break; }
 
                 else{cdst.at<Vec3b>(i,j)[0] = 0;
@@ -293,68 +290,69 @@ double Distance(double dX0, double dY0, double dX1, double dY1)
         
         count_green4++; }
   
-//cut<<count_green<<endl; 
            
         }
 
-        for (int j=p3.x; j<img.cols; j++)
-        {  int i=p3.y/0.85;
-  // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
-        if(cdst.at<Vec3b>(i,j)[0] == 255 && cdst.at<Vec3b>(i,j)[1] == 255 && cdst.at<Vec3b>(i,j)[2]  ==255)
+//horizontal_green_Line
+  for (int j = p3.x; j < img.cols; j++)
+        { int i = p3.y/0.85;
+  
+//start drawing the horizental_green_Line until it detect a white color(long lane),by then stop drawing
+        if(cdst.at<Vec3b>(i,j)[0] == 255 && cdst.at<Vec3b>(i,j)[1] == 255 && cdst.at<Vec3b>(i,j)[2]  == 255)
    {
-   p5.x=j;
-   p5.y=i;
+   p5.x = j;
+   p5.y = i;
         break; }
 
-                else{cdst.at<Vec3b>(i,j)[0] = 0;
+           else{cdst.at<Vec3b>(i,j)[0] = 0;
                 cdst.at<Vec3b>(i,j)[1] = 200;
                 cdst.at<Vec3b>(i,j)[2] = 0;
         
         count_green++; }
   
-//cut<<count_green<<endl; 
            
         }
-for (int j=p3.x; j<img.cols; j++)
-        {  int i=p3.y/0.8;
-  // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
+
+  //horizontal_green_Line_medel
+  for (int j = p3.x; j < img.cols; j++)
+        { int i = p3.y/0.8;
+ 
+  // start drawing the horizental_green_Line_medel until it detect a white color(long lane),by then stop drawing
         if(cdst.at<Vec3b>(i,j)[0] == 255 && cdst.at<Vec3b>(i,j)[1] == 255 && cdst.at<Vec3b>(i,j)[2]  ==255)
-         { p6.x=j;
-          p6.y=i;  
+         { p6.x = j;
+          p6.y = i;  
         break; }
 
-                else{cdst.at<Vec3b>(i,j)[0] = 0;
+           else{cdst.at<Vec3b>(i,j)[0] = 0;
                 cdst.at<Vec3b>(i,j)[1] = 200;
                 cdst.at<Vec3b>(i,j)[2] = 0;
         
-        count_green_medel++;
-   }
-//cut<<count_green<<endl; 
-           
-        }
-//horizental_yellow_Line
-    for (int j=p3.x; j<img.cols; j++)
-        {  int i=p3.y/0.75;
+        count_green_medel++;}
+
+    }
+
+  //horizental_yellow_Line
+  for (int j = p3.x; j < img.cols; j++)
+        { int i = p3.y/0.75;
+  
   // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
-      if(cdst.at<Vec3b>(i,j)[0] == 255 && cdst.at<Vec3b>(i,j)[1] == 255 && cdst.at<Vec3b>(i,j)[2]  ==255)
-      {p7.x=j;
-       p7.y=i;break; }
+      if(cdst.at<Vec3b>(i,j)[0] == 255 && cdst.at<Vec3b>(i,j)[1] == 255 && cdst.at<Vec3b>(i,j)[2]  == 255)
+      {p7.x = j;
+       p7.y = i;break;}
 
                else{ cdst.at<Vec3b>(i,j)[0] = 0;
                 cdst.at<Vec3b>(i,j)[1] = 255;
                 cdst.at<Vec3b>(i,j)[2] = 255;
         
-        count_yellow++; }
+        count_yellow++;}
   
-//cut<<count_green<<endl; 
            
-        }
+    }
 
-// counter_inter 
+  // counter_inter 
  
-p5_7(cdst, p5, p7 ) ;
-   //  p5_6(cdst, p5, p6 ) ;
-    // p6_7(cdst, p6, p7 ) ;
+        p5_7(cdst, p5, p7 ) ;
+   
         //Show Image
         imshow("Lane Detection", cdst);
 
@@ -370,72 +368,67 @@ p5_7(cdst, p5, p7 ) ;
 
         // Here, you see an example of how to send the data structure SteeringData to the ContainerConference. This data structure will be received by all running components. In our example, it will be processed by Driver. To change this data structure, have a look at Data.odvd in the root folder of this source.
         SteeringData sd;
-           double Pink_line =Distance(p5.x, p5.y, p7.x, p7.y);
+        double purple_Line = Distance(p5.x, p5.y, p7.x, p7.y);
 
 
-    cout<< "count_green/count_yellow " <<count_green/count_yellow<<endl;
-    cout<< "count_green1/count_green2 " <<count_green1/count_green2<<endl;
-    cout<< "count_green3/count_green4 " <<count_green3/count_green4<<endl;
+        cout<< "count_green/count_yellow " <<count_green/count_yellow<<endl;
+        cout<< "count_green1/count_green2 " <<count_green1/count_green2<<endl;
+        cout<< "count_green3/count_green4 " <<count_green3/count_green4<<endl;
     
-cout<<count_green<<endl;
-cout<<count_yellow<<endl;
-cout<<angle<<endl;
-cout << "Pink_line " <<      Pink_line  << endl;
+        cout<<count_green<<endl;
+        cout<<count_yellow<<endl;
+        cout<<angle<<endl;
+        cout << "Purple Line "<< purple_Line << endl;
 
 
 
 
+    if(( count_green/count_yellow) > 0.81 && (count_green/count_yellow) < 0.911 ) {
+        speed = 8;
+        angle = 0;
 
+    cout<<"Straight Road "<<endl;}
+    
+    else if ((count_green/count_yellow) < 0.811 && (count_green/count_yellow)  > 0.64) {
+      //usleep(100000);
+     //double m=(atan2(p5.y-p7.y, p5.x-p7.x)* 180 / PI);
+    //double n=(atan2(p6.y-p7.y, p6.x-p7.x)* 360 / PI);
 
-  ///////////////////////////////////////////////////////////////////////                ////////////////////////77
+        speed = 0.5;
+        angle = -9.5;  
+    
+    cout<<"Left Curve"<<endl;}
 
-
-if(( count_green/count_yellow)> 0.81 && (count_green/count_yellow)< 0.911 ) {
-     speed=8;
-    angle=0;
-
-    cout<<"STRAIGHT"<<endl;}
-else if ((count_green/count_yellow)< 0.811 && (count_green/count_yellow)> 0.64) {
-     //usleep(100000);
-   // double m=(atan2(p5.y-p7.y, p5.x-p7.x)* 180 / PI);
-  //  double n=(atan2(p6.y-p7.y, p6.x-p7.x)* 360 / PI);
-
-     speed=0.5;
-     angle=-9.5;  
-  cout<<" LEFT  "<<endl;}
-
-/*else if(Pink_line>100 && Pink_line< 55){
+    /*else if(Pink_line>100 && Pink_line< 55){
     speed=2;
     angle=0;
 
     cout<<"int 2"<<endl;}*/
-else if(((count_green/count_yellow)> 0.999 || (count_green3/count_green4)> 0.999) && (count_green1/count_green2< 1)){
    
-       speed=0.5;    
-       angle=0 ;  
-  cout<<" intersection "<<endl;}
-
-else if((count_green/count_yellow)> 0.91 && (count_green/count_yellow)< 0.999){
-   
-speed=0.5;
-
-
+    else if(((count_green/count_yellow) > 0.999 || (count_green3/count_green4) > 0.999) && (count_green1/count_green2 < 1)){
+         speed=0.5;    
+         angle=0 ;  
     
-       angle=13 ;  
-  cout<<" right "<<endl;}
+    cout<<"Intersection "<<endl;}
 
-//else if((count_green>319 && count_yellow>319)){
-  //  speed=2;
-    //angle=0;
+    else if((count_green/count_yellow) > 0.91 && (count_green/count_yellow) < 0.999){
+        speed = 0.5;
+        angle = 13 ;  
+  
+    cout<<"Right Curve "<<endl;}
+
+ //else if((count_green>319 && count_yellow>319)){
+    //speed=2;
+        //angle=0;
 
     //cout<<"int 2"<<endl;}
 
 
 
-//else {
+ //else {
 
-//speed=8;
-//angle=0;  
+//      speed=8;
+//      angle=0;  
 // }
 
 
@@ -445,7 +438,7 @@ speed=0.5;
   
    // if(angle > 14){
 
-   // angle= angle-1.0;
+   // angle= angle -1.0;
     sd.setSpeedData(speed);
     sd.setExampleData(angle);
 //}
@@ -456,6 +449,8 @@ speed=0.5;
 //}
   //  sd.setSpeedData(speed);
    // sd.setExampleData(angle);
+   
+   
         // Create container for finally sending the data.
         Container c(Container::USER_DATA_1, sd);
         // Send container.
