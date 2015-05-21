@@ -116,7 +116,6 @@ namespace msv {
                             }
                         }
                                              
-
                          if (park == true && rearObjectDetected == false){
                             cout << "Park now true!" << endl;
                             cout << "AbsPath in park-mode = " << vd.getAbsTraveledPath() << endl;
