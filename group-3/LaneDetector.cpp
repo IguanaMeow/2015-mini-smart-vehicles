@@ -174,7 +174,7 @@ Point DrawingLines(Mat img , Point point,bool right)
         //End of Emilys Part
         Point myPointStart[4]; // array of startpoints
         Point myPointRightEnd[4]; // array of rightEnd Point
-        Point myPointLeftEnd[4] // array of LeftEnd Point
+        Point myPointLeftEnd[4]; // array of LeftEnd Point
         for(int i=1; i<4;i++)
         {
         	myPointStart[0].x=cols/2;  // middle of the img
