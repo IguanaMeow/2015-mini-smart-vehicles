@@ -62,6 +62,7 @@ ModuleState::MODULE_EXITCODE Driver::body() {
 		BOTH_IR_SEEN_OBSTACLE,
 		FRONT_IR_LESS_THAN_BACK,
 		FRONT_IR_DETECTS_NOTHING,
+        ULTRASONIC_DETECT_NOTHING,
 		CALL_LANEDETECTOR
 	};
 	State state = FORWARD;
@@ -152,24 +153,24 @@ ModuleState::MODULE_EXITCODE Driver::body() {
 					&& sbd.getValueForKey_MapOfDistances(2) < 1.7
 					&& sbd.getValueForKey_MapOfDistances(0) > 1.25
 					&& sbd.getValueForKey_MapOfDistances(0) < 1.7) {
-				state = FRONT_IR_LESS_THAN_BACK;
-			}
-
-			break;
-
-		case FRONT_IR_LESS_THAN_BACK:
-			cout << "STATE: FRONT_IR_LESS_THAN_BACK" << endl;
-			// GO STRAIGHT AHEAD UNTIL TOP RIGHT ULTRASONIC RETURN -1
-			vc.setSteeringWheelAngle(0);
-			vc.setSpeed(1.0);
-			if (sbd.getValueForKey_MapOfDistances(0) < 0) {
 				state = FRONT_IR_DETECTS_NOTHING;
 			}
 
 			break;
 
 		case FRONT_IR_DETECTS_NOTHING:
-			cout << "STATE: FRONT_IR_DETECTS_NOTHING" << endl;
+			cout << "STATE: FRONT IR DETECTS NOTHING" << endl;
+			// GO STRAIGHT AHEAD UNTIL TOP RIGHT INFRARED RETURN -1
+			vc.setSteeringWheelAngle(0);
+			vc.setSpeed(1.0);
+			if (sbd.getValueForKey_MapOfDistances(0) < 0) {
+				state = ULTRASONIC_DETECT_NOTHING;
+			}
+
+			break;
+
+		case ULTRASONIC_DETECT_NOTHING:
+			cout << "STATE: ULTRASONIC DETECT NOTHING" << endl;
 			// FRONT IR DETECTS NOTHING
 			vc.setSteeringWheelAngle(25);
 			vc.setSpeed(1.0);
