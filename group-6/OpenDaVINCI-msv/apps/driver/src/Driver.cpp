@@ -17,6 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+
 #include <stdio.h>
 #include <math.h>
 
@@ -38,74 +39,100 @@ namespace msv {
         using namespace core::data::control;
         using namespace core::data::environment;
 
+        double overtaking = 0;  // time when we started overtaking
+        bool prevFound;  // was there an object found last loop?
+        double speed = 2,
+            angle = 0;
+
         Driver::Driver(const int32_t &argc, char **argv) :
-            ConferenceClientModule(argc, argv, "Driver") {
+          ConferenceClientModule(argc, argv, "Driver") {
         }
 
         Driver::~Driver() {}
 
         void Driver::setUp() {
-            // This method will be call automatically _before_ running body().
+          
         }
 
-        void Driver::tearDown() {
-            // This method will be call automatically _after_ return from body().
-        }
+        void Driver::tearDown() {}
 
         // This method will do the main data processing job.
         ModuleState::MODULE_EXITCODE Driver::body() {
 
-            while (getModuleState() == ModuleState::RUNNING) {
+          while (getModuleState() == ModuleState::RUNNING) {
                 // In the following, you find example for the various data sources that are available:
 
-                // 1. Get most recent vehicle data:
-                Container containerVehicleData = getKeyValueDataStore().get(Container::VEHICLEDATA);
-                VehicleData vd = containerVehicleData.getData<VehicleData> ();
-                cerr << "Most recent vehicle data: '" << vd.toString() << "'" << endl;
+            Container containerSBD = getKeyValueDataStore().get(Container::USER_DATA_0);
+            SteeringData sd = getKeyValueDataStore().get(Container::USER_DATA_1).getData<SteeringData>();
 
-                // 2. Get most recent sensor board data:
-                Container containerSensorBoardData = getKeyValueDataStore().get(Container::USER_DATA_0);
-                SensorBoardData sbd = containerSensorBoardData.getData<SensorBoardData> ();
-                cerr << "Most recent sensor board data: '" << sbd.toString() << "'" << endl;
+            SensorBoardData sbd = containerSBD.getData<SensorBoardData>();
+            double distanceFront = sbd.getValueForKey_MapOfDistances(3);
+            VehicleControl vc;
 
-                // 3. Get most recent user button data:
-                Container containerUserButtonData = getKeyValueDataStore().get(Container::USER_BUTTON);
-                UserButtonData ubd = containerUserButtonData.getData<UserButtonData> ();
-                cerr << "Most recent user button data: '" << ubd.toString() << "'" << endl;
+            // not overtaking? just follow the lane
+            if((int)overtaking == 0 && (distanceFront < 0 || distanceFront > 10)) {
+                
+                angle = sd.getExampleData();
+                cout << "angle" << angle<< endl;
+                speed = 2;
 
-                // 4. Get most recent steering data as fill from lanedetector for example:
-                Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_1);
-                SteeringData sd = containerSteeringData.getData<SteeringData> ();
-                cerr << "Most recent steering data: '" << sd.toString() << "'" << endl;
+                vc.setSpeed(speed);
+                vc.setSteeringWheelAngle(angle * Constants::DEG2RAD);
 
-
-
-                // Design your control algorithm here depending on the input data from above.
-
-
-
-                // Create vehicle control data.
-                VehicleControl vc;
-
-                // With setSpeed you can set a desired speed for the vehicle in the range of -2.0 (backwards) .. 0 (stop) .. +2.0 (forwards)
-                vc.setSpeed(0);
-
-                // With setSteeringWheelAngle, you can steer in the range of -26 (left) .. 0 (straight) .. +25 (right)
-                double desiredSteeringWheelAngle = 4; // 4 degree but SteeringWheelAngle expects the angle in radians!
-                vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
-
-                // You can also turn on or off various lights:
-                vc.setBrakeLights(false);
-                vc.setLeftFlashingLights(false);
-                vc.setRightFlashingLights(true);
-
-                // Create container for finally sending the data.
                 Container c(Container::VEHICLECONTROL, vc);
-                // Send container.
                 getConference().send(c);
+                continue;
             }
 
-            return ModuleState::OKAY;
+            bool objectFound = (sbd.getValueForKey_MapOfDistances(4) > 0 &&
+                                sbd.getValueForKey_MapOfDistances(4) < 30) ||
+                               (sbd.getValueForKey_MapOfDistances(0) > 0 &&
+                                sbd.getValueForKey_MapOfDistances(0) < 30);
+
+            cout << time(0) - overtaking << endl;
+
+            // BEGINNING
+            if((int)overtaking == 0) {
+                cout <<"Enter overtaking: " << endl;
+                angle = -15;
+                speed = 0.5;
+                overtaking = time(0);
+            }
+            // RESTART LANE DETECTION 
+            else if(time(0) - overtaking > 10) {
+                cout << "turn back HEEERE! " << overtaking << " " << time(0) << endl;
+                angle = 0;
+                speed = 2;
+                if((prevFound && !objectFound) && time(0) - overtaking > 13) overtaking = 0; // this is when!!
+                angle = 12;
+                angle = sd.getExampleData();
+            }
+            // AFTER BEGINNING  
+            else if(time(0) - overtaking > 3) {
+                angle = 15;
+            }  
+
+            
+
+
+            prevFound = objectFound;
+
+            vc.setSteeringWheelAngle(angle);
+            vc.setSpeed(speed);
+
+            Container d(Container::VEHICLECONTROL, vc);
+            getConference().send(d);
+          }
+
+          return ModuleState::OKAY;
         }
 } // msv
+//                      ID Sensors
+// //                 0 = Infrared_FrontRight
+// //                 1 = Infrared_Rear
+// //                 2 = Infrared_RearRight
 
+// //                 3 = UltraSonic_FrontCenter
+// //                 4 = UltraSonic_FrontRight
+// //                 5 = UltraSonic_RearRight
+// //                  
