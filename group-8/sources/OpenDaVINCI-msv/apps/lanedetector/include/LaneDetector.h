@@ -134,9 +134,6 @@ namespace msv {
       		vector<Lines> leftList;
       		vector<Lines> validLeft;
       		vector<Lines> validRight;
-
-
-
 	};
 
 } // msv

@@ -80,30 +80,21 @@ namespace msv {
                 
 
 	        while (getModuleState() == ModuleState::RUNNING) {
-                // In the following, you find example for the various data sources that are available:
-
-                // 1. Get most recent vehicle data:
+                
+                // Get most recent vehicle data:
                 Container containerVehicleData = getKeyValueDataStore().get(Container::VEHICLEDATA);
                 VehicleData vd = containerVehicleData.getData<VehicleData> ();
                 cerr << "Most recent vehicle data: '" << vd.toString() << "'" << endl;
 
-                // 2. Get most recent sensor board data:
+                // Get most recent sensor board data:
                 Container containerSensorBoardData = getKeyValueDataStore().get(Container::USER_DATA_0);
                 SensorBoardData sbd = containerSensorBoardData.getData<SensorBoardData> ();
                 cerr << "Most recent sensor board data: '" << sbd.toString() << "'" << endl;
 
-                // 3. Get most recent user button data:
-                Container containerUserButtonData = getKeyValueDataStore().get(Container::USER_BUTTON);
-                UserButtonData ubd = containerUserButtonData.getData<UserButtonData> ();
-                cerr << "Most recent user button data: '" << ubd.toString() << "'" << endl;
-
-                // 4. Get most recent steering data as fill from lanedetector for example:
+                // Get most recent steering data as fill from lanedetector for example:
                 Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_1);
                 SteeringData sd = containerSteeringData.getData<SteeringData> ();
                 cerr << "Most recent steering data: '" << sd.toString() << "'" << endl;
-
-
-                // Design your control algorithm here depending on the input data from above.
 
                 // Create vehicle control data.
                 VehicleControl vc;
