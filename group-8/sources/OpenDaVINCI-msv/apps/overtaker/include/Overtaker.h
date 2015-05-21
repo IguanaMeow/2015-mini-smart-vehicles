@@ -76,7 +76,7 @@ namespace msv {
             double m_steering;
             int m_sensor;
             double m_carLength;
-            int m_speed;
+            double m_speed;
 
     };
 

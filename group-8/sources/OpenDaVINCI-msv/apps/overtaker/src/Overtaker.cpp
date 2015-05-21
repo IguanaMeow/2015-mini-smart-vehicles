@@ -48,8 +48,7 @@ Overtaker::Overtaker(const int32_t &argc, char **argv) :
         m_counter(0),
         m_steering(19),
         m_sensor(0),
-        m_speed(3)
-
+        m_speed(1.5)
         {}
 
 Overtaker::~Overtaker() {}
@@ -72,27 +71,17 @@ m_carLength = kv.getValue<double> ("global.carLength");
 int m_state = m_followLane;
 
 while (getModuleState() == ModuleState::RUNNING) {
-// In the following, you find example for the various data sources that are available:
 
-Container containerLaneData = getKeyValueDataStore().get(Container::USER_DATA_3);
-LaneData ld = containerLaneData.getData<LaneData> ();
-// cerr << "Most recent Lane data: '" << ld.toString() << "'" << endl;
-
-// 2. Get most recent sensor board data:
+// Setting up different containers and getting data from them.
 Container containerSensorBoardData = getKeyValueDataStore().get(Container::USER_DATA_0);
 SensorBoardData sbd = containerSensorBoardData.getData<SensorBoardData> ();
-//cerr << "Most recent sensor board data: '" << sbd.toString() << "'" << endl;
-
-// 4. Get most recent steering data as fill from lanedetector for example:
 Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_1);
 SteeringData sd = containerSteeringData.getData<SteeringData> ();
-//cerr << "Most recent steering data: '" << sd.toString() << "'" << endl;
-
-// Create vehicle control data.
 VehicleControl vc;
 
 vc.setSpeed(m_speed);
 
+// if ultrasonic front exist.
 if(sbd.containsKey_MapOfDistances(3))
 {
 
@@ -102,14 +91,14 @@ if(sbd.containsKey_MapOfDistances(3))
     cerr << "follow lane" << endl;
         if(sbd.getValueForKey_MapOfDistances(3) < (2 * m_carLength) && sbd.getValueForKey_MapOfDistances(3) > 0)
         {
-
-            cerr << "heading = " << sd.getHeadingData() << endl;
             
             m_state = m_turnOut;
         }
         vc.setSteeringWheelAngle(sd.getHeadingData());
+        cout << "Value from Ultrasonic Front" << sbd.getValueForKey_MapOfDistances(3) << endl;
         break;
     case 2 :
+    // Turn out to left lane until InfraRed sensor detects the object, Keep incrementing counter to know how much to turn back later.
     cerr << "Turn out to left lane" << endl;
         if(sbd.getValueForKey_MapOfDistances(m_sensor) > 0)
         {
@@ -118,13 +107,17 @@ if(sbd.containsKey_MapOfDistances(3))
         }
         ++m_counter;
         std::cout << "counter " << m_counter << std::endl;
+        cout << "Value from Front InfraRed" << sbd.getValueForKey_MapOfDistances(m_sensor) << endl;
         vc.setSteeringWheelAngle(-m_steering * Constants::DEG2RAD);
         break;
 
     case 3 : 
+    // Turn car fully until Infrared front detects the object is close enough, This is done to align car to the object.
+        m_steering = 25;
         if(sbd.getValueForKey_MapOfDistances(0) < 0 || sbd.getValueForKey_MapOfDistances(0) > 1.5)
         {
             std::cout << "turning straight " << std::endl;
+            cout << "Value from Front InfraRed" << sbd.getValueForKey_MapOfDistances(0) << endl;
             vc.setSteeringWheelAngle(m_steering * Constants::DEG2RAD);
             break;
         }
@@ -133,29 +126,31 @@ if(sbd.containsKey_MapOfDistances(3))
             m_state = m_turnBack;
             break;
         }
-        break;
+    break;
     case 4 :
+    // If Front InfraRed and Front Right Ultrasonic is not detecting an object turn back half of counter. Go back to lanefollowing.
     cerr << "turn back to Lane" << endl;
-    m_steering = 17;
         if((sbd.getValueForKey_MapOfDistances(4) > (1.25 * m_carLength) || sbd.getValueForKey_MapOfDistances(4) < 0) && sbd.getValueForKey_MapOfDistances(0) < 0)
         {
             if(m_counter >= 0)
             {
-                   std::cout << "counter out " << m_counter << std::endl;
-                    vc.setSteeringWheelAngle(m_steering * Constants::DEG2RAD);
-                    m_counter -= 2;
-                    break;
+               std::cout << "counter out " << m_counter << std::endl;
+                vc.setSteeringWheelAngle(m_steering * Constants::DEG2RAD);
+                m_counter -= 2;
+                break;
             }
             else 
             {
-                    m_counter = 0;
-                    m_steering = 20;
-                    m_state = m_followLane;
-                    break;   
+                m_counter = 0;
+                m_steering = 20;
+                m_state = m_followLane;
+                break;   
             }
             break;
         }
         vc.setSteeringWheelAngle(sd.getHeadingData());
+        cout << "Value from Ultrasonic Front Right" << sbd.getValueForKey_MapOfDistances(3) << endl;
+        cout << "Value from Front InfraRed" << sbd.getValueForKey_MapOfDistances(0) << endl;
         break;
     }
 }
