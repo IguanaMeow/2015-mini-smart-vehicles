@@ -167,19 +167,9 @@ namespace msv {
       return fd; 
      } 
 
-    void writeVehicleValues(const char* value, int port) 
+    void writeVehicleValues(const char* data, int port, int length) 
     {
-    	// Go right
-		if (*value == 'a') {
-		write(port, "0", 1);
-		// Go left
-		} else if (*value == 'b') {
-		write(port, "1", 1);
-		} else {
-		// Go forwertz
-		write(port, "2", 1);
-		}
-        
+    	write(port, data, length);
     }    
 
     void readSensorValues(int port) 
@@ -339,7 +329,7 @@ namespace msv {
 
             // Send steering data to LLB
 
-            Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_2);
+          /*  Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_2);
 			SteeringData sd = containerSteeringData.getData<SteeringData> ();
 			
 			angle = sd.getExampleData();
@@ -361,17 +351,17 @@ namespace msv {
 				vehicleValue = "c";
 			}
 
-			writeVehicleValues(vehicleValue, vehiclePort); 
+			writeVehicleValues(vehicleValue, vehiclePort); 	*/
 
             
 
         //  Send data to Arduino
         
-     /*   Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_1);
-        SteeringData sd = containerSteeringData.getData<SteeringData> ();
+       Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_1);
+       SteeringData sd = containerSteeringData.getData<SteeringData; 
 
         angle = sd.getExampleData();
-        */
+        
         
         /*
             Lane detector sends a value between -26 and 26 to proxy. This converts it to a degree between max left for the servo
@@ -383,7 +373,7 @@ namespace msv {
             Turn left when angle is lower than 0, turn right when it is greater than 0 and drive straight when it equals 0
         */
 
-    /*    if (angle < 0)
+        if (angle < 0)
         {
             adjustedAngle = angle / multiplier;                 //  Get the angle to turn in degrees based on the steeringdata divided with a multiplier
             adjustedAngle = -adjustedAngle;                     //  Turn adjusted angle into a positive value
@@ -401,27 +391,26 @@ namespace msv {
             adjustedAngle = forwardAngle + adjustedAngle;       //  Displace angle for the servo, i.e. 70 + 20 = 90 degrees to turn
         }
         
-        char buffer [10];
-        sprintf(buffer,"%d",adjustedAngle);     //  Convert int to string
+        
+        sprintf(vehicleValue,"%d",adjustedAngle);     //  Convert int to string
 
         char str1[16];
         char str2[16];
-        strcpy(str1, buffer);
+        strcpy(str1, vehicleValue);
         strcpy(str2, " ");
         strcat(str1, str2);
         
         if (adjustedAngle > 99)
         {
-            writeByte(buffer, fd, 4);  
-   
+            writeVehicleValues(vehicleValue, vehiclePort, 4);
         }
 
         else 
         {
-            writeByte(buffer, fd, 3);
+            writeVehicleValues(vehicleValue, vehiclePort, 3);
         }
             
-        */
+        
 
             cout << "Proxy: Captured " << captureCounter << " frames." << endl;
 
