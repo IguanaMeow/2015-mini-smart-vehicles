@@ -22,7 +22,7 @@ global.showGrid = 0
 
 # The following attributes define the buffer sizes for recording and replaying.
 # You need to adjust these parameters depending on the camera resolution for example (640x480x3 --> 1000000 for memorySegment, 1280x720x3 --> 2800000).
-global.buffer.memorySegmentSize = 2800000 # Size of a memory segment for a shared data stream in bytes.
+global.buffer.memorySegmentSize = 1000000 # Size of a memory segment for a shared data stream in bytes.
 global.buffer.numberOfMemorySegments = 20 # Number of memory segments used for buffering.
 
 supercomponent.pulseshift.shift = 10000 # (in microseconds) If the managed level is pulse_shift, all connected modules will be informed about the supercomponent's real time by this increment per module. Thus, the execution times per modules are better aligned with supercomponent and the data exchange is somewhat more predictable.
@@ -163,9 +163,9 @@ proxy.debug = 0
 proxy.useRecorder = 0 # 1 = record all captured data directly, 0 otherwise. 
 proxy.camera.name = WebCam
 proxy.camera.type = OpenCV # OpenCV or UEYE
-proxy.camera.id = 0 # Select here the proper ID for OpenCV
+proxy.camera.id = 1 # Select here the proper ID for OpenCV
 proxy.camera.width = 640
-proxy.camera.height = 480
+proxy.camera.height = 360
 proxy.camera.bpp = 3
 
 
