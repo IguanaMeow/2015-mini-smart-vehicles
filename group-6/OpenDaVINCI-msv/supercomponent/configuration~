@@ -14,11 +14,28 @@
 
 #
 # GLOBAL CONFIGURATION
+<<<<<<< HEAD
+#Overtaking-easy.scnx
+# NoObstacles_StopLines.scnx
 #Parking-sideways.scnx
+#ObstacleOnStraightRoad.scnx
+#SEM_Test_Track.scnx
+#NoObstacles_StopLines.scnx
+global.car = Scenarios/Models/FordEscape.objx
+#global.car = Scenarios/Models/RedRocketCar.objx
+global.scenario = file://Scenarios/NoObstacles_StopLines.scnx
+=======
 #
 global.car = Scenarios/Models/FordEscape.objx
 #global.car = Scenarios/Models/RedRocketCar.objx
-global.scenario = file://Scenarios/Parking-sideways.scnx
+#global.scenario = file://Scenarios/Parking-sideways.scnx
+#global.scenario = file://Scenarios/Parking-easy.scnx
+#global.scenario = file://Scenarios/ObstacleOnStraightRoad.scnx
+#global.scenario = file://Scenarios/Parking-medium.scnx
+#global.scenario = file://Scenarios/Parking-hard.scnx
+#global.scenario = file://Scenarios/NoObstacles_StopLines.scnx
+global.scenario = file://Scenarios/Overtaking-easy.scnx
+>>>>>>> 3ac23cee33d35c2b19744059ef26fe6f1d53f47b
 global.showGrid = 0
 
 # The following attributes define the buffer sizes for recording and replaying.
@@ -164,7 +181,7 @@ proxy.debug = 0
 proxy.useRecorder = 1 # 1 = record all captured data directly, 0 otherwise. 
 proxy.camera.name = WebCam
 proxy.camera.type = OpenCV # OpenCV or UEYE
-proxy.camera.id = 0 # Select here the proper ID for OpenCV
+proxy.camera.id = 1 # Select here the proper ID for OpenCV     /// oooooooooooooooooooooooooooooooooooooooooooooooooooooooo
 proxy.camera.width = 640
 proxy.camera.height = 480
 proxy.camera.bpp = 3
@@ -173,10 +190,20 @@ proxy.camera.bpp = 3
 
 #
 # CONFIGURATION FOR VEHICLE
-#
-Vehicle.posX = 0                     # Initial position X in cartesian coordinates.
+<<<<<<< HEAD
+#// Vehicle.posX = 0 ..Vehicle.posY = 0   Vehicle.headingDEG = 90  OR   Vehicle.posX = -4 ..Vehicle.posY = 10   Vehicle.headingDEG = 270
+Vehicle.posX = 0                    # Initial position X in cartesian coordinates.
 Vehicle.posY = 0                     # Initial position Y in cartesian coordinates.
 Vehicle.headingDEG = 90
+=======
+#
+Vehicle.posX = 0             # 0 Initial position X in cartesian coordinates.
+Vehicle.posY = 0              # 0 Initial position Y in cartesian coordinates.
+Vehicle.headingDEG = 90        # 90 Initial heading.
+#Vehicle.posX = -45             # Parking Initial position X in cartesian coordinates.
+#Vehicle.posY = -10              # Parking Initial position Y in cartesian coordinates.
+#Vehicle.headingDEG = 360        # Parking Initial heading.
+>>>>>>> 3ac23cee33d35c2b19744059ef26fe6f1d53f47b
 Vehicle.model=LinearBicycleModelNew  # Which motion model to be used: LinearBicycleModelNew or LinearBicycleModel (for CaroloCup 2013!).
 Vehicle.LinearBicycleModelNew.withSpeedController=1          # iff 1: use the VehicleControl.m_speed field; otherwise, ignore m_speed and use VehicleControl.m_acceleration field
 Vehicle.LinearBicycleModelNew.minimumTurningRadiusLeft=4.85  # Minimum turning radius to the left (for calculating maximum steering angle to the left); Attention! we used data from the miniature vehicle Meili and thus, all values are scaled by factor 10 to be compatible with the simulation!
