@@ -372,7 +372,6 @@ namespace msv {
 
         int goodSerial = 1;
         int correctSerialDevice = true;
-        int serialCounter = 0;
 
         try{
             this_serial = new Serial(port, baud, Timeout::simpleTimeout(2000));
