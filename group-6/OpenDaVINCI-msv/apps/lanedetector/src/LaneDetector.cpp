@@ -1,4 +1,4 @@
-/**
+/** 
  * lanedetector - Sample application for detecting lane markings.
  * Copyright (C) 2012 - 2015 Christian Berger
  *
@@ -16,7 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-//Saleh and Jose
 
 #include <iostream>
 #include <opencv/cv.h>
@@ -48,16 +47,9 @@ namespace msv {
     using namespace core::data::image;
     using namespace tools::player;
 
-        int counter = 0;
-        bool obstacleFound = false;
-        bool overtakingLeft = false;
-        bool passObstacle = false;
-        bool detectObstacle = false;
-
         /*Sensors*/
         int UltraSonic_FrontCenter;
         double Infrared_RearRight;
-
 
     double angle;
     double speed;
@@ -72,6 +64,7 @@ namespace msv {
     {
       line( img, start_point, end_Point, Scalar( 255, 0, 0),  2, 8);
     }
+
 /* void p5_6( Mat img, Point start_point, Point end_Point ) 
     {
       line( img, start_point, end_Point, Scalar( 255, 0, 250),  2, 8);
@@ -81,10 +74,12 @@ void p6_7( Mat img, Point start_point, Point end_Point )
       line( img, start_point, end_Point, Scalar( 128, 0, 128),  2, 8);
    }  */
 void p5_7( Mat img, Point start_point, Point end_Point ) 
+
     {
       line( img, start_point, end_Point, Scalar( 128, 0, 128),  2, 8);
     }
 // distance between p5  and p7
+
 double Distance(double dX0, double dY0, double dX1, double dY1)
 {
     return sqrt((dX1 - dX0)*(dX1 - dX0) + (dY1 - dY0)*(dY1 - dY0));
@@ -169,7 +164,13 @@ double Distance(double dX0, double dY0, double dX1, double dY1)
     double count_yellow = 0.0;
   // double   count_inter=0.0;// for intersection
   // double  count_inter2=0.0;
+
+    double count_green1 = 0.0;
     double count_green2 = 0.0;
+    double count_green3 = 0.0;
+    double count_green4 = 0.0;
+    double count_green_medel = 0.0;
+   
     // Example: Show the image.
         if (m_debug) {
             if (m_image != NULL) {
@@ -181,6 +182,7 @@ double Distance(double dX0, double dY0, double dX1, double dY1)
         //TODO: Start here.
 
         Mat img, dst, cdst;
+
         img = cvarrToMat(m_image, true);
         
         //int centerLine = img.cols/2;
@@ -208,9 +210,15 @@ double Distance(double dX0, double dY0, double dX1, double dY1)
 
         //Line Detection
         vector<Vec4i> lines;
+<<<<<<< HEAD
         HoughLinesP(dst, lines, 1, CV_PI/180, 8, 10, 10);
 
         //Remove lines 
+=======
+       HoughLinesP(dst, lines, 1, CV_PI/180, 8, 10, 10);
+
+        //Remove lines unwanted upper half lines on the image
+>>>>>>> 42fecab03b6f7402df9a70c476d11b6879d7e182
         for(size_t i = lines.size(); i > 0; i--) {
             Vec4i l = lines[i -1];
             if(l[1] < img.rows/2 && l[3] < img.rows/2) {
@@ -230,6 +238,12 @@ double Distance(double dX0, double dY0, double dX1, double dY1)
 
         vertical_Line(cdst, p1, p2);
 
+  // counter_inter 
+ 
+        p5_7(cdst, p5, p7 ) ;
+   
+        //Show Image
+        imshow("Lane Detection", cdst);
 
         //horizental_green_Line
 
@@ -300,59 +314,75 @@ double Distance(double dX0, double dY0, double dX1, double dY1)
         //Show Image
         imshow("Lane Detection", cdst);
 
-        // 1. Do something with the image m_image here, for example: find lane marking features, optimize quality, ...
 
-        // 2. Calculate desired steering commands from your image features to be processed by driver.
-        
-        // Here, you see an example of how to send the data structure SteeringData to the ContainerConference. This data structure will be received by all running components. In our example, it will be processed by Driver. To change this data structure, have a look at Data.odvd in the root folder of this source.
-        SteeringData sd;
+    if(( count_green/count_yellow) > 0.81 && (count_green/count_yellow) < 0.911 ) {
+        speed = 8;
+        angle = 0;
 
-        cout<<count_green/count_yellow<<endl;
-        cout<<count_green<<endl;
-        cout<<count_yellow<<endl;
-        cout<<angle<<endl;
-        cout << "Distance = " << Distance(p5.x, p5.y, p7.x, p7.y) << endl;
+    cout<<"Straight Road "<<endl;}
+    
+    else if ((count_green/count_yellow) < 0.811 && (count_green/count_yellow)  > 0.64) {
+      //usleep(100000);
+     //double m=(atan2(p5.y-p7.y, p5.x-p7.x)* 180 / PI);
+    //double n=(atan2(p6.y-p7.y, p6.x-p7.x)* 360 / PI);
 
-        double Pink_line = Distance(p5.x, p5.y, p7.x, p7.y);
+        speed = 0.5;
+        angle = -9.5;  
+    
+    cout<<"Left Curve"<<endl;}
 
-        if(( count_green/count_yellow)> 0.81 && (count_green/count_yellow)< 0.92 ){
-          speed=8;
-          angle=0;
-          cout<<"111111111111111111111111"<<endl;
+    /*else if(Pink_line>100 && Pink_line< 55){
+    speed=2;
+    angle=0;
 
-        }else if(Pink_line>100 && Pink_line< 55){
-          speed=2;
-          angle=0;
-          cout<<"int 2"<<endl;
+    cout<<"int 2"<<endl;}*/
+   
+    else if(((count_green/count_yellow) > 0.999 || (count_green3/count_green4) > 0.999) && (count_green1/count_green2 < 1)){
+         speed=0.5;    
+         angle=0 ;  
+    
+    cout<<"Intersection "<<endl;}
 
-        }else if((count_green/count_yellow)> 0.90 && (count_green/count_yellow)< 0.99){
-          // usleep(100000);
-          double m=(atan2(p5.y-p7.y, p5.x-p7.x)* 180 / PI);
-          // double n=(atan2(p6.y-p7.y, p6.x-p7.x)* 360 / PI);
-          // speed=0.5;
-          angle=m +4 ;  
-          cout<<" right "<<endl;
-        }
+    else if((count_green/count_yellow) > 0.91 && (count_green/count_yellow) < 0.999){
+        speed = 0.5;
+        angle = 13 ;  
+  
+    cout<<"Right Curve "<<endl;}
 
-//else if((count_green>319 && count_yellow>319)){
-  //  speed=2;
-    //angle=0;
+ //else if((count_green>319 && count_yellow>319)){
+    //speed=2;
+        //angle=0;
 
     //cout<<"int 2"<<endl;}
 
-        else if (count_green/count_yellow< 0.80 && count_green/count_yellow > 0.69){
-     //usleep(100000);
-   // double m=(atan2(p5.y-p7.y, p5.x-p7.x)* 180 / PI);
-  //  double n=(atan2(p6.y-p7.y, p6.x-p7.x)* 360 / PI);
-// speed=0.5;
-         angle=-9.5;  
-         cout<<"22222222222 &&&&&&&&&&&&&"<<endl;}
+
+
+ //else {
+
+//      speed=8;
+//      angle=0;  
+// }
+
 
   /*  angle=(m+n)/2-4.33 ;
     cout<<"8"<<endl;*/
   
-        sd.setSpeedData(speed);
-        sd.setExampleData(angle);
+  
+   // if(angle > 14){
+
+   // angle= angle -1.0;
+    sd.setSpeedData(speed);
+    sd.setExampleData(angle);
+//}
+// else{
+  //  sd.setSpeedData(speed);
+   // sd.setExampleData(angle);
+
+//}
+  //  sd.setSpeedData(speed);
+   // sd.setExampleData(angle);
+   
+   
         // Create container for finally sending the data.
      //search
         Container c(Container::USER_DATA_1, sd);
