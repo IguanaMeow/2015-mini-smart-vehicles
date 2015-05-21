@@ -70,11 +70,14 @@ namespace msv {
             VehicleControl vc;
 
             // not overtaking? just follow the lane
-            if((int)overtaking == 0 && (distanceFront < 0 || distanceFront > 10)) {
+            if(distanceFront > -2) {
                 
                 angle = sd.getExampleData();
-                cout << "angle" << angle<< endl;
                 speed = sd.getSpeedData();
+
+                cout << "angle: " << angle << endl;
+                cout << "speed: " << speed << endl;
+                cout << "distance: " << distanceFront << endl << endl;
 
                 vc.setSpeed(speed);
                 vc.setSteeringWheelAngle(angle * Constants::DEG2RAD);
