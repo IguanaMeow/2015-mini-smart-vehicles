@@ -174,17 +174,20 @@ namespace msv {
                         }
                         break;
 
-                    case 1: //at intersection, check if clear
+                    case 1: //at intersection, wait at line until counter ends
                         if(intersectionCounter < 50){
                             intersectionCounter ++;
                             state = "at intersection"; 
                         }
+                        //check if clear
                         else if((front_us < 0 || front_us > 10) && (fr_us < 0 || fr_us > 20)) intersectionState = 2;                
                         break;
+                        
                     case 2: //drive through intersection
                         state = "drive through intersection";
                         speed = 1;          
                         desiredSteeringWheelAngle = 0;
+                        //check if lane can be detected, then do normal lane detection
                         if(canFollowLane){ 
                             intersectionCounter = 0; 
                             intersectionState = 0;    
@@ -192,6 +195,7 @@ namespace msv {
                         }
                         break;
                 }
+                
                 /********************** Overtaking control ************************/
                 switch(overtakingState){
                     case 0: // hard left
