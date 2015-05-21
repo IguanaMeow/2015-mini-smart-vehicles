@@ -19,7 +19,15 @@
 
 message msv.SteeringData {
     double exampleData;
-    double speedData; //Lane detection
+    double distanceToStop;
+    double distanceToRight;
+    bool turnRight;
+    bool turnLeft;
+    bool turnHarderLeft;
+    bool turnHarderRight;
+    bool driveStraight;
+    bool stopAtIntersect;
+    
 }
 
 message msv.UserButtonData {

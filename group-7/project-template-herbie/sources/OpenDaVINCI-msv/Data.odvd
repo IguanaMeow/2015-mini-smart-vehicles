@@ -29,9 +29,6 @@ message msv.SteeringData {
     double exampleData;
 }
 
-message msv.SpeedData {
-    double speedData;
-}
 
 message msv.LongDistanceData {
     double longDistanceData;
