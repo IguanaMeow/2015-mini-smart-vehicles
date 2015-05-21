@@ -110,9 +110,10 @@ namespace msv {
 bool FindWhiteLine(Vec3b white)
 { 
 	bool color =  false;
-	uchar blue = white.val[0];
-    uchar green = white.val[1];
-    uchar red = white.val[2];
+	uchar blue,green,red;
+	blue = white.val[0];
+	green = white.val[1];
+	red = white.val[2];
     if(blue == 255 && green == 255 && red == 255)
             {
                 color = true;
