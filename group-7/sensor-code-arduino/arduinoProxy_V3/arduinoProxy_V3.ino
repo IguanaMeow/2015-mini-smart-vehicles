@@ -124,12 +124,7 @@ int range(int ADDRESS_) {
 }
 
 void WheelEncoderInterrupt() {
-  if (digitalRead(encoderPinA)) {
-    !(digitalRead(encoderPinB)) ? encoderTicks -- : encoderTicks ++;
-  }
-  else {
-    !(digitalRead(encoderPinB)) ? encoderTicks ++ : encoderTicks --;
-  }
+  encoderTicks++;
 }
 
 void serialEvent() {
