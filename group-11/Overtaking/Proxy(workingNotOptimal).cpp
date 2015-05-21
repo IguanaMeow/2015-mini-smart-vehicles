@@ -169,19 +169,11 @@ namespace msv {
       return fd; 
      } 
 
-    void writeVehicleValues(const char* value, int port) 
+    void writeVehicleValues(const char* value, int port, int length) 
     {
-    	// Go right
-		if (*value == 'a') {
-		write(port, "0", 1);
-		// Go left
-		} else if (*value == 'b') {
-		write(port, "1", 1);
-		} else {
-		// Go forwertz
-		write(port, "2", 1);
-		}
-        
+		
+		write(port, value, length);
+		
     }    
 
     void readSensorValues(int port) 
@@ -281,7 +273,7 @@ namespace msv {
     }
  
 
-void setAngle(int angle){
+/*void setAngle(int angle){
 	if (angle > 0) 
 			{
 				vehicleValue = "a";
@@ -297,19 +289,19 @@ void setAngle(int angle){
 				vehicleValue = "c";
 			}
 
-			writeVehicleValues(vehicleValue, vehiclePort); 
-}
+			writeVehicleValues(vehicleValue, vehiclePort, 1); 
+} */
 
     
     // This method will do the main data processing job.
     ModuleState::MODULE_EXITCODE Proxy::body() 
     {
         uint32_t captureCounter = 0;
-        int angle;
+        int angle = 0;
 
         /* Open usb ports, specify which port is for sensors and which port is for vehicle */
-        sensorPort = openSerial("/dev/ttyACM3");
-        vehiclePort = openSerial("/dev/ttyACM4");
+        sensorPort = openSerial("/dev/ttyACM2");
+        vehiclePort = openSerial("/dev/ttyACM3");
 
         while (getModuleState() == ModuleState::RUNNING) 
         {
@@ -364,14 +356,15 @@ sd.setSpeedData(1.0);
 
 } */
 // Detects object in front and turns
-if (sbd.SensorBoardData::getValueForKey_MapOfDistances(3) <= 70 && sbd.SensorBoardData::getValueForKey_MapOfDistances(3) >= 20)
+
+if (sbd.SensorBoardData::getValueForKey_MapOfDistances(3) <= 80 && sbd.SensorBoardData::getValueForKey_MapOfDistances(3) >= 4)
 {
     sd.setExampleData(-23.0);
     *povertaking = 1;
     cout << "First statement " <<endl;
 }
 // Detects the object to our right and drives straight
-if (sbd.SensorBoardData::getValueForKey_MapOfDistances(4) <= 20 && sbd.SensorBoardData::getValueForKey_MapOfDistances(4) >= 5)
+if (sbd.SensorBoardData::getValueForKey_MapOfDistances(4) <= 20 && sbd.SensorBoardData::getValueForKey_MapOfDistances(4) >= 5 && overtaking == 1)
 {
     sd.setExampleData(-0.0);
     cout<<"Second statement " <<endl;
@@ -379,21 +372,25 @@ if (sbd.SensorBoardData::getValueForKey_MapOfDistances(4) <= 20 && sbd.SensorBoa
 
 if (overtaking == 1 || 2){
 // Activating overtaking state
-if (sbd.SensorBoardData::getValueForKey_MapOfDistances(2) >= 5 && sbd.SensorBoardData::getValueForKey_MapOfDistances(2) <= 10 && overtaking == 1)
+if (sbd.SensorBoardData::getValueForKey_MapOfDistances(2) >= 4 && sbd.SensorBoardData::getValueForKey_MapOfDistances(2) <= 8 && overtaking == 1)
 { 
-
+	sd.setExampleData(23.0);
     *povertaking = 2;
     cout<<"Third statement " <<endl;
 }
+if (sbd.SensorBoardData::getValueForKey_MapOfDistances(0) > 3 && sbd.SensorBoardData::getValueForKey_MapOfDistances(2)  >3 && overtaking == 2){
+sd.setExampleData(23.0);
+    cout<<"Fourth statement " <<endl;
+}
 
 // Turns right for as long as Front-Right IR is less than zero and Rear-Right IR detects the object.
-if (sbd.SensorBoardData::getValueForKey_MapOfDistances(0) < 6 && sbd.SensorBoardData::getValueForKey_MapOfDistances(2) >=6 && overtaking == 2){
-sd.setExampleData(17.0);
-    cout<<"Fourth statement " <<endl;
+if (sbd.SensorBoardData::getValueForKey_MapOfDistances(0) < 3 && sbd.SensorBoardData::getValueForKey_MapOfDistances(2) >=4 && overtaking == 2){
+sd.setExampleData(23.0);
+    cout<<"fifth statement " <<endl;
 }
 // Deactivate overtaking state when both IR are less than zero
 if (sbd.SensorBoardData::getValueForKey_MapOfDistances(0) < 0 && sbd.SensorBoardData::getValueForKey_MapOfDistances(2) <=0 && overtaking == 2){
-    cout<<"Fifth statement " <<endl;
+    cout<<"6 statement " <<endl;
     *povertaking = 0; }
     
 }
@@ -404,9 +401,10 @@ if (sbd.SensorBoardData::getValueForKey_MapOfDistances(0) < 0 && sbd.SensorBoard
 
 
 
-				angle = sd.getExampleData();
+
+				/*angle = sd.getExampleData();
 				printf("Overtaking angle is:  %d\n", angle);
-				setAngle(angle);
+				setAngle(angle); */
 			//}
 			/*else 
 
@@ -426,11 +424,11 @@ if (sbd.SensorBoardData::getValueForKey_MapOfDistances(0) < 0 && sbd.SensorBoard
 
         //  Send data to Arduino
         
-     /*   Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_1);
+       /* Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_1);
         SteeringData sd = containerSteeringData.getData<SteeringData> ();
 
-        angle = sd.getExampleData();
-        */
+        angle = sd.getExampleData(); */
+        
         
         /*
             Lane detector sends a value between -26 and 26 to proxy. This converts it to a degree between max left for the servo
@@ -442,7 +440,9 @@ if (sbd.SensorBoardData::getValueForKey_MapOfDistances(0) < 0 && sbd.SensorBoard
             Turn left when angle is lower than 0, turn right when it is greater than 0 and drive straight when it equals 0
         */
 
-    /*    if (angle < 0)
+	angle = sd.getExampleData();
+
+        if (angle < 0)
         {
             adjustedAngle = angle / multiplier;                 //  Get the angle to turn in degrees based on the steeringdata divided with a multiplier
             adjustedAngle = -adjustedAngle;                     //  Turn adjusted angle into a positive value
@@ -453,7 +453,7 @@ if (sbd.SensorBoardData::getValueForKey_MapOfDistances(0) < 0 && sbd.SensorBoard
         {
             adjustedAngle = 70;
         }
-
+	
         else if(angle > 0)
         {
             adjustedAngle = angle / multiplier;
@@ -471,16 +471,16 @@ if (sbd.SensorBoardData::getValueForKey_MapOfDistances(0) < 0 && sbd.SensorBoard
         
         if (adjustedAngle > 99)
         {
-            writeByte(buffer, fd, 4);  
+		writeVehicleValues(buffer, vehiclePort, 3);
    
         }
 
         else 
         {
-            writeByte(buffer, fd, 3);
+            writeVehicleValues(buffer, vehiclePort, 2);
         }
             
-        */
+        
 
             cout << "Proxy: Captured " << captureCounter << " frames." << endl;
 
