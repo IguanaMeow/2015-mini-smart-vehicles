@@ -40,7 +40,7 @@
 using namespace cv;
 using namespace std;
 
- 
+
 void drawLine(Mat img, Point start, Point end, int thickness, int lineType, int B, int G, int R){
     line (img, start,end,Scalar(B,G,R),thickness, lineType);
 
@@ -129,9 +129,9 @@ namespace msv {
   Point findWhitePixel(Point point, Mat& img, char side){    //this function searches for white pixel
   Vec3b pixel = img.at<Vec3b>(point); 			     //defines a a vector that contains the rgb values of each pixel
 	if (side == 'r'){				     //r = right, l = left
-        while(point.x != 640){	
-        	point.x = point.x +1; 			     
-        	pixel = img.at<Vec3b>(point); 
+        while(point.x != 640){
+        	point.x = point.x +1;
+        	pixel = img.at<Vec3b>(point);
 		if(pixel.val[0] == 255 && pixel.val[1] == 255 && pixel.val[2] == 255){	//break loop when white pixel is found
         		break;
 		}
@@ -139,8 +139,8 @@ namespace msv {
 	}
 	else if (side == 'l'){
 	while(point.x != 0){
-        	point.x = point.x - 1; 
-        	pixel = img.at<Vec3b>(point); 
+        	point.x = point.x - 1;
+        	pixel = img.at<Vec3b>(point);
         	if(pixel.val[0] == 255 && pixel.val[1] == 255 && pixel.val[2] == 255){
 			break;
 		}
@@ -151,43 +151,43 @@ namespace msv {
 
     // You should start your work in this method.
     void LaneDetector::processImage() {
-        if (m_debug) {
+    if (m_debug) {
 
-        Mat mat_img(m_image);  //converts the IPL image to a mat image
-        Mat gray, edge;  //initialise variables necessary to use for canny image
+    Mat mat_img(m_image);  //converts the IPL image to a mat image
+    Mat gray, edge;  //initialise variables necessary to use for canny image
 	int d1, d2;
 
-        cvtColor(mat_img, gray, CV_BGR2GRAY);	//conversion of image to grayscale
-        Canny( gray, edge, 50, 150, 3);		//detect edges and apply them to (edge) image
+    cvtColor(mat_img, gray, CV_BGR2GRAY);	//conversion of image to grayscale
+    Canny( gray, edge, 50, 150, 3);		//detect edges and apply them to (edge) image
 
-        cvtColor(edge, mat_img, CV_GRAY2BGR);	//conversion of image back to BGR scale
-        gray.release(); edge.release();		//frees memory allocation for previous images
+    cvtColor(edge, mat_img, CV_GRAY2BGR);	//conversion of image back to BGR scale
+    gray.release(); edge.release();		//frees memory allocation for previous images
 
-        int rows = mat_img.rows; int cols = mat_img.cols;
+    int rows = mat_img.rows; int cols = mat_img.cols;
 
-        Point centerStart;
-        Point centerEnd;
-        Point botArrowsStart;
-        Point rightArrow;        
+    Point centerStart;
+    Point centerEnd;
+    Point botArrowsStart;
+    Point rightArrow;
 	Point leftTopArrow;
 	Point leftBotArrow;
 	Point leftTopArrowStart;
 	Point backupLineStart;	//This line is used in case the car is critically close to the left lane and cannot find a line
 	Point backupLine;
-	
-        centerStart.x=cols/2; 			centerStart.y=0;
-        centerEnd.x=cols/2;  			centerEnd.y=rows;
-        botArrowsStart.x = cols/2; 		botArrowsStart.y = 420;
-	rightArrow.x = botArrowsStart.x;	rightArrow.y = botArrowsStart.y;
-        leftBotArrow.x = botArrowsStart.x;  	leftBotArrow.y = botArrowsStart.y;
-	leftTopArrowStart.x = cols/2; 		leftTopArrowStart.y = 350;
-	leftTopArrow.x =leftTopArrowStart.x;    leftTopArrow.y = 350;
-	backupLineStart.x = cols;		backupLineStart.y = 320;
-	backupLine.x = cols;			backupLine.y = 320;
-	
 
-        rightArrow = findWhitePixel(rightArrow, mat_img, 'r');
-    	leftBotArrow = findWhitePixel(leftBotArrow, mat_img, 'l');
+    centerStart.x=cols/2; 			        centerStart.y=0;
+    centerEnd.x=cols/2;  			        centerEnd.y=rows;
+    botArrowsStart.x = cols/2; 		        botArrowsStart.y = 420;
+	rightArrow.x = botArrowsStart.x;	    rightArrow.y = botArrowsStart.y;
+    leftBotArrow.x = botArrowsStart.x;  	leftBotArrow.y = botArrowsStart.y;
+	leftTopArrowStart.x = cols/2; 		    leftTopArrowStart.y = 350;
+	leftTopArrow.x =leftTopArrowStart.x;    leftTopArrow.y = 350;
+	backupLineStart.x = cols;		        backupLineStart.y = 320;
+	backupLine.x = cols;			        backupLine.y = 320;
+
+
+    rightArrow = findWhitePixel(rightArrow, mat_img, 'r');
+    leftBotArrow = findWhitePixel(leftBotArrow, mat_img, 'l');
 	leftTopArrow = findWhitePixel(leftTopArrow, mat_img, 'l');
 	backupLine = findWhitePixel(backupLine, mat_img, 'l');
 
@@ -202,19 +202,19 @@ namespace msv {
         drawLine(mat_img, leftTopArrowStart,leftTopArrow, 1, 8, 240, 206, 81);
 	drawLine(mat_img, backupLineStart,backupLine, 1, 8, 170, 150, 81);
 
-        imshow("image", mat_img);      
+    imshow("image", mat_img);
 	cvWaitKey(10);
-        SteeringData sd;
-        double angle = 0.0;
+    SteeringData sd;
+    double angle = 0.0;
 	d1 = rightArrow.x - 320;	//calculating first distance
 	if(rightArrow.x > 620){
 	d1 = 280;			//neutralising d1 in case right lane is not found
 	}
-	
+
 	while(true){				//calculating d2 for different conditions
 		if (leftBotArrow.x > 120) {
 		d2 = 320 - leftBotArrow.x;
-		break; 
+		break;
 			}
 		else if (leftTopArrow.x > 110 && leftTopArrow.x < 300) {
 		d2 = 320 - leftTopArrow.x;
@@ -223,11 +223,11 @@ namespace msv {
 		else{
 		d2 = 280;			//neutralise d2 in case no left lane is found
 		break;
-			} 
+			}
 	}
-	//cout <<"d1 = " <<d1<<endl;	
+	//cout <<"d1 = " <<d1<<endl;
 	//cout <<"d2 = " <<d2<<endl;
-	
+
 	angle = 0;
 	sd.setExampleData(angle);
 
@@ -252,7 +252,7 @@ namespace msv {
 	sd.setExampleData(angle);
 	//cout << "TURN Left: " << angle <<endl;
 	}
-	
+
 
         //TODO: Start here.
         // 1. Do something with the image m_image here, for example: find lane marking features, optimize quality, ...
