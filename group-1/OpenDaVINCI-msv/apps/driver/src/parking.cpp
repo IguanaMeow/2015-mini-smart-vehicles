@@ -174,16 +174,16 @@ namespace msv {
                   if(gapSum > xd && xd > parkspace && trigger ==0 ){       // if travel path gapSum is bigger than xd path and if xd path
                     vc.setSpeed(0.0);
                     state =2;
-                } if(state ==2 && US_RR>0 && trigger ==0){                                     //in state 3,
+                } if(state ==2 && US_RR>0 && trigger ==0){                                     
                     vc.setSpeed(1.0);
                     counter++;
-                } if(state ==2 && US_RR<0 && IR_FR <0 && trigger ==0){                                     //in state 3,
+                } if(state ==2 && US_RR<0 && IR_FR <0 && trigger ==0){                                   
                     vc.setSpeed(0.0);
                     counter=143;
                     state=3;
-                } if(state ==2 && US_RR<0 && IR_RR >0 && IR_FR >0  && trigger ==0){                                     //in state 3,
+                } if(state ==2 && US_RR<0 && IR_RR >0 && IR_FR >0  && trigger ==0){                                     
                     vc.setSpeed(0.0);
-                    parking1=1; // the speed on state 0 will be of
+                    parking1=1; 
                     counter=158;
                     state=4;
                 } if(state ==3 && counter > 140 && trigger<2){      
@@ -195,15 +195,15 @@ namespace msv {
                     parking1=1;
                     trigger=2;
                     state=4;
-                } if(state ==4 && counter >150 && trigger ==2){                                     //in state 3,
-                    vc.setSteeringWheelAngle(26);              //the car wheels turn max to the right,
+                } if(state ==4 && counter >150 && trigger ==2){                                     
+                    vc.setSteeringWheelAngle(26);              
                     vc.setSpeed(-0.5);
                     trajCounter++;
                 } if(state ==4  &&  (trajCounter/100)  >= aaqq && trigger ==2){
                     vc.setSteeringWheelAngle(-26);
                     vc.setSpeed(-0.4);
                 } if(state == 4 && (IR_R > 0.9 && IR_R <=1.9) && trigger == 2){
-                    trigger =3; // increase triggerger to not go back to state less then 5
+                    trigger =3; // increase trigger to not go back to state less then 5
                     vc. setSpeed(0.0);
                     state =5;
                 } if(state == 5 && vd.getHeading() >= 0.09 && trigger==3){
