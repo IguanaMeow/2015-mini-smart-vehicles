@@ -17,25 +17,17 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-message msv.LaneDetected {
-    bool laneDetected;
-}
-
-message msv.Intersection {
-    bool intersection;
-}
-
 message msv.SteeringData {
     double exampleData;
-}
-
-
-message msv.LongDistanceData {
-    double longDistanceData;
-}
-
-message msv.ShortDistanceData {
-    double shortDistanceData;
+    double distanceToStop;
+    double distanceToRight;
+    bool turnRight;
+    bool turnLeft;
+    bool turnHarderLeft;
+    bool turnHarderRight;
+    bool driveStraight;
+    bool stopAtIntersect;
+    
 }
 
 message msv.UserButtonData {
