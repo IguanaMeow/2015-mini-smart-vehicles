@@ -41,15 +41,12 @@ int countcounter = 0;
 namespace msv {
 
     using namespace std;
+    using namespace serial;
     using namespace core::base;
     using namespace core::data;
+    using namespace tools::recorder;
     using namespace core::data::control;
     using namespace core::data::environment;
-    using namespace tools::recorder;
-    using namespace serial;
-    //VehicleData
-    //using namespace core::data::environment;
-
 
 
     Proxy::Proxy(const int32_t &argc, char **argv) :
@@ -62,8 +59,8 @@ namespace msv {
         outSer(),
         incomingSer(),
         oldIncomingSer(),
-        speedOut(1521),
-        steeringOut(91),
+        speedOut(1500),
+        steeringOut(90),
         irFrontRightMedian(),
         irMiddleRightMedian(),
         irBackMedian(),
@@ -120,8 +117,11 @@ namespace msv {
 
     }
 
+    /*---This method will be call automatically _after_ return from body().---*/
+
     void Proxy::tearDown() {
-        // This method will be call automatically _after_ return from body().
+        
+        /*---send neutral signals to arduino---*/
         speedOut = 1520;
         steeringOut = 90;
         outSer[6] = 0;
@@ -135,7 +135,7 @@ namespace msv {
         for(int i = 0; i < OUTSERIAL-1; i++){
             outSer[OUTSERIAL - 1] ^= outSer[i];
         } 
-        for (int i = 0; i < 100; ++i){
+        for (int i = 0; i < 300; ++i){
             this_serial->write(outSer, 7);
         }
         OPENDAVINCI_CORE_DELETE_POINTER(m_recorder);
@@ -154,90 +154,47 @@ namespace msv {
         getConference().send(c);
     }
 
-    int Proxy::getSerial() {
-        cerr << "Gettingserial" << endl;
-        uint8_t current = 0;
-        uint8_t tempincoming[INSERIAL];
-        uint8_t check = 0;
-        //uint8_t success = 0;
-
-        this_serial->read(&current,1);
-        if(current != startByte){
-            while (this_serial->read(&current,1) && current != endByte);
-            this_serial->read(&current,1);
-            this_serial->read(&current,1);
-            //this_serial->read(&current,1);
-        }
-        tempincoming[0] = current;
-        this_serial->read(tempincoming + 1, 16);
-        // for(int i = 1; i < INSERIAL; i++){
-        //     this_serial->read(&current,1);
-        //     tempincoming[i] = current;
-        // }
-        for(int i = 0; i < INSERIAL; i++){
-            check ^= tempincoming[i];
-        }
-
-        cout << (uint16_t)tempincoming[0] << endl;
-        cout << (uint16_t)tempincoming[2] << endl;
-        cout << (uint16_t)tempincoming[INSERIAL - 2] << endl;
-        cout << (uint16_t)check << endl;
-        if(tempincoming[0] == startByte && tempincoming[INSERIAL - 2] == endByte && check == 0){
-            // memcpy(incomingSer, tempincoming, 17 * sizeof(uint8_t) );
-            for(int i = 0; i < INSERIAL; i++){
-                incomingSer[i] = tempincoming[i];
-            }
-            return 1;
-        }else{
-            return 1;
-        }
-    }
+    /*---Send the serial packet containing vehicle control data---*/
 
     void Proxy::sendSerial() {
-        cerr << "Sending Serial: " << endl;
-        Container containerVehicleControl = getKeyValueDataStore().get(Container::VEHICLECONTROL);
-        VehicleControl vdata = containerVehicleControl.getData<VehicleControl> ();
-        double speedSetting = vdata.getSpeed();
-        double steeringSetting = vdata.getSteeringWheelAngle();
-        //cerr << "speedSetting: " << speedSetting << endl;
-        //cerr << "steeringSetting: " << steeringSetting << endl;
-        //cerr << "RAD2DEG: " << Constants::RAD2DEG << endl;
+
         uint16_t speedOutTemp;
         uint16_t steeringOutTemp;
 
-        // if(countcounter == 50){
-        //     speedOut = 1;
-        //     steeringOut = 34;
-        // }
+        /*---Collect vehicle control data---*/
 
-        // countcounter++;
+        Container containerVehicleControl = getKeyValueDataStore().get(Container::VEHICLECONTROL);
+        VehicleControl vdata = containerVehicleControl.getData<VehicleControl> ();
+        
+        double speedSetting = vdata.getSpeed();
+        double steeringSetting = vdata.getSteeringWheelAngle();
 
 
-        cerr << "start: " << (uint16_t)outSer[0] << endl;
+        /*---Calculate speed and steering settings---*/
+        
         if(speedSetting < 0){
-            speedOutTemp = 1200;
+            speedOutTemp = 1220;
         }else if ((int)speedSetting == 0){
-            speedOutTemp = 1520; 
+            speedOutTemp = 1500; 
         }else{
-            speedOutTemp = 1560 + speedSetting;
+            speedOutTemp = 1570 + speedSetting;
         }
+
+        //for full steering set max physical angle
+        if(steeringSetting >= 25) steeringSetting = 35;
+        if(steeringSetting <= -26) steeringSetting = -35;
+
         steeringOutTemp = 90 + (int16_t)(steeringSetting * Constants::RAD2DEG);
-        if(steeringOutTemp < 65) steeringOutTemp = 65;
-        if(steeringOutTemp > 115) steeringOutTemp = 115;
-        // if(countcounter < 1000 || countcounter > 500){
-        //     speedOut = 1600;
-        // }
 
-        // countcounter++;
-        // cerr << "countcounter" << countcounter << endl;
 
+        /*---Do not send packet unless values have changed---*/
         if(steeringOut != steeringOutTemp || speedOut != speedOutTemp){
             steeringOut = steeringOutTemp;
             speedOut = speedOutTemp;
 
 
-
-            outSer[6] = 0;
+            
+            /*---deconstruct speed and steering settings---*/
             outSer[0] = startByte;
             outSer[1] = speedOut & 0xFF;
             outSer[2] = (speedOut >> 8) & 0xFF;
@@ -245,39 +202,76 @@ namespace msv {
             outSer[4] = (steeringOut >> 8) & 0xFF;
             outSer[5] = endByte;
 
+            /*--- calculate the checksum---*/
+            outSer[6] = 0;
+
             for(int i = 0; i < OUTSERIAL-1; i++){
                 outSer[OUTSERIAL - 1] ^= outSer[i];
             } 
 
-            //cerr << "checksum: " << (uint16_t)outSer[6] << endl;
+            /*---Write byte array to Serial device---*/
+
             int sentnum = (int)this_serial->write(outSer, 7);
-            uint16_t speedToArduino = outSer[1] + ((uint16_t)outSer[2] << 8);
-            uint16_t steeringToArduino = outSer[3] + ((uint16_t)outSer[4] << 8);
-            cerr << "sent bytes: " << sentnum << endl;
-            cerr << "Speed sent to Arduino: " << speedToArduino << endl;
-            cerr << "Steering sent to Arduino: " << steeringToArduino << endl;
+            cerr << "Succesfully sent bytes: " << sentnum << endl;
         }
     }
 
-    void Proxy::distSerial() {
-        VehicleData vd;
+    /*---Read sensor data from the car/arduino from serial device---*/
 
+    int Proxy::getSerial() {
+
+        uint8_t current = 0;
+        uint8_t tempincoming[INSERIAL];
+        uint8_t check = 0;
+
+        /*---check that the first byte in line is the startByte else read to next endByte and reset start byte---*/
+        this_serial->read(&current,1);
+        if(current != startByte){
+            while (this_serial->read(&current,1) && current != endByte);
+            this_serial->read(&current,1);
+        }
+
+        /*---If there is a full packet available, start reading it---*/ 
+
+        if(this_serial->available() > 15){
+            this_serial->read(&current,1);
+            tempincoming[0] = current;
+            this_serial->read(tempincoming + 1, 16);
+
+            //calculate checksum
+            for(int i = 0; i < INSERIAL; i++){
+                check ^= tempincoming[i];
+            }
+
+            /*---If all the expected bits are in place and checksum is satisfactory put 
+                temporary array to global and return success value---*/
+            
+            if(tempincoming[0] == startByte && tempincoming[INSERIAL - 2] == endByte && check == 0){
+                for(int i = 0; i < INSERIAL; i++){
+                    incomingSer[i] = tempincoming[i];
+                }
+                return 1;
+            }else{
+                return 0;
+            }
+        }
+        return 0;
+    }
+
+    /*---If an incoming serial packet is validated, it will be distributed to shared memory---*/
+
+    void Proxy::distSerial() {
+        
+        VehicleData vd;
         SensorBoardData sbd;
+
         double irFrontRightDist;
         double irMiddleRightDist;
         double irBackDist; 
 
-        //Hardcodetest
-        //uint16_t speed = 100;
-        //uint16_t steering = 100;
-        // uint16_t usFront = 100;
-        // uint16_t usFrontRight = 100;
-        // uint16_t irFrontRight = 100;
-        // uint16_t irMiddleRight = 100;
-        // uint16_t irBack = 100;
+        /*---Reconstruct the byte array into expected variables---*/
 
         uint16_t absDistance = ((uint16_t)incomingSer[2] << 8) | incomingSer[1];
-        cout << (uint16_t)incomingSer[2] << " : " << (uint16_t)incomingSer[1] << endl;
         uint16_t absDirection = ((uint16_t)incomingSer[4] << 8) | incomingSer[3];
         uint16_t irFrontRight = ((uint16_t)incomingSer[6] << 8) | incomingSer[5];
         uint16_t irMiddleRight = ((uint16_t)incomingSer[8] << 8) | incomingSer[7];   
@@ -285,64 +279,76 @@ namespace msv {
         uint16_t usFront = ((uint16_t)incomingSer[12] << 8) | incomingSer[11];
         uint16_t usFrontRight = ((uint16_t)incomingSer[14] << 8) | incomingSer[13];
 
-        vd.setAbsTraveledPath((double)absDistance/100);
+        /*---Convert IR values from Analogue to Digital raw values to CM---*/
 
-        vd.setHeading((double)absDirection  * Constants::DEG2RAD);
         irFrontRightDist = (2914 / (irFrontRight +5))-1;
         irMiddleRightDist = (2914 / (irMiddleRight +5))-1;
         irBackDist = (2914 / (irBack +5))-1;
 
-        //Smooth out values with RunningMedian
+        /*---Smooth out values with RunningMedian - push current value to "sliding window"
+            and sorted array---*/
+            
         irFrontRightMedian.addValue(irFrontRightDist);
-        irFrontRightDist = irFrontRightMedian.getMedian();
         irMiddleRightMedian.addValue(irMiddleRightDist);
-        irMiddleRightDist = irMiddleRightMedian.getMedian();
         irBackMedian.addValue(irBackDist);
-        irBackDist = irBackMedian.getMedian();
-        usFrontMedian.addValue(usFront);
-        usFront = usFrontMedian.getMedian();
+        usFrontMedian.addValue(usFront);    
         usFrontRightMedian.addValue(usFrontRight);
+
+        /*---Smooth out values with RunningMedian - retreive median value---*/
+
+        irFrontRightDist = irFrontRightMedian.getMedian();
+        irMiddleRightDist = irMiddleRightMedian.getMedian();
+        irBackDist = irBackMedian.getMedian();
+        usFront = usFrontMedian.getMedian();
         usFrontRight = usFrontRightMedian.getMedian();
 
-        if(irFrontRightDist > 40){
+        /*---limits of the sensor range return -1 if over---*/
+        int irLimit = 40;
+        int usLimit = 120;
+
+        /*---Put fully processed values into the Sensor Board Data container---*/
+
+        if(irFrontRightDist > irLimit){
             sbd.putTo_MapOfDistances(0, -1);
         }else{
             sbd.putTo_MapOfDistances(0, (double)irFrontRightDist/100);
         }
-        if(irBackDist > 40){
+        if(irBackDist > irLimit){
             sbd.putTo_MapOfDistances(1, -1);
         }else{
             sbd.putTo_MapOfDistances(1, (double)irBackDist/100);
         }
-        if(irMiddleRightDist > 40){
+        if(irMiddleRightDist > irLimit){
             sbd.putTo_MapOfDistances(2, -1);
         }else{
             sbd.putTo_MapOfDistances(2, (double)irMiddleRightDist/100);
         }
-        if(usFront > 120){
+        if(usFront > usLimit){
             sbd.putTo_MapOfDistances(3, -1);
         }else{
             sbd.putTo_MapOfDistances(3, (double)usFront/100);
         }
-        if(usFrontRight > 120){
+        if(usFrontRight > usLimit){
             sbd.putTo_MapOfDistances(4, -1);
         }else{
             sbd.putTo_MapOfDistances(4, (double)usFrontRight/100);
         }
         
+        /*---Put fully processed values into the Sensor Board Data container---*/
+
+        vd.setAbsTraveledPath((double)absDistance/100);
+        vd.setHeading((double)absDirection  * Constants::DEG2RAD);
         
-        
+        cout << "AbsoluteDistance : " << absDistance << endl;
+        cout << "AbsoluteDirection: " << absDirection << endl;
 
+        cout << "Sensor 0 IR Front-Right: " << sbd.getValueForKey_MapOfDistances(0) << endl;
+        cout << "Sensor 1 IR Back: " << sbd.getValueForKey_MapOfDistances(1) << endl;
+        cout << "Sensor 2 IR Middle-Right: " << sbd.getValueForKey_MapOfDistances(2) << endl;
+        cout << "Sensor 3 US Front-Center: " << sbd.getValueForKey_MapOfDistances(3) << endl;
+        cout << "Sensor 4 US Front-Right: " << sbd.getValueForKey_MapOfDistances(4) << endl;
 
-
-        cerr << "ABSDISTANCE RECEIVED from Arduino: " << absDistance << endl;
-        cerr << "ABSDIRECTION RECEIVED from Arduino: " << absDirection << endl;
-
-        cerr << "Sensor 0 IR Front-Right: " << sbd.getValueForKey_MapOfDistances(0) << endl;
-        cerr << " Sensor 1 IR Back: " << sbd.getValueForKey_MapOfDistances(1) << endl;
-        cerr << " Sensor 2 IR Middle-Right: " << sbd.getValueForKey_MapOfDistances(2) << endl;
-        cerr << " Sensor 3 US Front-Center: " << sbd.getValueForKey_MapOfDistances(3) << endl;
-        cerr << " Sensor 4 US Front-Right: " << sbd.getValueForKey_MapOfDistances(4) << endl;
+        /*---Distribute containers---*/
 
         Container contVD(Container::VEHICLEDATA, vd);
         distribute(contVD);
@@ -350,109 +356,74 @@ namespace msv {
         distribute(contSBD);
     }
 
-    // This method will do the main data processing job.
+    /*---This method does the main data processing job.---*/
+
     ModuleState::MODULE_EXITCODE Proxy::body() {
-
-
-        //Serial connection check
-        uint32_t baud = 57600;
-        string port = "/dev/ttyACM0"; 
-        cerr << "Testing port: " << port << endl;
-        // posible commands for getting serial port
-        // CommandLineParser cmdParser;
-        // cmdParser.addCommandLineArgument("id");
-
-        int connection = 1;
-        int correctserial = true;
-        int serialcounter = 0;
         
-
+        /*---Real time frequency measurement---*/
         uint32_t captureCounter = 0;
-        //Framerate
-        //clock_t start;
-        double cumduration;
-        //double duration;
-        //double oldduration = 0.0;
-        //double smoothduration;
-        //start = clock();
-        
+        double cumulDuration;
         time_t startTime = time(0);
         
+        /*---Set serial settings---*/
+        uint32_t baud = 115200;
+        string port = "/dev/ttyACM0";
+        cerr << "Trying port: " << port << endl;
+
+        int goodSerial = 1;
+        int correctSerialDevice = true;
+        int serialCounter = 0;
 
         try{
             this_serial = new Serial(port, baud, Timeout::simpleTimeout(2000));
             //this_serial->flushInput();
         }catch (IOException e){
             cerr << "IO Exception - SerialPort" << port << "is not configured correctly" << endl;
-            correctserial = false;
+            correctSerialDevice = false;
         }    
         
-        
-
-
         while (getModuleState() == ModuleState::RUNNING) {
 
+            /*---Capture image frame.--*/
 
-            // Capture frame.
-            if (m_camera != NULL) {
-
-                //cerr << "Capturing frame" << endl;
-                
+            if (m_camera != NULL) {                
                 core::data::image::SharedImage si = m_camera->capture();
-                
-
                 Container c(Container::SHARED_IMAGE, si);
-                //cerr << "Distributing Frame" << endl;
                 distribute(c);
                 captureCounter++;
-                // cumduration = ( clock() - start ) / (double) CLOCKS_PER_SEC;
-                // duration = cumduration - oldduration;
-                // oldduration = cumduration;
-
-                // smoothduration = (smoothduration * 0.9) + ((1/duration) * 0.1);
-
-                // cout<<"process time = : "<< duration <<" secs." << endl;
-                // cout<<"frame rate = : "<< 1/duration <<" /sec." << endl;
-                // cout<<"smoothed frame rate = : "<< smoothduration <<" /sec." << endl;
-
-
             }
 
-            // TODO: Here, you need to implement the data links to the embedded system
-            // to read data from IR/US.
-            //Serial
-            
-            if(correctserial && this_serial->isOpen()){
-                cerr << "About to send serial" << endl;
-                if(connection){
+            /*---Start serial sequence---*/            
+
+            if(correctSerialDevice && this_serial->isOpen()){
+                //if not receiving serial do not send
+                if(goodSerial){
                     sendSerial();
                 }
-                //cerr << "Serial Baud =  " << this_serial->getBaudrate() << endl;
-                if(this_serial->available() > 15){
-                    connection = getSerial();
-                }
-                if(connection){
-                    distSerial();
-                    
 
-                }else{
-                    cout << "Proxy timed out on serial connection " << endl;
-                    break;
+                //only attempt serial read if there is a packet to read
+                if(this_serial->available() > 15){
+                    goodSerial = getSerial();
                 }
-                serialcounter++;
+                
+                //if a packet is captured, distribute it to shared memory
+                if(goodSerial){
+                    distSerial();
+                }
+
+                // if incoming serial buffer is falling behind, flush it
                 if(this_serial->available() > 32){
                     this_serial->flushInput();
-                    serialcounter = 0;
                 }
             }
             
         }
-        //cumduration = ( clock() - start ) / (double) CLOCKS_PER_SEC;
 
+        /*---Show realtime frequency---*/
         cout << "Proxy: Captured " << captureCounter << " frames." << endl;
         time_t endTime = time(0);
-        cumduration = difftime(endTime, startTime);
-        cout << "Proxy: Captured " << captureCounter/cumduration << " frames per sec." << endl;
+        cumulDuration = difftime(endTime, startTime);
+        cout << "Proxy: Captured " << captureCounter/cumulDuration << " frames per sec." << endl;
         
 
         return ModuleState::OKAY;

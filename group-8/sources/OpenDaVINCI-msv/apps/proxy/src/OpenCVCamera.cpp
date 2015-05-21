@@ -59,6 +59,9 @@ namespace msv {
         return (m_capture != NULL);
     }
 
+    /*---Capture the frame, if BPP in config is set to 1, set image to gray scale, 
+        else do all processing edge detection for debug purposes---*/
+
     bool OpenCVCamera::captureFrame() {
         bool retVal = false;
         if (m_capture != NULL) {
@@ -67,9 +70,6 @@ namespace msv {
                     IplImage *tmpFrame = cvRetrieveFrame(m_capture);
 
                     if (m_image == NULL || out == NULL || gray_out == NULL) {
-                        // out = cvCreateImage( cvGetSize(tmpFrame), IPL_DEPTH_8U, 1 );
-                        // gray_out = cvCreateImage( cvGetSize(tmpFrame), IPL_DEPTH_8U, 1 );
-                        // merge_image = cvCreateImage( cvGetSize(tmpFrame), IPL_DEPTH_8U, 1 );
                         m_image = cvCreateImage(cvGetSize(tmpFrame), IPL_DEPTH_8U, 1);                    
                     }                   
 
@@ -88,8 +88,8 @@ namespace msv {
                     }                   
 
                     cvCvtColor( tmpFrame , gray_out, CV_BGR2GRAY);
-                    cvSmooth( gray_out, out, CV_GAUSSIAN, 25, 25 );       
-                    cvCanny( out, merge_image, 60, 20, 3 );
+                    cvSmooth( gray_out, out, CV_GAUSSIAN, 11, 11 );       
+                    cvCanny( out, merge_image, 110, 55, 3 );
                     cvMerge(merge_image, merge_image, merge_image, NULL, tmpFrame);
                     cvDilate(tmpFrame, m_image,NULL,1);
                 }
@@ -106,10 +106,13 @@ namespace msv {
         if ( (dest != NULL) && (size > 0) && (m_image != NULL) ) {
             ::memcpy(dest, m_image->imageData, size);
 
+            //check if configuration is tagged for running odroid headless.
+            
             if(!isheadless){
                 cvShowImage("WindowShowImage", m_image);
+                cvWaitKey(10);
             }
-            cvWaitKey(10);
+            
 
             retVal = true;
         }
