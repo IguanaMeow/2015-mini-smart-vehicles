@@ -45,6 +45,7 @@ namespace msv {
     using namespace core::data::control;
     using namespace core::data::environment;
     using namespace tools::recorder;
+    
 
     Proxy::Proxy(const int32_t &argc, char **argv) :
         ConferenceClientModule(argc, argv, "proxy"),
@@ -116,7 +117,8 @@ namespace msv {
         getConference().send(c);
     }
 
-    double front_us, fr_ir, rr_ir, fr_us, rear_ir; // values to pass to HLB
+    double front_us, fr_ir, rr_ir, fr_us, rear_ir, temp = 0; // values to pass to HLB
+    int wheel_encoder = 0;
     SensorBoardData sbd;
     VehicleControl vc;
     VehicleData vd;
@@ -124,6 +126,8 @@ namespace msv {
     serial::Serial my_serial("/dev/ttyACM0", 9600, serial::Timeout::simpleTimeout(1000));
     stringstream ss;
     bool dataReceived = true;
+    int failCount = 0;
+    bool decodeFail = false;
    
  // This method will do the main data processing job.
     ModuleState::MODULE_EXITCODE Proxy::body() {
@@ -146,30 +150,62 @@ namespace msv {
             Container c1(Container::USER_DATA_0, sbd);
             Container c2(Container::VEHICLEDATA, vd);
             
-        
-        if(dataReceived){
-        ss << (vc.getSteeringWheelAngle() * -1);
-        vcDataString = "WA=" + ss.str();
-        ss.str("");
-        ss << vc.getSpeed();
-        vcDataString += "SP=";
-        vcDataString += ss.str();
-        ss.str("");
-        my_serial.write(encodeNetstring(vcDataString));
-        cerr << vcDataString << endl;
-        dataReceived = false;
-    }
+            cerr << (decodeFail ? "Decode status: failed, car stopped" : "Decode status: success") << endl;
+            cerr << "fail count " << failCount << endl;
+            
+        if(dataReceived && !decodeFail){
+            ss << (vc.getSteeringWheelAngle() * -1);
+            vcDataString = "WA=" + ss.str();
+            ss.str("");
+            ss << vc.getSpeed();
+            vcDataString += "SP=";
+            vcDataString += ss.str();
+            ss.str("");
+            my_serial.write(encodeNetstring(vcDataString));
+            cerr << vcDataString << endl;
+            dataReceived = false;
+        }
+        if(dataReceived && decodeFail){
+            vcDataString = "WA=0SP=0";
+            my_serial.write(encodeNetstring(vcDataString));
+            dataReceived = false;
+        }
 
-        if(my_serial.available()) {
-            string result =  my_serial.readline(1024, ",");
+
+        if(my_serial.available()){
+            string result =  my_serial.readline(50, ",");
             sensorData = decodeNetstring(result);
-            cerr << result << endl;
-            sbd.putTo_MapOfDistances(0, extractData("IR1", sensorData)); // IR front right
-            sbd.putTo_MapOfDistances(1, extractData("IR2", sensorData)); // IR rear
-            sbd.putTo_MapOfDistances(2, extractData("IR3", sensorData)); // IR rear right
-            sbd.putTo_MapOfDistances(3, extractData("US1", sensorData)); // US front
-            sbd.putTo_MapOfDistances(4, extractData("US2", sensorData)); // US front right
-            vd.setAbsTraveledPath(75); // hardcoded to test
+            cerr << sensorData << endl;
+            if(sensorData != "NETSTRING_ERROR"){
+                temp = extractData("IR1", sensorData);
+                temp >= 199 ? fr_ir = 0 : fr_ir = temp/10;
+                temp = extractData("IR2", sensorData);
+                temp >= 199 ? rear_ir = 0 : rear_ir = temp/10;
+                temp = extractData("IR3", sensorData);
+                temp >= 199 ? rr_ir = 0 : rr_ir = temp/10;
+                temp = extractData("US1", sensorData);
+                temp >= 199 ? front_us = 0 : front_us = temp/10;
+                temp = extractData("US2", sensorData);
+                temp >= 199 ? fr_us = 0 : fr_us = temp/10;
+                temp = extractData("WE", sensorData);
+                temp >= 199 ? wheel_encoder = 0 : wheel_encoder = temp;
+                wheel_encoder = extractData("WE", sensorData);
+                decodeFail = false;
+            }else{
+                 cerr << "bad string" << endl;
+                sbd.putTo_MapOfDistances(0, fr_ir); // IR front right
+                sbd.putTo_MapOfDistances(1, rear_ir); // IR rear
+                sbd.putTo_MapOfDistances(2, rr_ir); // IR rear right
+                sbd.putTo_MapOfDistances(3, front_us); // US front
+                sbd.putTo_MapOfDistances(4, fr_us); // US front right
+                vd.setAbsTraveledPath(wheel_encoder); // wheel encoder
+                failCount ++;
+            }
+            
+            if(failCount >= 10){
+                decodeFail = true;                
+            }
+        
             distribute(c1);
             distribute(c2);
             dataReceived = true;
@@ -186,7 +222,8 @@ namespace msv {
 double extractData(string label, string sbData){
 
     double sensorValue;
-    int stringPos = sbData.find(label);
+    size_t stringPos = sbData.find(label);
+    if(stringPos >= std::string::npos) return 200;
     stringstream convert(sbData.substr(stringPos + 4));
     convert >> sensorValue;
     return sensorValue;

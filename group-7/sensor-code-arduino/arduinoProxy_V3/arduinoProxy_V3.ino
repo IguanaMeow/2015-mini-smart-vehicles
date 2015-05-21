@@ -18,7 +18,7 @@ int throttle = 1500;
 int angle = 90;
 String inputString;
 bool dataReceived = true;
-volatile long encoderTicks = 0;
+volatile unsigned long encoderTicks = 0;
 
 Servo esc;
 Servo servo;
@@ -77,7 +77,8 @@ void loop()
     sensorData += WE;
 
 
-    Serial.println(encodeNetstring(sensorData));
+    
+   Serial.println(encodeNetstring(sensorData));
     dataReceived = false; //Boolean to synchronize serial
   }
 }
@@ -124,7 +125,12 @@ int range(int ADDRESS_) {
 }
 
 void WheelEncoderInterrupt() {
-  encoderTicks++;
+  if (digitalRead(encoderPinA)) {
+    !(digitalRead(encoderPinB)) ? encoderTicks -- : encoderTicks ++;
+  }
+  else {
+    !(digitalRead(encoderPinB)) ? encoderTicks ++ : encoderTicks --;
+  }
 }
 
 void serialEvent() {
