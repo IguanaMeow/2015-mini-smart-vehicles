@@ -127,14 +127,16 @@ namespace msv {
                         vc.setSteeringWheelAngle(steeringAngle);
                         
                         // If something is detected during measuring, go back to SCANNING mode
-                        if((IRFrontRight > -1 && absTraveledPath - currentTraveledPath < carLength * 1.50) || (steeringAngle > 10 || steeringAngle < -10)){
-                                mode = SCANNING;
-                        }
-                        // If gap is wide enough change mode to ALIGNING
-                        else if (absTraveledPath - currentTraveledPath >= carLength * 1.50){
+                        if (absTraveledPath - currentTraveledPath >= carLength * 1.50){
                                 mode = ALIGNING;
                                 currentTraveledPath = absTraveledPath;
                         }
+
+                        else if(IRFrontRight > -1 || steeringAngle > 10 || steeringAngle < -10){
+                                mode = SCANNING;
+                        }
+                        // If gap is wide enough change mode to ALIGNING
+                        
                         break;
 
                         // Mode for aligning the car to park
