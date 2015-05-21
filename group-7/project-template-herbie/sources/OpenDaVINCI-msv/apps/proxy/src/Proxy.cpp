@@ -45,7 +45,7 @@ namespace msv {
     using namespace core::data::control;
     using namespace core::data::environment;
     using namespace tools::recorder;
-    
+
 
     Proxy::Proxy(const int32_t &argc, char **argv) :
         ConferenceClientModule(argc, argv, "proxy"),
@@ -123,12 +123,12 @@ namespace msv {
     VehicleControl vc;
     VehicleData vd;
     string vcDataString, sensorData;
-    serial::Serial my_serial("/dev/ttyACM0", 57600, serial::Timeout::simpleTimeout(1000));
+    serial::Serial my_serial("/dev/ttyACM0", 14400, serial::Timeout::simpleTimeout(1000));
     stringstream ss;
     bool dataReceived = true;
     int failCount = 0;
     bool decodeFail = false;
-   
+
  // This method will do the main data processing job.
     ModuleState::MODULE_EXITCODE Proxy::body() {
         uint32_t captureCounter = 0;
@@ -144,15 +144,15 @@ namespace msv {
 
             // TODO: Here, you need to implement the data links to the embedded system
             // to read data from IR/US.
-           
+
             Container containerVehicleControl = getKeyValueDataStore().get(Container::VEHICLECONTROL);
-            vc = containerVehicleControl.getData<VehicleControl> ();     
+            vc = containerVehicleControl.getData<VehicleControl> ();
             Container c1(Container::USER_DATA_0, sbd);
             Container c2(Container::VEHICLEDATA, vd);
-            
+
             cerr << (decodeFail ? "Decode status: failed, car stopped" : "Decode status: success") << endl;
             cerr << "fail count " << failCount << endl;
-            
+
         if(dataReceived && !decodeFail){
             ss << (vc.getSteeringWheelAngle() * -1);
             vcDataString = "WA=" + ss.str();
@@ -201,11 +201,11 @@ namespace msv {
                 vd.setAbsTraveledPath(wheel_encoder); // wheel encoder
                 failCount ++;
             }
-            
+
             if(failCount >= 10){
-                decodeFail = true;                
+                decodeFail = true;
             }
-        
+
             distribute(c1);
             distribute(c2);
             dataReceived = true;

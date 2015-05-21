@@ -27,7 +27,7 @@ void setup()
 {
   inputString.reserve(10); // Instantiate Objects
   Wire.begin();
-  Serial.begin(115200);
+  Serial.begin(14400);
 
   esc.attach(9);
   servo.attach(10);
@@ -155,7 +155,7 @@ void serialEvent() {
       float acceleration = speedData.toFloat();
 
       if (acceleration == 0) throttle = 1500;
-      if (acceleration > 0) throttle = 1605;
+      if (acceleration > 0) throttle = 1610;
       if (acceleration < 0) throttle = 1100;
     }
     inputString = "";
