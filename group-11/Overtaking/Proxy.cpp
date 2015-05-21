@@ -50,7 +50,7 @@ namespace msv {
     int forwardAngle = 70;
     double multiplier = 0.65;
     int adjustedAngle = 0;   
-    const char* vehicleValue = "";
+    char vehicleValue [10] = "";
 
     int sensorPort, vehiclePort;
 
@@ -358,9 +358,9 @@ namespace msv {
         //  Send data to Arduino
         
        Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_1);
-       SteeringData sd = containerSteeringData.getData<SteeringData; 
+       SteeringData sd = containerSteeringData.getData<SteeringData>(); 
 
-        angle = sd.getExampleData();
+       angle = sd.getExampleData();
         
         
         /*
