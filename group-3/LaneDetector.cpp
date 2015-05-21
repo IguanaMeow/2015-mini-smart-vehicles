@@ -229,14 +229,19 @@ Point DrawingVertical(Mat img, Point point, bool top)
 }
 //end of Nicolas part
 //Emily part
-        if((myPointRightEnd[2].x < 478 && myPointRightEnd[0].x > 300))
+        //Need too make dynamic steering
+        //320 == roi Width
+        //160  == ROI Height
+        //((bRightPointEnd.x < 478 && rightPointTopEnd.x>280)
+        if((myPointRightEnd[2].x < 480 && myPointRightEnd[0].x>320))
         {
         sd.setExampleData(-10);
         }
-        else if(myPointLeftEnd[0].x > 170 || myPointLeftEnd[1].x  > 170 || myPointLeftEnd[2].x  > 180 || myPointLeftEnd[3].x  > 190 )
+        else if(myPointLeftEnd[0].x > 160 || myPointLeftEnd[1].x  > 170 || myPointLeftEnd[2].x  > 180 || myPointLeftEnd[3].x  > 190 )
         {
         sd.setExampleData(18);
         }
+
 //End of emily part
         //TODO: Start here.
         // 1. Do something with the image m_image here, for example: find lane marking features, optimize quality, ...
