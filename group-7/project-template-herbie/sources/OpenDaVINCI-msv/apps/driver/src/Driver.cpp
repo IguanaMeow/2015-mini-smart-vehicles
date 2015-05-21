@@ -55,9 +55,11 @@ namespace msv {
         // This method will do the main data processing job.
         ModuleState::MODULE_EXITCODE Driver::body() {
                 double front_us, fr_ir, rr_ir, fr_us, rear_ir;
-                
                 bool intersect = false;
-                int intersectionState, overtakingState, parkingState, demoState = 0;
+                int intersectionState = 0;
+                int parkingState = 0;
+                int demoState = 0;
+                int overtakingState = 0; 
                 bool obstacleFound = false;
                 bool inSimulator = false;
                 double speed = 1;
@@ -73,7 +75,7 @@ namespace msv {
                 const double car_length = 5;
                 double distance_1, distance_2, distance_3;
                 int intersectionCounter = 0;
-                int leftCounter = 0; 
+                int counter = 0; 
                 int delay = 0;
                 double turnSpeed = 0;
              
@@ -86,54 +88,43 @@ namespace msv {
                 cout << "Enter 1 for parking mode, 2 for hardware demo or any key for normal mode." << endl;
                 cin >> menuChoice;
                 
-            
-
             while (getModuleState() == ModuleState::RUNNING) {
                 // In the following, you find example for the various data sources that are available:
 
                 // 1. Get most recent vehicle data:
                 Container containerVehicleData = getKeyValueDataStore().get(Container::VEHICLEDATA);
                 VehicleData vd = containerVehicleData.getData<VehicleData> ();
-                cerr << "Most recent vehicle data: '" << vd.toString() << "'" << endl;
+                //cout << "Most recent vehicle data: '" << vd.toString() << "'" << endl;
 
                 // 2. Get most recent sensor board data:
                 Container containerSensorBoardData = getKeyValueDataStore().get(Container::USER_DATA_0);
                 SensorBoardData sbd = containerSensorBoardData.getData<SensorBoardData> ();
-                cerr << "Most recent sensor board data: '" << sbd.toString() << "'" << endl;
-
-                // 3. Get most recent user button data:
-                Container containerUserButtonData = getKeyValueDataStore().get(Container::USER_BUTTON);
-                UserButtonData ubd = containerUserButtonData.getData<UserButtonData> ();
-                cerr << "Most recent user button data: '" << ubd.toString() << "'" << endl;
+                //cout << "Most recent sensor board data: '" << sbd.toString() << "'" << endl;
 
                 // 4. Get most recent steering data as fill from lanedetector for example:
                 Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_1);
                 SteeringData sd = containerSteeringData.getData<SteeringData> ();
-                cerr << "Most recent steering data: '" << sd.toString() << "'" << endl;
-                cerr << "Current state '" << state << "'" << endl;
-                 Container containerSpeedData = getKeyValueDataStore().get(Container::USER_DATA_2);
-                SpeedData spd = containerSpeedData.getData<SpeedData>();
+                //cout << "Most recent steering data: '" << sd.toString() << "'" << endl;
+                
 
                 Container containerLaneFollowing = getKeyValueDataStore().get(Container::USER_DATA_5);
                 LaneDetected ld = containerLaneFollowing.getData<LaneDetected>();
 
                  Container containerIntersection = getKeyValueDataStore().get(Container::USER_DATA_6);
                 Intersection id = containerIntersection.getData<Intersection> ();
-                intersect = id.getIntersection();
-
-                canFollowLane = ld.getLaneDetected();
-                cerr << (canFollowLane ? "canFollowLane = true" : "canFollowLane = false") << endl;
-                
 
                 laneFollowAngle = (sd.getExampleData() * Constants::RAD2DEG);
-                cerr << "laneFollowAngle = " << laneFollowAngle << endl;
-                cerr << "rightTurnSteerAngle = " << rightTurnSteerAngle << endl;
-                cerr << "leftCounter = " << leftCounter << endl;
-               
-                cerr << "IR front = " << fr_ir << endl;
-                cerr << "IR rear = " << rr_ir << endl;
-                cerr << "Delay = " << delay << endl;
-            
+                intersect = id.getIntersection();
+                canFollowLane = ld.getLaneDetected();
+
+                cout << "Current state '" << state << "'" << endl;
+                cout << (canFollowLane ? "canFollowLane = true" : "canFollowLane = false") << endl;
+                cout << "laneFollowAngle = " << laneFollowAngle << endl;
+                cout << "counter = " << counter << endl;
+                cout << "IR front = " << fr_ir << endl;
+                cout << "IR rear = " << rr_ir << endl;
+                cout << "Delay = " << delay << endl;
+                
                 fr_ir = sbd.getValueForKey_MapOfDistances(0);
                 rear_ir = sbd.getValueForKey_MapOfDistances(1);
                 rr_ir = sbd.getValueForKey_MapOfDistances(2);
@@ -159,12 +150,9 @@ namespace msv {
                     turnSpeed = 0.6;
                 }
 
-
                 /******************** intersection control ************************/
 
                 switch(intersectionState){ 
-
-                
                     case 0: // if intersection detected disable lane following and stop car      
                         state = "normal";
                         if(intersect && !obstacleFound){   
@@ -173,21 +161,17 @@ namespace msv {
                             intersectionState = 1;                
                         }
                         break;
-
-                    case 1: //at intersection, wait at line until counter ends
+                    case 1: //at intersection, check if clear
                         if(intersectionCounter < 50){
                             intersectionCounter ++;
                             state = "at intersection"; 
                         }
-                        //check if clear
                         else if((front_us < 0 || front_us > 10) && (fr_us < 0 || fr_us > 20)) intersectionState = 2;                
                         break;
-                        
                     case 2: //drive through intersection
                         state = "drive through intersection";
                         speed = 1;          
                         desiredSteeringWheelAngle = 0;
-                        //check if lane can be detected, then do normal lane detection
                         if(canFollowLane){ 
                             intersectionCounter = 0; 
                             intersectionState = 0;    
@@ -195,12 +179,10 @@ namespace msv {
                         }
                         break;
                 }
-                
                 /********************** Overtaking control ************************/
                 switch(overtakingState){
                     case 0: // hard left
                     if(!obstacleFound && front_us > -1 && front_us < distToObject && doLaneFollowing){  
-                       
                         desiredSteeringWheelAngle = -25;   
                         obstacleFound = true; 
                         doLaneFollowing = false; 
@@ -215,7 +197,7 @@ namespace msv {
                         overtakingState = 2;                     
                     }
                     break;
-                    case 2:
+                    case 2: // right turn when corner seen
                     state = "waiting for rear";
                     if(rr_ir > -1 && rr_ir <= 3){
                         state = "seen by rear IR"; 
@@ -224,7 +206,7 @@ namespace msv {
                     }
                     break;
                     case 3: // follow left lane
-                    leftCounter ++;
+                    counter ++;
                     delay ++;
                     if(delay >= 60){
                         if(rr_ir >= (fr_ir - 0.1) && rr_ir <= (fr_ir + 0.1) ){
@@ -239,11 +221,11 @@ namespace msv {
                     break;
                     case 5: // turn right when front right US is clear
                         delay = 0;
-                        leftCounter --;
+                        counter --;
                         speed = turnSpeed;
                         desiredSteeringWheelAngle = rightTurnSteerAngle;
                         state = "to RHLane"; 
-                        if(leftCounter == 0){ 
+                        if(counter == 0){ 
                         overtakingState = 6; 
                     } 
                     break;
@@ -263,7 +245,8 @@ namespace msv {
                      switch(parkingState){ // using switch-case to change state
                             case 0: // find space for parking and right place to park (found the obstacle)
                                //get speed data and wheelangle from the lane detector through container
-                                speed = spd.getSpeedData();
+                                //speed = spd.getSpeedData();
+                            speed = 1;
                                 //make sure that it is not curve, before going to the next state.
                                 state = "parking: Finding a parking gap";
                                 if((fr_us < 0 || fr_us > (car_length * 1.6)) && laneFollowAngle <= 0.02 && laneFollowAngle >= 0) parkingState = 1;
