@@ -14,14 +14,16 @@
 
 #
 # GLOBAL CONFIGURATION
-#Parking-sideways.scnx
-#ObstacleOnStraightRoad.scnx
 #
 global.car = Scenarios/Models/FordEscape.objx
 #global.car = Scenarios/Models/RedRocketCar.objx
 #global.scenario = file://Scenarios/Parking-sideways.scnx
+#global.scenario = file://Scenarios/Parking-easy.scnx
 #global.scenario = file://Scenarios/ObstacleOnStraightRoad.scnx
-global.scenario = file://Scenarios/NoObstacles_StopLines.scnx
+#global.scenario = file://Scenarios/Parking-medium.scnx
+#global.scenario = file://Scenarios/Parking-hard.scnx
+#global.scenario = file://Scenarios/NoObstacles_StopLines.scnx
+global.scenario = file://Scenarios/Overtaking-easy.scnx
 global.showGrid = 0
 
 # The following attributes define the buffer sizes for recording and replaying.
@@ -177,9 +179,12 @@ proxy.camera.bpp = 3
 #
 # CONFIGURATION FOR VEHICLE
 #
-Vehicle.posX = 0                     # Initial position X in cartesian coordinates.
-Vehicle.posY = 0                     # Initial position Y in cartesian coordinates.
-Vehicle.headingDEG = 90
+Vehicle.posX = 0             # 0 Initial position X in cartesian coordinates.
+Vehicle.posY = 0              # 0 Initial position Y in cartesian coordinates.
+Vehicle.headingDEG = 90        # 90 Initial heading.
+#Vehicle.posX = -45             # Parking Initial position X in cartesian coordinates.
+#Vehicle.posY = -10              # Parking Initial position Y in cartesian coordinates.
+#Vehicle.headingDEG = 360        # Parking Initial heading.
 Vehicle.model=LinearBicycleModelNew  # Which motion model to be used: LinearBicycleModelNew or LinearBicycleModel (for CaroloCup 2013!).
 Vehicle.LinearBicycleModelNew.withSpeedController=1          # iff 1: use the VehicleControl.m_speed field; otherwise, ignore m_speed and use VehicleControl.m_acceleration field
 Vehicle.LinearBicycleModelNew.minimumTurningRadiusLeft=4.85  # Minimum turning radius to the left (for calculating maximum steering angle to the left); Attention! we used data from the miniature vehicle Meili and thus, all values are scaled by factor 10 to be compatible with the simulation!
