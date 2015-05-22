@@ -97,6 +97,10 @@ namespace msv {
 
 			void setLines(IplImage* image);
 
+			 /*---Translate a given point around (nearly) the middle of the image using a slightly offset 
+    		vanishing point---*/
+			int translatePoint(int yPos, int xPos);
+
 	        virtual void setUp();
 
 	        virtual void tearDown();
@@ -124,6 +128,7 @@ namespace msv {
 
         	double critAngleRight;
         	double critAngleLeft;
+        	int vanY;
 
         	double rightError;
         	double leftError;
@@ -134,6 +139,9 @@ namespace msv {
       		vector<Lines> leftList;
       		vector<Lines> validLeft;
       		vector<Lines> validRight;
+
+
+
 	};
 
 } // msv
