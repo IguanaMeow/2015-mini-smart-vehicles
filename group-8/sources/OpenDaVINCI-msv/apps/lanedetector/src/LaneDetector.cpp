@@ -196,7 +196,10 @@
 
         validLines(leftList,0);
         validLines(rightList,1);
+        /*---Critical angle is determined from vlid, drawn lines to establish the level of skew from the camera angle ---*/
         if (critAngleCounter < 2 ) {
+          /*---the left critical angle is not currently used (only the right) but we left it here 
+              because we'd like to use it (call it experimental) to average out with the right critical angle---*/ 
             if (validLeft.begin()->getYPos() < validLeft[1].getYPos()) {
                 critAngleLeft = (atan2(validLeft[1].getYPos() - validLeft.begin()->getYPos(), 
                     validLeft[1].getXPos()- validLeft.begin()->getXPos() ) * Constants::RAD2DEG);
@@ -332,15 +335,15 @@
             if(headless){
 
                 for(int i = 0; i < SIZE; ++i){
-                    rightList[i].setYPos(round(imgHeight * distance *i+6));
-                    leftList[i].setYPos(round(imgHeight * distance *i+6));
+                    rightList[i].setYPos(round(imgHeight * distance *(i+6)));
+                    leftList[i].setYPos(round(imgHeight * distance *(i+6)));
                     upline1.setCritical(imgHeight * 0.36);
                     upline2.setCritical(imgHeight * 0.36);
                 }
             }else{
                 for(int i = 0; i < SIZE; ++i){
-                    rightList[i].setYPos(round(imgHeight * distance *i+2));
-                    leftList[i].setYPos(round(imgHeight * distance *i+2));
+                    rightList[i].setYPos(round(imgHeight * distance *(i+2)));
+                    leftList[i].setYPos(round(imgHeight * distance *(i+2)));
                 }
                 upline1.setCritical(imgHeight * 0.2);
                 upline2.setCritical(imgHeight * 0.2);
@@ -350,13 +353,6 @@
             upline2.setXPos((imgWidth / 2) + (imgWidth * 0.04));
             yCount = 1;
         }
-
-        /*---If running on Odroid use higher starting lines for intersection 
-            detect to handle noise from nose of car---*/
-        if(headless){
-            upline1.setYPos(measureDistance(rightList[0].getYPos(), 2, m_image));
-            upline2.setYPos(measureDistance(rightList[0].getYPos(), 2, m_image));
-        }else{
             upline1.setYPos(measureDistance(upline1.getXPos(), 2, m_image));
             upline2.setYPos(measureDistance(upline2.getXPos(), 2, m_image));
         }
