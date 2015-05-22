@@ -243,6 +243,9 @@ namespace msv {
             //cv::imshow("Lane-det",thr);
             //cv::waitKey(30);
             //cvWaitKey(10);
+        
+        //From this point on, Jonathan Klemetz and Johan Hermansson, started implementing the logic
+        //that had been planned for the lane following algorithm.
             
             rightDistance = p5.x - p4.x;
             leftDistance = p6.x - p3.x;
