@@ -49,8 +49,6 @@
     using namespace core::data::image;
     using namespace tools::player;
 
-
-
     LaneDetector::LaneDetector(const int32_t &argc, char **argv) : ConferenceClientModule(argc, argv, "lanedetector"),
     m_hasAttachedToSharedImageMemory(false),
     m_sharedImageMemory(),
@@ -172,16 +170,11 @@
                     cvCanny( merge_image, merge_image, 110, 55, 3 );
                     cvDilate(merge_image, merge_image,NULL,1);
                     cvMerge(merge_image, merge_image, merge_image, NULL, m_image);
-
                 }
-
-
-
             // Mirror the image.
                 if(numberOfChannels != 1){
                     cvFlip(m_image, 0, -1);
                 }
-
                 retVal = true;
             }
         }
@@ -189,11 +182,10 @@
         imgHeight = m_image->height;
         return retVal;
     }
-
+    
+    
     void LaneDetector::processImage() {
-
         setLines(m_image);
-
         validLines(leftList,0);
         validLines(rightList,1);
         /*---Critical angle is determined from vlid, drawn lines to establish the level of skew from the camera angle ---*/
