@@ -51,7 +51,7 @@ namespace msv {
     void open_port(std::string adr);
     void port_config();
     //void write_int();
-    std::string readString();
+    //std::string readString();
     //void readSerial(int q);
     std::string readSerial(); 
 
@@ -224,8 +224,8 @@ namespace msv {
             
             write(port, sentence, 10);
             std::cout << "Wrote: "<< sentence << std::endl;
-            //msv::readSerial();
-            msv::readString();
+            msv::readSerial();
+            
             /*************************
             Test this read
             msv::readString();
@@ -291,10 +291,10 @@ void port_config() {
     tcsetattr(port, TCSANOW, &options);
 }
 
+// Markus Erlach
 // <16:100:2020202020>
 // XXX:IR1IR2IR3US1US2 Example: 100:2020202020
 // All sensors should equal XXX (checksum) Like above.
-// Markus Erlach
 /*
 std::string readString() {
     char start[1] = "";
