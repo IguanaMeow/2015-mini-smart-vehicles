@@ -106,7 +106,6 @@ namespace msv {
                     if(sonarRight < 0 || sonarRight > 20) break;
                     angle = 0;
                     speed = 2;
-                    turnTime = duration;
                     state = 2;
                     break;
 
