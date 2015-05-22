@@ -51,141 +51,167 @@ namespace msv {
         void Driver::tearDown() {
                 // This method will be call automatically _after_ return from body().
         }
-
+        double Driver::angle(double heading){
+                double difference = heading * Constants::RAD2DEG;
+                if(difference> 360)
+                {
+                  difference=difference-360;
+                }
+              return difference;
+        }
         // This method will do the main data processing job.
         ModuleState::MODULE_EXITCODE Driver::body() {
 
-				int mode=0;
-				double speed = 0;
-                double IF_RR;
-                double IF_Rear;
-                double US_Front;
-                int CurrentPath;
-                int absPath;
 
+                const int CARSIZE = 4;
+                int mode=0;
+                double speed;
+                int steering;
+                double absPath;
+                double curentPath;
+                double initheading;
+                double correctHeading;
                 while (getModuleState() == ModuleState::RUNNING) {
                 // In the following, you find example for the various data sources that are available:
 
                 // 1. Get most recent vehicle data:
                 Container containerVehicleData = getKeyValueDataStore().get(Container::VEHICLEDATA);
                 VehicleData vd = containerVehicleData.getData<VehicleData> ();
-           //     cerr << "Most recent vehicle data: '" << vd.toString() << "'" << endl;
+                cerr << "Most recent vehicle data: '" << vd.toString() << "'" << endl;
 
                 // 2. Get most recent sensor board data:
                 Container containerSensorBoardData = getKeyValueDataStore().get(Container::USER_DATA_0);
                 SensorBoardData sbd = containerSensorBoardData.getData<SensorBoardData> ();
-           //     cerr << "Most recent sensor board data: '" << sbd.toString() << "'" << endl;
+                cerr << "Most recent sensor board data: '" << sbd.toString() << "'" << endl;
 
                 // 3. Get most recent user button data:
                 Container containerUserButtonData = getKeyValueDataStore().get(Container::USER_BUTTON);
                 UserButtonData ubd = containerUserButtonData.getData<UserButtonData> ();
-           //     cerr << "Most recent user button data: '" << ubd.toString() << "'" << endl;
+                cerr << "Most recent user button data: '" << ubd.toString() << "'" << endl;
 
                 // 4. Get most recent steering data as fill from lanedetector for example:
                 Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_1);
                 SteeringData sd = containerSteeringData.getData<SteeringData> ();
-             //   cerr << "Most recent steering data: '" << sd.toString() << "'" << endl;
+                 cerr << "Most recent steering data: '" << sd.toString() << "'" << endl;
+
+              double  IRRear = sbd.getValueForKey_MapOfDistances(1);
+              double  IR_RR=sbd.getValueForKey_MapOfDistances(2);
+               double   USFrontCenter = sbd.getValueForKey_MapOfDistances(3);
+
+
+                // Design your control algorithm here depending on the input data from above.
+
+
 
                 // Create vehicle control data.
                 VehicleControl vc;
-                // Sensors
-                IF_Rear = sbd.getValueForKey_MapOfDistances(1); 
-                IF_RR = sbd.getValueForKey_MapOfDistances(2);
-                US_Front = sbd.getValueForKey_MapOfDistances(3);
 
                 switch(mode){
 
-                //Starts moving the car until it finds a parking spot
                 case 0:
-                speed =2.0; // let's go fast
-                vc.setSteeringWheelAngle(0 * Constants::DEG2RAD);
-                if(IF_RR < 0) 
-                {
-                    CurrentPath = vd.getAbsTraveledPath();
+                cout << "Start Driving" << endl;
+                speed =2.0;
+                steering =0;
+                absPath = 0;
+               curentPath = 0;
+                if(IR_RR < 0) { // we strt driving incase sensor doesnt find anything 
+                    absPath = vd.getAbsTraveledPath();
                     mode = 1;                    
                 }
                 break;
-                //looks for a parking spot , if a parking spot is found we check it size
+
                 case 1:
-                speed =2.0;// let's look go fast for a parking spot
-                vc.setSteeringWheelAngle(0 * Constants::DEG2RAD);
-                if(IF_RR > 0) 
-                {
+                cout << "Finding parkingspace" << endl;
+                speed =1.5;
+                steering =0;
+                if(IR_RR > 0) { // if sensor finds an object we change mode too mesure it size of the spot
                     mode = 2;                    
                 }
                 break;
 
-                //Checks the size of the parking spot , if it fits it parks , if it doesnt it starts scanning again
                 case 2:
-                absPath = vd.getAbsTraveledPath();
-                speed =0.5;
-                vc.setSteeringWheelAngle(0 * Constants::DEG2RAD);
-                if(absPath - CurrentPath > 3) 
-                {
-                	speed = 0.0; //Stops the car so we can back up too park
-                    if(vd.getSpeed() < 0.5)  // if Vehicle speed is under 0.5 start backing up
-                    {
-                    	mode = 3;
-                    }
+                cout << "Parking space is big enough" << endl;
+                curentPath = vd.getAbsTraveledPath();
+                speed =1;
+                steering =0;
+                if(curentPath - absPath > CARSIZE) { // we start mesuring the size of the spot from the spot where we found an object until we find another object again
+                    initheading = vd.getHeading(); // if free space is bigger than carsize we slow down and park.
+                    mode = 3;
                 }
-                else
-                 {
-                    mode = 0; // if parking spot doesnt fit the starts scanning again
+                else {
+                    mode = 0; // if parking isnt big enough , we keep looking
                 }
                 break;
 
-                //the Vehicle starts backing into the parking spot while turning right
                 case 3:
-                vc.setSteeringWheelAngle(26 * Constants::DEG2RAD);
-                speed =-0.5;
-                if(vd.getHeading() * Constants::RAD2DEG > 155) // 150 doesnt go enough in and 160 goes too far out
-                {  
-                    mode = 4;
+                cout << "Prepairing for backing" << endl;
+                speed =0.0;
+                if (vd.getSpeed() < 0.5) { // slow down the car and start backing it up
+                        mode = 4;
                 }
                 break;
 
-                //Trying to straighten up the car while backing
-                case 4:
-                vc.setSteeringWheelAngle(-26 * Constants::DEG2RAD); //turns left 
-                speed =-0.5; // backuo slowly
-                if(IF_Rear < 2 && IF_Rear > 0) 
-                {
+                case 4: 
+                cout << "Backing up right" << endl;
+                steering =26; // backing up right
+                speed =-1;
+                correctHeading = angle(initheading)+ 50; // backing in too the parkingspace , +50 too get a better angle of parking
+                if(vd.getHeading() * Constants::RAD2DEG > correctHeading) // checks current heading angle is bigger than initheading angle - 360
+                {initheading angle
                     mode = 5;
                 }
-                else if(vd.getHeading() * Constants::RAD2DEG < 91) 
-                {
+                break;
+
+                case 5:
+                cout<< "Backing left" << endl;                
+                steering =-26; // backing up left
+                speed =-1;
+                correctHeading = angle(initheading); // Used too calculate the anglediffrence
+                if(vd.getHeading() * Constants::RAD2DEG >angle(initheading) && vd.getHeading() * Constants::RAD2DEG < correctHeading) {
+                    mode = 7;                    
+                }
+                if(IRRear < 2.5 && IRRear > 0) { 
                     mode = 6;
                 }
                 break;
 
-                // Trying too correct the car while driving foward
-                case 5:
-                vc.setSteeringWheelAngle(26 * Constants::DEG2RAD); // steering too the right
-                speed =0.7;
-                if(vd.getHeading() * Constants::RAD2DEG < 91) 
-                {
-                    mode = 6; // trys too get the car perfect in the midle
+                case 6:
+                cout<< "Forward right" << endl;
+                steering =26;
+                speed =1;
+                correctHeading = angle(initheading)+1;
+                if(vd.getHeading() * Constants::RAD2DEG > angle(initheading) && vd.getHeading() * Constants::RAD2DEG < correctHeading) {
+                    mode = 7;
                 } 
-                if(US_Front < 2) 
-                {
-                   mode = 4;
+                if(USFrontCenter < 2) {
+                    mode = 5;
                 }                
                 break;
 
-                //What gets the parking perfectly in the middle
-                case 6:
-                if(US_Front > 3 || US_Front < 0)//Drives the car abit more front so it get perfectly in the middle
-                {
-                vc.setSteeringWheelAngle(0 * Constants::DEG2RAD);
-                speed =0.4;
+                case 7:
+                cout << "Make that parking bautiful" << endl;
+                if (USFrontCenter < 2.5 && USFrontCenter > 2){ // 2-2.4 jungles back in foward as a swing , this is because the USFrontCenter sensor goes between 2.8-3.1
+                    mode = 8;
                 }
-                else if (US_Front < 3 && US_Front > 2) //What gets the parking perfectly in the middle
-                {
-                speed =0.0;
+                else if(USFrontCenter > 3 || USFrontCenter < 0){ // drive abit front
+                steering =0;
+                speed =0.5;
+                }
+                else { // ddrives abit back
+                steering =0;
+                speed =-0.5; 
                 }
                 break;
+
+                case 8:
+                cout << "turning of the ferrari" << endl;
+                speed =0.0; // turn of the car
+                steering =0; // steering as middle
+                break;
+
                 }
-               vc.setSpeed(speed);
+                vc.setSteeringWheelAngle(steering * Constants::DEG2RAD);
+                vc.setSpeed(speed);
 
                 // You can also turn on or off various lights:
                 vc.setBrakeLights(false);
