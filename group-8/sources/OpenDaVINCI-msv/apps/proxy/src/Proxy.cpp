@@ -177,12 +177,16 @@ namespace msv {
         }else if ((int)speedSetting == 0){
             speedOutTemp = 1500; 
         }else{
-            speedOutTemp = 1570 + speedSetting;
+            if(steeringSetting > 21 || steeringSetting < -21){
+                speedOutTemp = 1560;
+            }else{
+                speedOutTemp = 1570 + speedSetting;
+            }
         }
 
         //for full steering set max physical angle
-        if(steeringSetting >= 25) steeringSetting = 35;
-        if(steeringSetting <= -26) steeringSetting = -35;
+        if(steeringSetting >= 25) steeringSetting = 40;
+        if(steeringSetting <= -26) steeringSetting = -40;
 
         steeringOutTemp = 90 + (int16_t)(steeringSetting * Constants::RAD2DEG);
 
@@ -229,33 +233,30 @@ namespace msv {
         if(current != startByte){
             while (this_serial->read(&current,1) && current != endByte);
             this_serial->read(&current,1);
-        }
-
-        /*---If there is a full packet available, start reading it---*/ 
-
-        if(this_serial->available() > 15){
             this_serial->read(&current,1);
-            tempincoming[0] = current;
-            this_serial->read(tempincoming + 1, 16);
-
-            //calculate checksum
-            for(int i = 0; i < INSERIAL; i++){
-                check ^= tempincoming[i];
-            }
-
-            /*---If all the expected bits are in place and checksum is satisfactory put 
-                temporary array to global and return success value---*/
-            
-            if(tempincoming[0] == startByte && tempincoming[INSERIAL - 2] == endByte && check == 0){
-                for(int i = 0; i < INSERIAL; i++){
-                    incomingSer[i] = tempincoming[i];
-                }
-                return 1;
-            }else{
-                return 0;
-            }
         }
-        return 0;
+
+
+        
+        tempincoming[0] = current;
+        this_serial->read(tempincoming + 1, 16);
+
+        //calculate checksum
+        for(int i = 0; i < INSERIAL; i++){
+            check ^= tempincoming[i];
+        }
+
+        /*---If all the expected bits are in place and checksum is satisfactory put 
+            temporary array to global and return success value---*/
+        
+        if(tempincoming[0] == startByte && tempincoming[INSERIAL - 2] == endByte && check == 0){
+            for(int i = 0; i < INSERIAL; i++){
+                incomingSer[i] = tempincoming[i];
+            }
+            return 1;
+        }else{
+            return 0;
+        }
     }
 
     /*---If an incoming serial packet is validated, it will be distributed to shared memory---*/
@@ -390,6 +391,7 @@ namespace msv {
                 Container c(Container::SHARED_IMAGE, si);
                 distribute(c);
                 captureCounter++;
+                cout << "Captured Frame" << endl;
             }
 
             /*---Start serial sequence---*/            
