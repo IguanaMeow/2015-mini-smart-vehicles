@@ -204,6 +204,7 @@
             if (validRight.begin()->getYPos() < validRight[1].getYPos()) {
                 critAngleRight = (atan2(validRight[1].getYPos() - validRight.begin()->getYPos(), 
                     validRight.begin()->getXPos()-validRight[1].getXPos()) * Constants::RAD2DEG);
+                //vanY is vanishing point
                 vanY = (validRight.begin()->getYPos() + (tan(critAngleRight * Constants::DEG2RAD) 
                     * (validRight.begin()->getXPos() - imgWidth/2)));
                 critAngleCounter += 1;
@@ -349,6 +350,7 @@
             upline2.setYPos(measureDistance(upline2.getXPos(), 2, m_image));
         }
 
+        //calculate critical distance for each line once
         if (critCounter < 20) {
             for(int i = 0; i < SIZE; ++i) {
                 if (leftList[i].getCritical() < 1){
@@ -369,6 +371,7 @@
         }
     }
 
+    //check if the gien vector is empty. Empty means (-1, -1, -1)
     bool LaneDetector::isEmpty(std::vector<Lines>& lines){
         for(int i=0; i<SIZE; ++i){
             if (lines.at(i).getYPos()>0)
@@ -414,6 +417,7 @@
                     validLeft.push_back(lines[i]);
                     ++leftLength;
                 }else{
+                	//when its invalid, put place holder (-1, -1, -1) to that position
                     validLeft.push_back(Lines(-1,-1,-1));
                 }
 
@@ -478,12 +482,14 @@
             tempListLeft.clear();
             tempListRight.clear();
             for(int i=0; i<SIZE; ++i){
+            	//when the ith element in both vectors are valid, push them back to temporary lists
                 if (validLeft[i].getXPos()>0 && validRight[i].getXPos()>0){
                     tempListLeft.push_back(validLeft[i]);
                     tempListRight.push_back(validRight[i]); 
                 }
             }
             int length = tempListLeft.size();
+            //when there are more than two valid lines, only keep the first two
             if (length >0){
                 if(length >1){
                     length = 2;
@@ -502,6 +508,8 @@
                 double array[length];
 
                 for (int i = 0; i < length; ++i){
+                	//difference between the midponit of the image and the mid of the road
+
                     int alphaX =(((tempListRight[i].getXPos()-tempListLeft[i].getXPos())/2)
                         +tempListLeft[i].getXPos() + 5)-x/2;        
                     int alphaY = tempListLeft[i].getYPos();
@@ -518,6 +526,7 @@
                     sum+=array[i];
                 }
                 angle = (sum/length);
+                //due to hardware restriction, angles have to be between -26 and 25
                 if (angle* Constants::RAD2DEG > 25)
                     angle = 25* Constants::DEG2RAD;
                 else if (angle* Constants::RAD2DEG < -26)
