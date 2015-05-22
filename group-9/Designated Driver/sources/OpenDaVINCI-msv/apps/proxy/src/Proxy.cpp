@@ -33,6 +33,7 @@
 #include "Proxy.h"
 #include <fstream>
 #include <iostream> 
+#include <ctime>
 #include <unistd.h>
 #include <fcntl.h> 
 #include <termios.h> 
@@ -40,18 +41,19 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <time.h>
+#include <sys/time.h> 
 
+// Markus Erlach
 #define USB "/dev/ttyACM0"
 
-namespace msv {
+namespace msv { 
     int port;
-
-    int open_port(std::string adr);
-    void port_config(int x);
-    void write_int(int y);
-    std::string readString(int z);
-    void readSerial(int q); 
+    void open_port(std::string adr);
+    void port_config();
+    //void write_int();
+    std::string readString();
+    //void readSerial(int q);
+    std::string readSerial(); 
 
     const char *USB_PORT;
 
@@ -62,7 +64,7 @@ namespace msv {
     using namespace core::data::control;
 
     Proxy::Proxy(const int32_t &argc, char **argv) :
-	    ConferenceClientModule(argc, argv, "proxy"),
+        ConferenceClientModule(argc, argv, "proxy"),
         m_recorder(NULL),
         m_camera(NULL)
     {}
@@ -71,8 +73,9 @@ namespace msv {
     }
 
     void Proxy::setUp() {
-        port = msv::open_port(USB); // Connect to arduino
-        msv::port_config(port);
+
+        msv::open_port(USB); // Connect to arduino
+        msv::port_config();
         // This method will be called automatically _before_ running body().
         if (getFrequency() < 20) {
             cerr << endl << endl << "Proxy: WARNING! Running proxy with a LOW frequency (consequence: data updates are too seldom and will influence your algorithms in a negative manner!) --> suggestions: --freq=20 or higher! Current frequency: " << getFrequency() << " Hz." << endl << endl << endl;
@@ -82,6 +85,7 @@ namespace msv {
         KeyValueConfiguration kv = getKeyValueConfiguration();
 
         // Create built-in recorder.
+        /*
         const bool useRecorder = kv.getValue<uint32_t>("proxy.useRecorder") == 1;
         if (useRecorder) {
             // URL for storing containers.
@@ -96,7 +100,7 @@ namespace msv {
 
             m_recorder = new Recorder(recordingURL.str(), MEMORY_SEGMENT_SIZE, NUMBER_OF_SEGMENTS, THREADING);
         }
-
+*/
         // Create the camera grabber.
         const string NAME = getKeyValueConfiguration().getValue<string>("proxy.camera.name");
         string TYPE = getKeyValueConfiguration().getValue<string>("proxy.camera.type");
@@ -116,7 +120,7 @@ namespace msv {
     }
 
     void Proxy::tearDown() {
-	    // This method will be call automatically _after_ return from body().
+        // This method will be call automatically _after_ return from body().
         OPENDAVINCI_CORE_DELETE_POINTER(m_recorder);
         OPENDAVINCI_CORE_DELETE_POINTER(m_camera);
     }
@@ -150,68 +154,90 @@ namespace msv {
                 cerr << "Speed: '" << vc.getSpeed() << "'" << endl;
                 cerr << "Angle: '" << vc.getSteeringWheelAngle() << "'" << endl;
 
-
-
             // TODO: Here, you need to implement the data links to the embedded system
             // to read data from IR/US.
-		    //int port = open_port();
-    		//int portOptions = port_config(port);
-    		//printf("Port: %d\n", portOptions);
-    		//write_int(port);
-    		//std::string read = readString(port);
-   		    //cout << "received string: " << read << endl;
-		//so far i dont know the string format, so I cant move on for decoding the string
 
             // Test ***************************
-            char fromInt[2];
-            char fromInt2[2];
-            char fromDouble[4];
-            char sentence[11];               
-            double speed = 0.8;
+            // Markus Erlach
+            char checkSum[3];
+            char fromIntAngle[3];
+            char fromIntSpeed[3];
+            char padSum[4];
+            char padAngle[4];
+            char padSpeed[4];
+            char sentence[15];               
+            double speed = vc.getSpeed()*10;
             double steeringAngle = vc.getSteeringWheelAngle();
-            steeringAngle = steeringAngle * 57.2957795;
-            std::cout << steeringAngle << std::endl;
-            if (steeringAngle < 0) {
-               steeringAngle = (steeringAngle * (-1));
-            } else if (steeringAngle >= 0) {
-                steeringAngle = steeringAngle + 25;
-            }
-            int newAngle = (double)steeringAngle + 1;
-            std::cout << "Angle: " << newAngle << std::endl;
+            steeringAngle = steeringAngle * 57.3;
+            std::cout << "After calc: " << steeringAngle << std::endl;
             
-            if (newAngle < 10) {
-                sprintf(fromInt2, "%d", newAngle);
-                strcpy(fromInt, "0");
-                strcat(fromInt, fromInt2);    
-                snprintf(fromDouble, sizeof(fromDouble), "%g", speed);    
+            if (steeringAngle < -1) {
+                steeringAngle = 90 - (steeringAngle * -1);
+            } else if (steeringAngle > 1) {
+                steeringAngle = 90 + steeringAngle;
             } else {
-                sprintf(fromInt, "%d", newAngle);
-                snprintf(fromDouble, sizeof(fromDouble), "%g", speed);
+                steeringAngle = 90;
             }
-            // "{4:0.8,15}"
-            strcpy(sentence, "{4:");
-            strcat(sentence, fromDouble);
-            strcat(sentence, ",");
-            strcat(sentence, fromInt);
-            strcat(sentence, "}");
+            std::cout << "Int angle: " << steeringAngle << std::endl;
+            if (steeringAngle > 115) {
+                steeringAngle = 115;
+            }
+            if (steeringAngle < 65) {
+                steeringAngle = 65;
+            }
+            // Create angle
+            int intAngle = (int)steeringAngle;
+            if (intAngle < 100) {
+                sprintf(fromIntAngle, "%d", intAngle);
+                strcpy(padAngle, "0");
+                strcat(padAngle, fromIntAngle);    
+            } else {
+                sprintf(fromIntAngle, "%d", intAngle);
+                strcpy(padAngle, fromIntAngle);
+            }
+            // Create speed
+            // Simon Lobo Roca
+            int intSpeed = (int)speed;
+            if (intSpeed < 10) {
+                sprintf(fromIntSpeed, "%d", intSpeed);
+                strcpy(padSpeed, "0");
+                strcat(padSpeed, fromIntSpeed);    
+            } else {
+                sprintf(fromIntSpeed, "%d", intSpeed);
+                strcpy(padSpeed, fromIntSpeed);
+            }
+            // Create checksum
+            //  Markus Erlach
+            int check = intAngle + intSpeed; 
+            if (check < 100) {
+                sprintf(checkSum, "%d", check);
+                strcpy(padSum, "0");
+                strcat(padSum, checkSum);      
+            } else {
+                sprintf(checkSum, "%d", check);
+                strcpy(padSum, checkSum);
+            }
+            //12308115
+            strcpy(sentence, padSum);
+            strcat(sentence, padSpeed);     
+            strcat(sentence, padAngle);   
             
-            write(port, sentence, 13);
+            write(port, sentence, 10);
             std::cout << "Wrote: "<< sentence << std::endl;
-         //  msv::readString(port);
+            //msv::readSerial();
+            msv::readString();
             /*************************
             Test this read
-                        Instead of readString
+            msv::readString();
             *************************/
-          // msv::readSerial(port);
-
         }
-
         cout << "Proxy: Captured " << captureCounter << " frames." << endl;
 
         return ModuleState::OKAY;
     }
 
-int open_port(std::string adr) {
+// Markus Erlach
+void open_port(std::string adr) {
     USB_PORT = adr.c_str();
     /*
     O_RDWR = Posix read write
@@ -219,24 +245,15 @@ int open_port(std::string adr) {
     O_NDELAY = Ignore dcd signal state
     */
     port = open(USB_PORT, O_RDWR | O_NOCTTY);
-    // Check open
-    
-    if (port < 0) {
-        std::cerr << "Unable to open port: " << port << std::endl;
-        return (port);
-    } else {
-        fcntl (port, F_SETFL, 0);       
-    }
-    return (port);
-    
-    /*
+
     if (port != 0) {
-        port_config(port);
-    }
-    */
+        port_config();
+    } 
+    
 }
 
-void port_config(int x) {
+// Markus Erlach
+void port_config() {
     // Setup control structure
     struct termios options;
     struct termios oldOptions;
@@ -244,14 +261,14 @@ void port_config(int x) {
     
     // Get currently set options
     // Error handling
-    if (tcgetattr(x, &options) != 0) {
+    if (tcgetattr(port, &options) != 0) {
         std::cout << "Error: " << errno << "from tcgetattr" << strerror(errno) << std::endl;
     }
     // Save old options
     oldOptions = options;
-    // Set read and write speed to 9600 baud
-    cfsetispeed(&options, B9600);
-    cfsetospeed(&options, B9600);
+    // Set read and write speed to 9600, 19200 or 384000 baud
+    cfsetispeed(&options, B38400);
+    cfsetospeed(&options, B38400);
     // 8bits, no parity, no stop bits
     options.c_cflag &= ~PARENB;
     options.c_cflag &= ~CSTOPB;
@@ -266,123 +283,95 @@ void port_config(int x) {
     options.c_iflag &= ~(IXON | IXOFF | IXANY); 
     options.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG); 
     options.c_oflag &= ~OPOST; 
-    // wait for min 0 chars and wait time min
-    options.c_cc[VMIN]  = 0;
+    // wait for min 1 chars and wait time min
+    options.c_cc[VMIN]  = 1;
     options.c_cc[VTIME] = 0;
     // Commit
-    tcflush(x, TCIFLUSH);
-    tcsetattr(x, TCSANOW, &options);
+    tcflush(port, TCIFLUSH);
+    tcsetattr(port, TCSANOW, &options);
 }
 
-// Need to fix vc import
-void write_int(int y) {
-    double speed = 0.8;
-    double steeringAngle = -20.1; // vc.getExampleData(); 
-    if (steeringAngle < 0) {
-        steeringAngle = (steeringAngle * (-1));
-    } else {
-        steeringAngle = (steeringAngle + 25);
-    }
-
-    std::cout << "Angle: " << steeringAngle << std::endl;
-    char toSend[10];
-    snprintf(toSend, sizeof(toSend), "%g,%g", speed, steeringAngle);
-    
-    char sentence[13];
-    strcpy(sentence, "{4:");
-    strcat(sentence, toSend);
-    strcat(sentence, "}");
-    //puts(sentence);
-    
-    // "{4:0.8,15.2}"
-    write(y, sentence, 13);
-   
-    std::cout << "Wrote: "<< sentence << std::endl;
-}
- 
-std::string readString(int z) {
+// <16:100:2020202020>
+// XXX:IR1IR2IR3US1US2 Example: 100:2020202020
+// All sensors should equal XXX (checksum) Like above.
+// Markus Erlach
+/*
+std::string readString() {
     char start[1] = "";
+    char length[1] = "";
+    char sum[1] = "";
     char next[1] = "";
-    char svar[10] = ""; 
-    
-    std::string result = ""; 
-    std::cout << "Serial available: " << port << std::endl;
-    
-        //for (int x = 0; x < 6; x++) {
-        read(z, start, 1);
-        std::cout << "Start: " << start << std::endl;
-        if (start[0] != '{') {
-            std::cout << "No start" << std::endl;
-            //readString(z);
-            return svar;
-        } else {
-            result += start;
-            //delete[] start;
-            std::cout << "Result start: " << result << std::endl;
-            for (int x = 0; x < 8; x++) {
-                read(z, next, 1);
-                result += next;
-                //std::cout << "Result: " << result <<std::endl;
+    char svar[18] = ""; 
+    string result = ""; 
+    string csum = "";
+    string stringlength = "";
+    cout << "Serial available: " << port << endl;
+    // <17:200:
+    read(port, start, 1);
+    cout << "Start: " << start << endl;
+    if (start[0] != '<') {
+        cout << "No start" << endl;
+        //readString();
+        return svar;
+    } else {
+        result += start;
+        for (int o = 0; o < 3; o++) {
+            read(port, length, 1);
+            stringlength += length;
         }
-        std::cout << "Efter loopen: " << result << std::endl;
-
-        //svar = new char[result.size() + 1];
+        int len = atoi(stringlength.c_str());
+        cout << "Len: " << len  << endl;
+        for (int p = 0; p < 3; p++) {
+            read(port, sum, 1);
+            csum += sum;
+        }
+        int cs = atoi(csum.c_str());
+        cout << "CS: " << cs << endl;
+        for (int q = 0; q < len; q++) {
+            read(port, next, 1);
+            result += next;
+        }
+        cout << "Efter loopen: " << result << " Csum: " << cs << endl;
         memcpy(svar, result.c_str(), result.size() + 1);
        
-        //svar = (char *)malloc(result.size() + 1);
-        //memcpy(svar, result.c_str(), result.size() + 1);
-        
-        // strncpy(svar1, result.c_str(), sizeof(svar1));
-        // sizeof(svar1) - 1 för att null terminatea
-        
-        svar[9] = '\0';
-        //svar[sizeof(svar) - 1] = '\0';
-        std::cout << "Svar kopia: " << svar << std::endl;        
+        //svar[9] = '\0';
+        svar[17] = '\0';
+        cout << "Svar kopia: " << svar << endl;        
 
-        if (svar[0] == '{' && isdigit(svar[1])) {
-            //size = svar[1];
-            //speed = svar[2] + svar[3]; 
-            std::cout << "Svar: " << svar[0] << std::endl;
-            std::cout << "Svar: " << svar[1] << std::endl;
-            std::cout << "Svar: " << svar[2] << std::endl;
-            std::cout << "Svar: " << svar[3] << std::endl;
-            std::cout << "Svar: " << svar[4] << std::endl;
-            std::cout << "Svar: " << svar[5] << std::endl;
-            std::cout << "Svar: " << svar[6] << std::endl;
-            std::cout << "Svar: " << svar[7] << std::endl;
-            std::cout << "Svar: " << svar[8] << std::endl;
-            if (svar[8] == '}') {
-                std::cout << "Done: " << svar << std::endl;
+        if (svar[0] == '<' && isdigit(svar[1])) {
+            cout << "Svar: " << svar << endl;
+            if (svar[16] == '>') {
+                //checksum
+                // Set to containers
+                cout << "Done: " << svar << endl;
                 return svar;
             } else {
-                
-                std::cout << "Rerunning, no closing bracket" << std::endl;
-                //readString(z);
-                return svar;
+                cout << "Rerunning, no closing bracket" << endl;
+                readString();
+                //return svar;
             }
             //return svar;
         } else {
-                std::cout << "Rerunning!" << svar << std::endl;
-                //readString(z);
-                return svar;
+                cout << "Rerunning!" << svar << endl;
+                readString();
+                //return svar;
             }
         } 
     return svar;
 }
+*/
 
-void readSerial(int q) {
-    char buf[15];
-    // Read
-    int n = read(q, buf, 15);
-    // Null terminatea, alternativt, kommentera ut buf[n] = 0;
-    buf[n] = 0;
-    // Check read
-    if (n > 0) {
-        std::cout << "Bytes read: " << n << std::endl;
-        std::cout << "In buf: " << buf << std::endl;
-    } else {
-        std::cout << "Got nothing!" << std::endl;
-    }
+// Markus Erlach
+std::string readSerial() {
+    char start[255] = "";
+    
+    std::cout << "Serial available: " << port << std::endl;
+    
+    int n = read(port, start, 255);
+    start[n] = 0;
+    std::cout << "N: " << n << std::endl;
+    std::string received(start);
+    return received;
 }
 
 } // msv
