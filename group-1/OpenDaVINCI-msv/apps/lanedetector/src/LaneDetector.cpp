@@ -270,11 +270,10 @@ void drawLine(Mat atom_image, int line1line, int count, int &line1leftLineLength
     int whiteCount = cv::countNonZero(mask);
     cout << "No: white pixels " << whiteCount << endl;
     if(whiteCount < 1600) // 2138
-        threshold_ratio = 160;
+        threshold_ratio--;
     else if(whiteCount > 3000)
-        threshold_ratio = 200;
-        else
-            threshold_ratio = 170;
+        threshold_ratio++;
+        
 
 
 
