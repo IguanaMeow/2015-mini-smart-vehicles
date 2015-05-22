@@ -254,11 +254,11 @@ using namespace core::data::control;
 }
   cout<<"Wheel Encoder value " << valWheelE <<endl;
   sensorBoardData.putTo_MapOfDistances(4,valUs2);
-  sensorBoardData.putTo_MapOfDistances(3,valUs1);
+  sensorBoardData.putTo_MapOfDistances(3,valUs3);
   sensorBoardData.putTo_MapOfDistances(1,valIr3);
   sensorBoardData.putTo_MapOfDistances(2,valIr2);
   sensorBoardData.putTo_MapOfDistances(0,valIr1);
-  sensorBoardData.putTo_MapOfDistances(5,valUs3);
+  sensorBoardData.putTo_MapOfDistances(5,valUs1);
 
   Container c = Container(Container::USER_DATA_0, sensorBoardData);
   distribute(c);
