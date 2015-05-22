@@ -231,7 +231,7 @@ void port_config() {
     tcsetattr(port, TCSANOW, &options);
 }
 
-// Markus Erlach
+// Markus Erlach 
 std::string readSerial() {
     char start[255] = "";
     
