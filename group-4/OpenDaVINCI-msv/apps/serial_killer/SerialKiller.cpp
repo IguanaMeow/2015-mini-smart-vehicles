@@ -86,7 +86,6 @@ namespace msv {
                 } else {
                     value += *it;
                 }
-
             }
 
 
@@ -130,11 +129,17 @@ namespace msv {
                 }
             }
             if (title == "WC") {
-                cout << title;
+                Container vehicleDataThing = getKeyValueDataStore().get(Container::VEHICLEDATA);
+                VehicleData vdd = vehicleDataThing.getData<VehicleData>();
+                vdd.setSpeed(values.at(3));
+                vdd.setAbsTraveledPath(values.at(1));
+                Container c(Container::VEHICLEDATA, vdd);
+                getConference().send(c);
+                /*cout << title;
                 for (vector<int>::const_iterator it = values.begin(); it != values.end(); ++it) {
                     cout << " " << *it;
                 }
-                cout << endl;
+                cout << endl;*/
             }
         } else if (title == "IR" || title == "US") {
             for ( std::string::const_iterator it=data.begin(); it!=data.end(); ++it) {
