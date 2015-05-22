@@ -61,7 +61,7 @@ int valUs2;
 int valUs3;
 int valWheelE;
 
-
+string convertedAngle;
 
 
 int wd;
@@ -100,8 +100,8 @@ using namespace core::data::control;
     }
 
     void Proxy::setUp() {
-      msv::connect("/dev/ttyACM0",1); // connect to arduino reading from
-     //msv::connect("/dev/ttyACM0",2); // connect to arduino sending to
+   //   msv::connect("/dev/ttyACM0",1); // connect to arduino reading from
+     // msv::connect("/dev/ttyACM0",2); // connect to arduino sending to
 
 
 	    // This method will be call automatically _before_ running body().
@@ -197,23 +197,28 @@ using namespace core::data::control;
              angle+=angleFromDriver;
              stringstream ss;
               ss << angle;
-             string convertedAngle="0"+ss.str();
+              if(angle<100)
+             convertedAngle="0"+ss.str();
+           else
+            convertedAngle=ss.str();
           
             if(vc.getSpeed()>0)
               userInput="600"+convertedAngle+",";
             else if(vc.getSpeed()<1 && vc.getSpeed()>-1)
               userInput="512060,";
             else if(vc.getSpeed()<-1)
-              userInput="200"+convertedAngle+"0,";
+              userInput="200"+convertedAngle+",";
               
               
               cout<<userInput<<endl;
                     
-              if(wd!=0)
+                    cout<<" fd is " << fd << endl;
+
+              if(wd!=-1 && wd!=0)
              msv::write(userInput);
 
 
-      if(fd!=0){
+      if(fd!=-1 && fd!=0){
 
   readings=msv::read();
 	
@@ -254,26 +259,26 @@ using namespace core::data::control;
 }
   cout<<"Wheel Encoder value " << valWheelE <<endl;
   sensorBoardData.putTo_MapOfDistances(4,valUs2);
-  sensorBoardData.putTo_MapOfDistances(3,valUs3);
+  sensorBoardData.putTo_MapOfDistances(3,valUs1);
   sensorBoardData.putTo_MapOfDistances(1,valIr3);
   sensorBoardData.putTo_MapOfDistances(2,valIr2);
   sensorBoardData.putTo_MapOfDistances(0,valIr1);
-  sensorBoardData.putTo_MapOfDistances(5,valUs1);
+  sensorBoardData.putTo_MapOfDistances(5,valUs3);
 
   Container c = Container(Container::USER_DATA_0, sensorBoardData);
   distribute(c);
   tcflush(fd, TCIFLUSH);
 }
-if(wd!=0)
+if(wd!=-1 && wd!=0)
   tcflush(wd, TCOFLUSH);
 //usleep(2000000);
 
  }  
-        if(wd!=0){
+        if(wd!=-1 && wd!=0){
         msv::write("512060,");
         msv::close(wd);
         }
-        if(fd!=0)
+        if(fd!=-1 && fd!=0)
         msv::close(fd);
         
         cout << "Proxy: Captured " << captureCounter << " frames." << endl;
