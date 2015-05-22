@@ -114,91 +114,75 @@ namespace msv {
                 captureCounter++;
             }
 
-            // TODO: Here, you need to implement the data links to the embedded system
-            // to read data from IR/US.
-
-		key_t key;
-                int shmid;
-                char *data;
-                //char *ptr;
-                //int mode;
-                //char* shared_memory[6];
-                //int *p;
-                /* make the key: */
-                if ((key = 123123) == -1) {
-                    perror("ftok");
-                    exit(1);
-                }
+            // the following code for grabbing the sensor data was implemented by Magnus Johansson
+            key_t key;
+            int shmid;
+            char *data;
+                
+            /* make the key: */
+            if ((key = 123123) == -1) {
+                perror("ftok");
+                exit(1);
+            }
                 /* connect to (and possibly create) the segment: */
-                if ((shmid = shmget(key, SHM_SIZE, 0644 | IPC_CREAT)) == -1) {
-                    perror("shmget");
-                    exit(1);
-                }
-                /* attach to the segment to get a pointer to it: */
-                data = (char*) shmat(shmid, (void *)0, 0);
-                if (data == (char *)(-1)) {
-                    perror("shmat");
-                    exit(1);
-                }
-                /*
-                printf("Data is = %p\n", data);
-                printf("d : %c\n", data[0]);
-                printf("d : %c\n", data[1]);
-                printf("d : %c\n", data[2]);
-                printf("d : %c\n", data[3]);
-                printf("d : %c\n", data[4]);
-                printf("d : %c\n", data[5]);
-                printf("d : %c\n", data[6]);
-                printf("d : %c\n", data[7]);
-                */
+			if ((shmid = shmget(key, SHM_SIZE, 0644 | IPC_CREAT)) == -1) {
+				perror("shmget");
+				exit(1);
+			}
+			/* attach to the segment to get a pointer to it: */
+			data = (char*) shmat(shmid, (void *)0, 0);
+			if (data == (char *)(-1)) {
+				perror("shmat");
+				exit(1);
+			}
+			
 
-                char sensor1[3], sensor2[3], sensor3[3], sensor4[3], sensor5[3];
-                sensor1[0] = data[0];
-                sensor1[1] = data[1];
-                sensor1[2] = data[2];
-                sensor2[0] = data[3];
-                sensor2[1] = data[4];
-                sensor2[2] = data[5];
-                sensor3[0] = data[6];
-                sensor3[1] = data[7];
-                sensor3[2] = data[8];
-                sensor4[0] = data[9];
-                sensor4[1] = data[10];
-                sensor4[2] = data[11];
-                sensor5[0] = data[12];
-                sensor5[1] = data[13];
-                sensor5[2] = data[14];
+			char sensor1[3], sensor2[3], sensor3[3], sensor4[3], sensor5[3];
+			sensor1[0] = data[0];
+			sensor1[1] = data[1];
+			sensor1[2] = data[2];
+			sensor2[0] = data[3];
+			sensor2[1] = data[4];
+			sensor2[2] = data[5];
+			sensor3[0] = data[6];
+			sensor3[1] = data[7];
+			sensor3[2] = data[8];
+			sensor4[0] = data[9];
+			sensor4[1] = data[10];
+			sensor4[2] = data[11];
+			sensor5[0] = data[12];
+			sensor5[1] = data[13];
+			sensor5[2] = data[14];
 
 
 
-                double sense0 = atoi(sensor1);
-                double sense1 = atoi(sensor2);
-                double sense2 = atoi(sensor3);
-                double sense3 = atoi(sensor4);
-                double sense4 = atoi(sensor5);
+			double sense0 = atoi(sensor1);
+			double sense1 = atoi(sensor2);
+			double sense2 = atoi(sensor3);
+			double sense3 = atoi(sensor4);
+			double sense4 = atoi(sensor5);
 
-                //printf("s0 %f, s1 %f, s2 %f, s3 %f, s4 %f\n", sense0, sense1, sense2, sense3, sense4);
+			//printf("s0 %f, s1 %f, s2 %f, s3 %f, s4 %f\n", sense0, sense1, sense2, sense3, sense4);
                 
 
-                SensorBoardData sbd;
+			SensorBoardData sbd;
 
-                sbd.putTo_MapOfDistances(0, sense0);
-                sbd.putTo_MapOfDistances(1, sense1);
-                sbd.putTo_MapOfDistances(2, sense2);
-                sbd.putTo_MapOfDistances(3, sense3);
-                sbd.putTo_MapOfDistances(4, sense4);
-                // double temp = sbd.getValueForKey_MapOfDistances(0);
-                // printf("TEMP %f\n", temp);
-                // Create container for finally sending the data.
-                Container c(Container::USER_DATA_0, sbd);
-                // Send container.
-                getConference().send(c);
-                
-
-                if (shmdt(data) == -1) {
-                    perror("shmdt");
-                    exit(1);
-                }
+			sbd.putTo_MapOfDistances(0, sense0);
+			sbd.putTo_MapOfDistances(1, sense1);
+			sbd.putTo_MapOfDistances(2, sense2);
+			sbd.putTo_MapOfDistances(3, sense3);
+			sbd.putTo_MapOfDistances(4, sense4);
+			
+			// Create container for finally sending the data.
+			Container c(Container::USER_DATA_0, sbd);
+			// Send container.
+			getConference().send(c);
+			
+			/* detach from the segment: */
+			if (shmdt(data) == -1) {
+				perror("shmdt");
+				exit(1);
+			}
 
         }
 

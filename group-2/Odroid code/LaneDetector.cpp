@@ -43,7 +43,7 @@ int rightDistance;
 int leftDistance;
 int forwardDistance;
 
-//draws a line between two Points
+//code by Magnus Johansson; function just draws a line between two Points
 void DrawLine( cv::Mat img, cv::Point start, cv::Point end, cv::Scalar color)
 {
     int thickness = 2;
@@ -111,7 +111,7 @@ namespace msv {
                 // Lock the memory region to gain exclusive access. REMEMBER!!! DO NOT FAIL WITHIN lock() / unlock(), otherwise, the image producing process would fail.
                 m_sharedImageMemory->lock();
                 {
-                    const uint32_t numberOfChannels = 1;
+                    const uint32_t numberOfChannels = 1;	//we're capturing single channel images for performance reasons
                     // For example, simply show the image.
                     if (m_image == NULL) {
                         m_image = cvCreateImage(cvSize(si.getWidth(), si.getHeight()), IPL_DEPTH_8U, numberOfChannels);
@@ -129,7 +129,7 @@ namespace msv {
                 m_sharedImageMemory->unlock();
                 
                 // Mirror the image.
-                // F U cvFlip(m_image, 0, -1);
+                // cvFlip(m_image, 0, -1);
                 
                 retVal = true;
             }
@@ -140,34 +140,20 @@ namespace msv {
     // You should start your work in this method.
     void LaneDetector::processImage() {
         
-        //double steeringAngle;
-        // Create a Mat image, define points and draw lines between them
+        // Code by Magnus Johansson
+        // Using the cv::Mat class we apply Canny edge detection and define Points from which to measure the distances to white edges
         if (!m_debug) {
             cv::Mat img(m_image);
             
             cv::Mat contours, thr;
-            
+            //these threshold values has proven to work the best with the different lighting conditions on the test track
             cv::Canny(img ,contours,35,90);
             cv::threshold(contours, thr, 180, 240, cv::THRESH_BINARY);
             
-            //cv::namedWindow("Image");
-            //cv::imshow("Image",img);
             
-            //cv::namedWindow("Gray");
-            //cv::imshow("Gray",gray_image);
-            
-            
-            //cv::namedWindow("Threshold");
-            //cv::imshow("Threshold",thr);
-            
-            
-            
-            
-            
-            //int rows = thr.rows;
-            int cols = thr.cols;
+            int cols;
+			//int rows;
             cv::Size s = thr.size();
-            
             //rows = s.height;
             cols = s.width;
             
@@ -186,22 +172,8 @@ namespace msv {
             p6.x=cols/2;
             p6.y=400;
             
-            //we find the white lines by checking the intensity of a pixel
-            //cv::Vec3b intensity = contours.at<cv::Vec3b>(p3);
-            /* while (p3.x != 0){
-             intensity = contours.at<cv::Vec3b>(p3);
-             //when intensity is white, we have found the end point for our line
-             if (intensity[0] == 255 && intensity[1] == 255 && intensity[2] == 255){
-             break;
-             }
-             p3.x = p3.x -1;
-             }
-             DrawLine(contours, p3, p4, cv::Scalar(255,0,0));
-             */
             
-            
-            
-            //trying to find the left lane marking
+            //we find the left lane marking by measuring the intensity of pixels
             cv::Scalar intensity = thr.at<uchar>(p3);
             while (p3.x != 0){
                 intensity = thr.at<uchar>(p3);
@@ -233,6 +205,7 @@ namespace msv {
                 p2.y = p2.y -1;
                 
             }
+			//If we want to visualise the process in simulator environment or with recordings we use the following functions
             DrawLine(thr, p2, p1, cv::Scalar(255,255,255));
             DrawLine(thr, p3, p6, cv::Scalar(255,255,255));
             DrawLine(thr, p5, p4, cv::Scalar(255,255,255));
