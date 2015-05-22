@@ -349,8 +349,7 @@ namespace msv {
 					break;
 				}
 			}
-		
-			//If intersection mode, car stops, else just go straight
+			
 			steeringAngle = 0;
 			cout<<"State 1: At Intersection"<<endl;
 
@@ -359,6 +358,7 @@ namespace msv {
 
 			if (abs(steer) < 2.1*Constants::DEG2RAD ) {
 				//If car is going quite straight, it probably in the middle of intersection
+				steeringAngle = 0;
 				cout << "State 2: Middle of intersection" << endl;
 
 			} else {
@@ -469,7 +469,7 @@ namespace msv {
 					} else {
 						steeringAngle = (diff/11 * Constants::DEG2RAD);
 					}
-					cout << "State 13: Turn, lef lane" << endl;
+					cout << "State 13: Turn, left lane" << endl;
 
 				} else {
 					steeringAngle = steer;

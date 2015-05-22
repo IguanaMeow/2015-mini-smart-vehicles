@@ -53,45 +53,7 @@ namespace msv {
         void Driver::tearDown() {
 	        // This method will be call automatically _after_ return from body().
         }
-        /*void BothInfraredDetect(){
-        Container containerVehicleData = getKeyValueDataStore().get(Container::VEHICLEDATA);
-        VehicleData vd = containerVehicleData.getData<VehicleData> ();
-        double infraredRearRight = sbd.getValueForKey_MapOfDistances(2);
-        double infraredFrontRight= sbd.getValueForKey_MapOfDistances(0);
-        if((infraredRearRight>0) &&(infraredFrontRight>0)){
-        }
-        }*/
-       /* void RearInfraredDetect(){
-        getModuleState();
-        Container containerSensorBoardData = getKeyValueDataStore().get(Container::USER_DATA_0);
-        SensorBoardData sbd = containerSensorBoardData.getData<SensorBoardData> ();
-        double infraredRearRight = sbd.getValueForKey_MapOfDistances(2);
-        double infraredFrontRight= sbd.getValueForKey_MapOfDistances(0);
-        if((infraredRearRight>0) && (infraredFrontRight<0)){
-        double desiredSteeringWheelAngle;
-        desiredSteeringWheelAngle=-25;
         
-        }
-        }
-        void FrontInfraredDetect(){
-        Container containerSensorBoardData = getKeyValueDataStore().get(Container::USER_DATA_0);
-        SensorBoardData sbd = containerSensorBoardData.getData<SensorBoardData> ();
-        double infraredFrontRight= sbd.getValueForKey_MapOfDistances(0);
-        double desiredSteeringWheelAngle;
-        if (infraredFrontRight=1){
-        desiredSteeringWheelAngle=25;
-        }
-        }
-        void turnleft(){
-        double desiredSteeringWheelAngle;
-        desiredSterringWheelAngle=-25
-        } 
-        void Overtakingmode(){
-               turnleft();
-               FrontInfraredDetect();
-               RearInfraredDetect();
-        
-        }*/
 
         // This method will do the main data processing job.
         ModuleState::MODULE_EXITCODE Driver::body() {
@@ -134,7 +96,7 @@ namespace msv {
                     double desiredSteeringWheelAngle = 0;
                     
                     
-                    //int Lanedetectionmode=1;
+                    
                    int steeringAngle=sd.getExampleData();
 
 
@@ -147,17 +109,21 @@ namespace msv {
 
                 // With setSpeed you can set a desired speed for the vehicle in the range of -2.0 (backwards) .. 0 (stop) .. +2.0 (forwards)
                  //   cerr << "rearRight: '" << infraredRearRight << "'" << endl;
-
-                  vc.setSpeed(2);
+                vc.setSpeed(2);
+                if((Overtakingmode==0) &&(steeringAngle>=-2) && (steeringAngle<=2)){
+                 vc.setSpeed(2);
+                 desiredSteeringWheelAngle=steeringAngle;
+                 }
   //Overtaking at straight line
-                if ((steeringAngle>=-2)&& (steeringAngle<=2)){
+                  else  if ((steeringAngle>=-2)&& (steeringAngle<=2)){
                 if (ultraSonicFrontCenter < 6) {
                          Overtakingmode=1;
                         
                 }
                 if (Overtakingmode==1){
                   
-                	desiredSteeringWheelAngle=-80;
+                	//desiredSteeringWheelAngle=-80;
+                        
                 	if(infraredFrontRight>0) {
                 		desiredSteeringWheelAngle=20;
                 	}
@@ -183,7 +149,7 @@ namespace msv {
                }
                else if( steeringAngle>=-10) {
               //Overtaking at curve.// need to fix steering data at lanedetector and get them at overtaking. Else it doesnt work.
-              if((ultraSonicFrontCenter<5)&&(infraredFrontRight<0)&&(infraredRearRight<0)){
+              if((ultraSonicFrontCenter<7)&&(infraredFrontRight<0)&&(infraredRearRight<0)){
                  Overtakingmode=1;
               
                 }
@@ -213,15 +179,17 @@ namespace msv {
 
                 // With setSteeringWheelAngle, you can steer in the range of -26 (left) .. 0 (straight) .. +25 (right)
                  // 4 degree but SteeringWheelAngle expects the angle in radians!
-                vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
-
+              vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
+                
+               // vc.setExampleData(desiredSteeringWheelAngle * Constants::DEG2RAD);
                 // You can also turn on or off various lights:
                 vc.setBrakeLights(false);
                 vc.setLeftFlashingLights(false);
                 vc.setRightFlashingLights(true);
 
                 // Create container for finally sending the data.
-                Container c(Container::VEHICLECONTROL, vc);
+                //  Container c(Container::USER_DATA_2,sd);
+               Container c(Container::VEHICLECONTROL, vc);
                 // Send container.
                 getConference().send(c);
 	        }

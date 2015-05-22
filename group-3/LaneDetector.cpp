@@ -44,6 +44,8 @@ namespace msv {
     using namespace core::data::image;
     using namespace tools::player;
 
+    SteeringData sd;
+
     LaneDetector::LaneDetector(const int32_t &argc, char **argv) : ConferenceClientModule(argc, argv, "lanedetector"),
         m_hasAttachedToSharedImageMemory(false),
         m_sharedImageMemory(),
@@ -105,13 +107,15 @@ namespace msv {
 	    return retVal;
 
     }
+//Nicolas Part
 // finds the white line
 bool FindWhiteLine(Vec3b white)
 { 
 	bool color =  false;
-	uchar blue = white.val[0];
-    uchar green = white.val[1];
-    uchar red = white.val[2];
+	uchar blue,green,red;
+	blue = white.val[0];
+	green = white.val[1];
+	red = white.val[2];
     if(blue == 255 && green == 255 && red == 255)
             {
                 color = true;
@@ -143,8 +147,30 @@ Point DrawingLines(Mat img , Point point,bool right)
     }
            return point;
 }
+//end of Nicolas part
+
+//Emily
+Point DrawingVertical(Mat img, Point point, bool top)
+{
+        int rows = img.rows;
+        Vec3b drawVertical = img.at<Vec3b>(point);
+        //Vec3b drawingLine = img.at<Vec3b>(point);
+        while(point.y != rows-100){
+            if(top == false)
+            {
+            point.y = point.y-1; 
+            drawVertical = img.at<cv::Vec3b>(point); 
+                if(FindWhiteLine(drawVertical)==true){
+                        cout << "State: Intersection" << endl;
+                        sd.setExampleData(0);
+                }
+            }
+        } 
+        return point;
+}
+//End of Emily's part
     // You should start your work in this method.
-    // written by Nicolas Kheirallah
+    //Nicolas Part
     void LaneDetector::processImage() {
 
 		//http://docs.opencv.org/doc/user_guide/ug_mat.html   Handeling images
@@ -158,90 +184,65 @@ Point DrawingLines(Mat img , Point point,bool right)
         cvtColor(canny, matImg, CV_GRAY2BGR); //Converts back from gray
 
 		// get matrix size  http://docs.opencv.org/modules/core/doc/basic_structures.html
-        int rows = matImg.rows;
         int cols = matImg.cols;
+        int rows = matImg.rows;
 
-        //Points 
-        // Needs more points
-        // Be prepaired for a mindfuck
-        // currently 3 lines per side
-        Point centerPoint;             
-        Point centerPointEnd;  
-        Point bRightPoint;  
-        Point bRightPointEnd; 
-        Point bRightPointmid;
-        Point rightPointMidEnd; 
-        Point rightPointTop;
-        Point rightPointTopEnd;
-        Point bLeftPoint;         
-        Point lMidPoint; 
-        Point lMidPointEnd;  
-        Point ltopPoint; 
-        Point ltopPointEnd;  
+    
+        // Emilys part
+        Point center;             
+        Point centerEnd;
 
-        centerPoint.x=cols/2;   
-        centerPoint.y=0; 
-        centerPointEnd.x=cols/2;   
-        centerPointEnd.y=rows; 
-        bRightPoint.x = cols/2; 
-        bRightPoint.y = 350;
-		bRightPointmid.x=cols/2; 
-        bRightPointmid.y =325;
-        rightPointTop.x = cols/2; 
-        rightPointTop.y = 275; 
+        center.x = cols/2;   
+        center.y = rows; 
+        centerEnd.x = center.x;   
+        centerEnd.y = rows-50; 
 
-        rightPointTopEnd.x =rightPointTop.x;
-        rightPointTopEnd.y = rightPointTop.y;
-        rightPointMidEnd.x = bRightPointmid.x; 
-        rightPointMidEnd.y = bRightPointmid.y;
+        centerEnd = DrawingVertical(matImg, centerEnd, false);
+        //End of Emilys Part
 
-        bRightPointEnd.x = bRightPoint.x; 
-        bRightPointEnd.y = bRightPoint.y;
-        bLeftPoint.x = bRightPoint.x;
-        bLeftPoint.y = bRightPoint.y;
-
-        ltopPoint.x = bRightPoint.x; 
-        ltopPoint.y = 275;
-        ltopPointEnd.x = bRightPoint.x;  
-        ltopPointEnd.y = ltopPoint.y;
-
-        lMidPoint.x = bRightPoint.x; 
-        lMidPoint.y = 325;
-        lMidPointEnd.x = bRightPoint.x;  
-        lMidPointEnd.y = lMidPoint.y;
-
-// assigns the point the extended value 
-		bLeftPoint =DrawingLines(matImg,bLeftPoint,false);
-		bRightPointEnd=DrawingLines(matImg,bRightPointEnd,true);
-		bRightPointmid=DrawingLines(matImg,bRightPointmid,true);
-		rightPointTopEnd =DrawingLines(matImg,rightPointTopEnd,true);
-		lMidPointEnd =DrawingLines(matImg,lMidPointEnd,false);
-		ltopPointEnd =DrawingLines(matImg,ltopPointEnd,false);
+        Point myPointStart[4]; // array of startpoints
+        Point myPointRightEnd[4]; // array of rightEnd Point
+        Point myPointLeftEnd[4]; // array of LeftEnd Point
+        for(int i=1; i<4;i++)
+        {
+        	myPointStart[0].x=cols/2;  // middle of the img
+        	myPointStart[0].y=275; // start point of the Y axis , 
+        	myPointStart[i].x=myPointStart[0].x; //startpoint of each line
+            myPointStart[i].y=myPointStart[i-1].y+25; // Each point has a new Y-point 
+        }
+        for(int i=0; i<4;i++)
+        {
+        	myPointRightEnd[i] =DrawingLines(matImg,myPointStart[i],true); // sends startpoint and extends it too the right
+        	myPointLeftEnd[i] =DrawingLines(matImg,myPointStart[i],false); // sends startpoint and extends it too the Left
+        }
 
        if (m_debug) {
        	  //http://docs.opencv.org/doc/tutorials/core/basic_geometric_drawing/basic_geometric_drawing.html
-       	       line(matImg, centerPoint,centerPointEnd,cvScalar(0, 0, 255),2, 8); //centralline
-       	       line(matImg, bRightPoint,bRightPointEnd,cvScalar(0, 165, 255),1, 8); //bottom right line
-       	       line(matImg, lMidPoint,lMidPointEnd,cvScalar(255, 225, 0),1, 8); //LeftMid line
-       	       line(matImg, bRightPoint,bLeftPoint,cvScalar(255, 0, 0),1, 8);//LeftBottom line
-       	       line(matImg, ltopPoint,ltopPointEnd,cvScalar(130, 0, 75),1, 8); //TopLeft line
-       	       line(matImg, bRightPointmid,rightPointMidEnd,cvScalar(238, 130, 238),1, 8); //rightmid line
-       	       line(matImg, rightPointTop,rightPointTopEnd,cvScalar(52, 64, 76),1, 8); //TopRight line
+       	for(int i=0; i<4;i++)
+       	{
+       	    line(matImg, myPointStart[i],myPointRightEnd[i],cvScalar(0, 165, 255),1, 8); //Right line
+       	    line(matImg, myPointStart[i],myPointLeftEnd[i],cvScalar(52, 64, 76),1, 8); //Left line line
+       	 }
+       	    line(matImg, center,centerEnd,cvScalar(0, 0, 255),1, 8); //centralline
          imshow("Lanedetection", matImg);
          cvWaitKey(10);
 }
+//end of Nicolas part
+//Emily part
         //Need too make dynamic steering
-        SteeringData sd;
+        //320 == roi Width
+        //160  == ROI Height
         //((bRightPointEnd.x < 478 && rightPointTopEnd.x>280)
-        if(bRightPointmid.x < 478 && rightPointTopEnd.x>300)
+        if((myPointRightEnd[2].x < 480 && myPointRightEnd[0].x>320))
         {
         sd.setExampleData(-10);
         }
-        else if(bLeftPoint.x > 190 || lMidPointEnd.x > 190 || ltopPointEnd.x > 200)
+        else if(myPointLeftEnd[0].x > 160 || myPointLeftEnd[1].x  > 170 || myPointLeftEnd[2].x  > 180 || myPointLeftEnd[3].x  > 190 )
         {
-        sd.setExampleData(14);
+        sd.setExampleData(18);
         }
 
+//End of emily part
         //TODO: Start here.
         // 1. Do something with the image m_image here, for example: find lane marking features, optimize quality, ...
         // 2. Calculate desired steering commands from your image features to be processed by driver.
@@ -267,16 +268,12 @@ Point DrawingLines(Mat img , Point point,bool right)
 /*
         // Lane-detector can also directly read the data from file. This might be interesting to inspect the algorithm step-wisely.
         core::io::URL url("file://recorder.rec");
-
         // Size of the memory buffer.
         const uint32_t MEMORY_SEGMENT_SIZE = kv.getValue<uint32_t>("global.buffer.memorySegmentSize");
-
         // Number of memory segments.
         const uint32_t NUMBER_OF_SEGMENTS = kv.getValue<uint32_t>("global.buffer.numberOfMemorySegments");
-
         // If AUTO_REWIND is true, the file will be played endlessly.
         const bool AUTO_REWIND = true;
-
         player = new Player(url, AUTO_REWIND, MEMORY_SEGMENT_SIZE, NUMBER_OF_SEGMENTS);
 */
 

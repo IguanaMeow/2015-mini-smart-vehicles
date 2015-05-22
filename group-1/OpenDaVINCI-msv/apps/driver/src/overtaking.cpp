@@ -19,7 +19,7 @@
 
 #include <stdio.h>
 #include <math.h>
-#define _USE_MATH_DEFINES
+
 #include "core/io/ContainerConference.h"
 #include "core/data/Container.h"
 #include "core/data/Constants.h"
@@ -37,29 +37,22 @@ namespace msv {
         using namespace core::data;
         using namespace core::data::control;
         using namespace core::data::environment;
-
+                //checking obstacle in front of the car
                 bool obstacleFront=false;
+                //checking turn to left 
                 bool startTurningToLeft=false;
+                // State 
                 int state=0;
+                // counter 1 
                 int count1=0;
+                // counter 2
                 int count2=0;
-                double time=3.0;
+                // the distance for calculating travel path
                 double distance;
-                std::clock_t start;
-                double duration;
-                int angle1=30;
-                double l = 2.5;
-                double distance1, result, val, degreeTeta;
-                double result2, degree, finaldegree;
-                int x = 35;
-                double T = 3;
-                double safedistance = 4, y=2.5;
-                bool straight = false; 
-            
-
         Driver::Driver(const int32_t &argc, char **argv) :
             ConferenceClientModule(argc, argv, "Driver") {
         }
+
         Driver::~Driver() {}
 
         void Driver::setUp() {
@@ -76,10 +69,10 @@ namespace msv {
             while (getModuleState() == ModuleState::RUNNING) {
                 // In the following, you find example for the various data sources that are available:
 
-                // 1. Get most recent vehicle data:9                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            m
+                // 1. Get most recent vehicle data:
                 Container containerVehicleData = getKeyValueDataStore().get(Container::VEHICLEDATA);
                 VehicleData vd = containerVehicleData.getData<VehicleData> ();
-                //cerr << "Most recent vehicle data: '" << vd.toString() << "'" << endl;
+              //  cerr << "Most recent vehicle data: '" << vd.toString() << "'" << endl;
 
                 // 2. Get most recent sensor board data:
                 Container containerSensorBoardData = getKeyValueDataStore().get(Container::USER_DATA_0);
@@ -96,278 +89,123 @@ namespace msv {
                 SteeringData sd = containerSteeringData.getData<SteeringData> ();
                 //cerr << "Most recent steering data: '" << sd.toString() << "'" << endl;
 
-                // Design your control algorithm here depending on the input data from above.
 
                 // Create vehicle control data.
                 VehicleControl vc;
                 double desiredSteeringWheelAngle;
-                start = std::clock();
-                val = M_PI/180;
-                result = sin(angle1*val);
-                distance1 = 1.5*l * sqrt((1/pow(result,2))-1);
-                degree = safedistance/(sqrt(pow(safedistance,2)+pow(y,2)));
-                result2 = asin(degree) * 180.0 / M_PI;
-                finaldegree = 90 - result2;
-                straight = true;
-                          
-                        vc.setSpeed(2);
-                        desiredSteeringWheelAngle=sd.getExampleData();
-                         /* 
-                        cout<<"x is : "<< vd.getPosition().getX()<<endl;
-                        cout<<"y is : "<< vd.getPosition().getY()<<endl;
-                        cout<< "following angle : "<<sd.getExampleData()<<endl;
-                        */
+                distance= vd.getAbsTraveledPath();
+                 
                 // With setSpeed you can set a desired speed for the vehicle in the range of -2.0 (backwards) .. 0 (stop) .. +2.0 (forwards)
-                if(sbd.getValueForKey_MapOfDistances(3)>distance1 && obstacleFront==false && startTurningToLeft==false) {
-                        cout<< "Moving  " << endl;
+
+//---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                //  When car is moving in a distance less than 90 or bigger than 150 we are in straight
+                if(distance<90 || distance>150){
+                // lane following when US_FC is not detecting or has distance that is less then 10 and when IR_FR is not detecting
+                if((sbd.getValueForKey_MapOfDistances(3)<0 || sbd.getValueForKey_MapOfDistances(3)>10 ) && sbd.getValueForKey_MapOfDistances(0)<0 && obstacleFront==false && startTurningToLeft==false) {
+                        cout<< "tracking" << endl;
                         vc.setSpeed(2);
                         desiredSteeringWheelAngle=sd.getExampleData();
-
-                    }else if(sbd.getValueForKey_MapOfDistances(3)>0 && sbd.getValueForKey_MapOfDistances(3)<distance1 && obstacleFront==false && startTurningToLeft==false) {
+                       
+                //Obstacle detected from front when 0<US_FC<10. 
+                } else if(sbd.getValueForKey_MapOfDistances(3)>0 && sbd.getValueForKey_MapOfDistances(3)<10 && obstacleFront==false && startTurningToLeft==false) {
                         cout<< "Changing boolean"<<endl;
                         obstacleFront=true;
                         state=1;
 
-                    }else if(state==1 && obstacleFront==true) { // check if obstacle is found in front
+                //changing boolean turning to the left to true in this statement
+                }else if(state==1 && obstacleFront==true) { // check if obstacle is found in front
                         cout<< "obstacle found" << endl;
-                       
                         startTurningToLeft=true;
                         obstacleFront=false;
-
-                    }else if(startTurningToLeft==true && sbd.getValueForKey_MapOfDistances(3)>0 && sbd.getValueForKey_MapOfDistances(3)<distance1) {//&& sbd.getValueForKey_MapOfDistances(0)<0
-                        cout<< "Start turning" << endl;
-                        vc.setSpeed(2);
-                        desiredSteeringWheelAngle=-30;
-                        count1++;
-                        state=2;
-                        
-                    }else if(state==2 && sbd.getValueForKey_MapOfDistances(3)<0){
-                        vc.setSpeed(2);
-                        cout << "we are in lane following"<< endl;
-                        desiredSteeringWheelAngle=sd.getExampleData();
-                        state=3;
-
-                    }else if(state==3 && sbd.getValueForKey_MapOfDistances(4)>0){
-                     vc.setSpeed(2);
-                        desiredSteeringWheelAngle=sd.getExampleData();
-
-                    }else if(state==3 && sbd.getValueForKey_MapOfDistances(2)>0){
-                            vc.setSpeed(2);
-                            desiredSteeringWheelAngle=sd.getExampleData();
-
-                    }else if(state==3 && sbd.getValueForKey_MapOfDistances(2)<1 && sbd.getValueForKey_MapOfDistances(5)<2.3){// && (b2-a2<=a-b)){
-                            cout<< "Start turning back" << sbd.getValueForKey_MapOfDistances(5)<< endl;
-                            startTurningToLeft = false;
-                            desiredSteeringWheelAngle=finaldegree;
-                            cout << "the degree is : " << finaldegree << endl;
-                            vc.setSpeed(2);
-                            state=4;
-
-                    }else if (state == 4 && sbd.getValueForKey_MapOfDistances(5)<safedistance){
-                            cout << "in state 4 : " << sbd.getValueForKey_MapOfDistances(5) << endl;
-                            desiredSteeringWheelAngle=finaldegree;
-                            vc.setSpeed(2);
-                            count2++;
-
-                    }else if (state == 4 && sbd.getValueForKey_MapOfDistances(5)>safedistance){
-                            cout << "in state 4 : " << sbd.getValueForKey_MapOfDistances(5) << endl;
-                            vc.setSpeed(2);
-                            state=5;
-
-                    }else if(state==5 && count2>0){
-                            vc.setSpeed(2);
-                            desiredSteeringWheelAngle=-10;
-                            count2--;
-    
-                    }else if(state==5 && count2==0){
-                            cout<< " last count2: "<< count2<<endl;
-                            vc.setSpeed(2);
-                            desiredSteeringWheelAngle=sd.getExampleData();
-                            state=6;
-                        }
-                          
-
-
-
-
-
-
-
-                          ///////////////////////////////////////////////////////mahsa
-                if(sd.getExampleData()<=-7){
-                                straight=false;
-                                cout << "we are in curve now" << endl;
-                                vc.setSpeed(2);
-                                angle1=25;
-                                safedistance=4;
-                                desiredSteeringWheelAngle=sd.getExampleData();
-                         /* 
-                        cout<<"x is : "<< vd.getPosition().getX()<<endl;
-                        cout<<"y is : "<< vd.getPosition().getY()<<endl;
-                        cout<< "following angle : "<<sd.getExampleData()<<endl;
-                        */
-                // With setSpeed you can set a desired speed for the vehicle in the range of -2.0 (backwards) .. 0 (stop) .. +2.0 (forwards)
-                if(sbd.getValueForKey_MapOfDistances(3)>distance1 && obstacleFront==false && startTurningToLeft==false) {
-                        cout<< "driving in curve" << endl;
-                        vc.setSpeed(2);
-                        desiredSteeringWheelAngle=sd.getExampleData();
-
-                    }else if(sbd.getValueForKey_MapOfDistances(3)>0 && sbd.getValueForKey_MapOfDistances(3)<distance1 && obstacleFront==false && startTurningToLeft==false) {
-                            cout<< "detecting object "<<endl;
-                            obstacleFront=true;
-                            state=1;
-
-                    }else if(state==1 && obstacleFront==true) { // check if obstacle is found in front
-                            cout<< "obstacle found cur" << endl;
-                            startTurningToLeft=true;
-                            obstacleFront=false;
-
-                    }else if(startTurningToLeft==true && sbd.getValueForKey_MapOfDistances(3)>0 && sbd.getValueForKey_MapOfDistances(3)<distance1) {//&& sbd.getValueForKey_MapOfDistances(0)<0
-                            cout<< "Start turning cur" << endl;
-                            vc.setSpeed(2);
-                            desiredSteeringWheelAngle=-30;
-                            count1++;
-                            state=2;
-
-                        
-                    }else if(state==2 && sbd.getValueForKey_MapOfDistances(3)<0){
-                            vc.setSpeed(2);
-                            cout << "we are in lane following"<< endl;
-                            desiredSteeringWheelAngle=sd.getExampleData();
-                            state=3;
-
-                    }else if(state==3 && sbd.getValueForKey_MapOfDistances(4)>0){
-                            vc.setSpeed(2);
-                            desiredSteeringWheelAngle=sd.getExampleData();
-
-                    }else if(state==3 && sbd.getValueForKey_MapOfDistances(2)>0){
-                            vc.setSpeed(2);
-                            desiredSteeringWheelAngle=sd.getExampleData();
-
-                    }else if(state==3 && sbd.getValueForKey_MapOfDistances(2)<1 && sbd.getValueForKey_MapOfDistances(5)<2.3){// && (b2-a2<=a-b)){
-                            cout<< "Start turning back" << sbd.getValueForKey_MapOfDistances(5)<< endl;
-                            startTurningToLeft = false;
-                            desiredSteeringWheelAngle=finaldegree;
-                            cout << "the degree is : " << finaldegree << endl;
-                            vc.setSpeed(2);
-                            state=4;
-
-                    }else if (state == 4 && sbd.getValueForKey_MapOfDistances(5)<3.3){
-                            cout << "10 degree " << endl;
-                            desiredSteeringWheelAngle=5;
-                            vc.setSpeed(2);
-                            count2++;
-
-                    }else if (state == 4 && sbd.getValueForKey_MapOfDistances(5)>3.3){
-                            vc.setSpeed(2);
-                            state=5;
-
-                    }else if(state==5 && count2>0){
-                            desiredSteeringWheelAngle=-35;
-                            vc.setSpeed(2);
-                            count2--;
-                            cout << "20 degree"<< endl;
-    
-                    }else if(state==5 && count2==0){
-                            cout<< " last count2: "<< count2<<endl;
-                            desiredSteeringWheelAngle=sd.getExampleData();
-                            vc.setSpeed(2);
-                            state=6;
-                    }
-                }
-
-                                ///////////////////////////////////////////////
-                 if (sd.getExampleData()>15){
-                    cout<< "we are in intersection :D:DD "<<endl;
-                    straight=false;
-                    //dynamic distance calculation
-                    val =3.14159265/180;
-                    result= sin(x*val);
-                    distance1= 1.5*l * sqrt((1/pow(result,2))-1);
-
-                    degreeTeta=T/(sqrt(pow(T,2)+pow(y,2)));
-                    result2 = asin (degreeTeta) * 180.0 / M_PI;
-                    finaldegree=90-result2;
-                    // With setSpeed you can set a desired speed for the vehicle in the range of -2.0 (backwards) .. 0 (stop) .. +2.0 (forwards)
-
-                    if(obstacleFront==false && startTurningToLeft==false) {
-                        vc.setSpeed(2);
-                        desiredSteeringWheelAngle=sd.getExampleData();
-                        cout<< "lanedetector     1 " << count1<<endl;
-                    }
-
-                    if(sbd.getValueForKey_MapOfDistances(3)>0 && sbd.getValueForKey_MapOfDistances(3)<distance1 && obstacleFront==false && startTurningToLeft==false) {
-                        obstacleFront=true;
-                        desiredSteeringWheelAngle=sd.getExampleData();
-                        cout<< "lanedetector  2 " << count1<<endl;
-                       
-                    }else if(obstacleFront) { // check if obstacle is found in front
-                            startTurningToLeft=true;
-                            obstacleFront=false;
-
-                    }else if(startTurningToLeft==true && sbd.getValueForKey_MapOfDistances(3)>0 && sbd.getValueForKey_MapOfDistances(3)<distance1 && sbd.getValueForKey_MapOfDistances(0)<0) {
-                            vc.setSpeed(1);
-                            desiredSteeringWheelAngle=-30;
-                            count1++;
-          
-                    }else if(startTurningToLeft==true &&  sbd.getValueForKey_MapOfDistances(3)<0 && sbd.getValueForKey_MapOfDistances(0)<0){
-                            vc.setSpeed(1);
-                        
-                    }else if(startTurningToLeft==true &&  sbd.getValueForKey_MapOfDistances(3)<0 && sbd.getValueForKey_MapOfDistances(0)>0){
-                            startTurningToLeft=false;
-                            vc.setSpeed(1);
-                            state=1;
-
-                    }else if(state==1 && sbd.getValueForKey_MapOfDistances(2)<0){
-                            vc.setSpeed(1);
-                            desiredSteeringWheelAngle=24;
-                         
-
-                    }else if(state==1 && sbd.getValueForKey_MapOfDistances(2)>0){
-                            desiredSteeringWheelAngle=0;
-                            vc.setSpeed(1);
-                            state=2;
-                         
-                     }else if(state==2 && sbd.getValueForKey_MapOfDistances(0)>0){
-                            vc.setSpeed(1);
-                            desiredSteeringWheelAngle=0;
-                            vc.setSpeed(1);
-                         
-                    }else if(state==2 && sbd.getValueForKey_MapOfDistances(0)<0){
-                            vc.setSpeed(1);
-                            state=3;
-
-                    }else if(state==3 && sbd.getValueForKey_MapOfDistances(2)>0){
-                            vc.setSpeed(1);
-
-                    }else if(state==3 && sbd.getValueForKey_MapOfDistances(2)<0){
-                            desiredSteeringWheelAngle=finaldegree;
-                            vc.setSpeed(1);
-                            state=4;
-
-                    }else if(state==4 && sbd.getValueForKey_MapOfDistances(5)<T){
-                            vc.setSpeed(1);
-                            count2++;
-
-                    } else if(state==4 && sbd.getValueForKey_MapOfDistances(5)>T && count1>0){
-                            vc.setSpeed(1);
-                            state=5;
                 
-                    }else if(state==5 && count2>0){
-                            vc.setSpeed(1);
-                            desiredSteeringWheelAngle=-24;
-                            count2--;
+                // in this statement car start to turn to the left with -20 degree and count2 increase until it reaches 100
+                }else if(state==1 && startTurningToLeft==true && count2<100){
+                        cout<< "turning to left" << endl;
+                        desiredSteeringWheelAngle=-20;
+                        vc.setSpeed(1);
+                        count2++;
 
-                    }else if(state==5 && count2==0){
-                            vc.setSpeed(2);
-                            desiredSteeringWheelAngle=sd.getExampleData();
-                    }
+                // end of state1 
+                }else if(state==1){
+                        state=2;
+
+                //checking whether US_FR IR_FR or IR_RR is detecting obstacle, then switch to follow the left lane
+                }else if(state ==2 && (sbd.getValueForKey_MapOfDistances(4)>0 || sbd.getValueForKey_MapOfDistances(2)>0 || sbd.getValueForKey_MapOfDistances(0)>0 )){
+                        cout<< "lane following in left side" << endl;
+                        vc.setSpeed(2);
+                        desiredSteeringWheelAngle=sd.getExampleData();
+
+                //checking IR_FR and US_FR are not detecting, the car has passed the obstacle and start to steer back with 15 degrees to follow 
+                // the right lane again when the counter reaches 50.
+                }else if(state ==2 && sbd.getValueForKey_MapOfDistances(0)<0 && sbd.getValueForKey_MapOfDistances(4)<0 && count1<50){
+                        cout<< "turning back to right lane" << endl;
+                        vc.setSpeed(2);
+                        desiredSteeringWheelAngle=15;
+                        count1++;
+                        
+                // return back to state 0 when the car has completely passed the obstacle.
+                }else{
+                       count1=0;
+                       obstacleFront=false;
+                       startTurningToLeft=false;
+                       state=0;
+                       count2=0;
                 }
+//__________________________________________________________________________________________________________________________________________________________________________________________________________________
+                // when the car is moving in a distance bigger than 90 and less than 150 we are in curve
+                //(we had to make this if condition as in curve the lane following was not recognizing the vanishing point)
+                // in line 189, we only added a small steering to the left with 15 degrees before adjusting it with lane following after the front detection
+                }else if (distance>90 && distance<150){
+                if((sbd.getValueForKey_MapOfDistances(3)<0 || sbd.getValueForKey_MapOfDistances(3)>10 ) && sbd.getValueForKey_MapOfDistances(0)<0 && obstacleFront==false && startTurningToLeft==false) {
+                    cout<< "tracking" << endl;
+                    vc.setSpeed(2);
+                    desiredSteeringWheelAngle=sd.getExampleData();
+                       
+                }else if(sbd.getValueForKey_MapOfDistances(3)>0 && sbd.getValueForKey_MapOfDistances(3)<10 && obstacleFront==false && startTurningToLeft==false) {
+                        cout<< "Changing boolean"<<endl;
+                        obstacleFront=true;
+                        state=1;
 
+                }else if(state==1 && obstacleFront==true) {
+                        cout<< "obstacle found" << endl;
+                        startTurningToLeft=true;
+                        obstacleFront=false;
+                
+                }else if(state==1 && startTurningToLeft==true &&count2<100){
+                        cout<< "turning to left" << endl;
+                        desiredSteeringWheelAngle=-20;
+                        vc.setSpeed(1);
+                        count2++;
 
+                }else if (state==1){
+                        state=2;
+                
+                }else if (state ==2 && (sbd.getValueForKey_MapOfDistances(4)>0 || sbd.getValueForKey_MapOfDistances(2)>0 || sbd.getValueForKey_MapOfDistances(0)>0 )){
+                         cout<< "turn to adjust curve" << endl;
+                        vc.setSpeed(2);
+                        desiredSteeringWheelAngle=15;
+
+                }else if (state ==2 && (sbd.getValueForKey_MapOfDistances(4)>0 || sbd.getValueForKey_MapOfDistances(2)>0 || sbd.getValueForKey_MapOfDistances(0)>0 )){
+                         cout<< "lane following in left side" << endl;
+                        vc.setSpeed(2);
+                        desiredSteeringWheelAngle=sd.getExampleData();
+
+                }else if(state ==2 && sbd.getValueForKey_MapOfDistances(0)<0 && sbd.getValueForKey_MapOfDistances(4)<0 && count1<20){
+                        cout<< "turning back to right lane" << endl;
+                        vc.setSpeed(2);
+                        desiredSteeringWheelAngle=15;
+                        count1++;
+                }else{
+                    count1=0;
+                    obstacleFront=false;
+                    startTurningToLeft=false;
+                    state=0;
+                    count2=0;
+                }
+            }
+                //printing out the distance and the states.
                 cout << "                  state :" << state << endl;
-                duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
-                // std::cout<<"printf: "<< duration <<'\n'; 
+                cout << "                  distance is  :" << distance << endl;
 
                 // With setSteeringWheelAngle, you can steer in the range of -26 (left) .. 0 (straight) .. +25 (right)
                  // 4 degree but SteeringWheelAngle expects the angle in radians!
@@ -387,4 +225,3 @@ namespace msv {
             return ModuleState::OKAY;
         }
 } // msv
-

@@ -169,7 +169,9 @@ namespace msv {
             SteeringData sd = containerSteeringData.getData<SteeringData> ();
            cerr << "Most recent steering data: '" << sd.toString() << "'" << endl;
             
-            
+        // This is where we check what state lane detector has deemed appropriate for the 
+        // car to act upon. And then send how we want the car to act, into the steering board.
+        // Jonathan Klemetz, Johan Hermannson.
             loop++;
             if(loop > 98){
                 loop = 10;

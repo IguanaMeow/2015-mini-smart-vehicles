@@ -18,34 +18,47 @@
  */
 
 #include <ctype.h>
-#include <string>
+#include <cstring>
 #include <cmath>
-#include <unistd.h>
-#include <sstream>
 
+#include "core/data/control/VehicleControl.h"
 #include "core/base/KeyValueConfiguration.h"
 #include "core/data/Container.h"
 #include "core/data/TimeStamp.h"
-#include "core/data/control/VehicleControl.h"
+
 #include "OpenCVCamera.h"
-#include "core/data/environment/VehicleData.h"
+
 #include "GeneratedHeaders_Data.h"
 
 #include "Proxy.h"
-#include "Netstring.h"
-#include "../serial/include/serial/serial.h"
+#include <fstream>
+#include <iostream> 
+#include <ctime>
+#include <unistd.h>
+#include <fcntl.h> 
+#include <termios.h> 
+#include <errno.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <sys/time.h> 
 
- double extractData(string, string);
+// Markus Erlach
+#define USB "/dev/ttyACM0"
 
-namespace msv {
+namespace msv { 
+    int port;
+    void open_port(std::string adr);
+    void port_config();
+    std::string readSerial(); 
+
+    const char *USB_PORT;
 
     using namespace std;
     using namespace core::base;
     using namespace core::data;
-    using namespace core::data::control;
-    using namespace core::data::environment;
     using namespace tools::recorder;
-
+    using namespace core::data::control;
 
     Proxy::Proxy(const int32_t &argc, char **argv) :
         ConferenceClientModule(argc, argv, "proxy"),
@@ -57,7 +70,10 @@ namespace msv {
     }
 
     void Proxy::setUp() {
-        // This method will be call automatically _before_ running body().
+        
+        msv::open_port(USB); // Connect to arduino
+        msv::port_config();
+        // This method will be called automatically _before_ running body().
         if (getFrequency() < 20) {
             cerr << endl << endl << "Proxy: WARNING! Running proxy with a LOW frequency (consequence: data updates are too seldom and will influence your algorithms in a negative manner!) --> suggestions: --freq=20 or higher! Current frequency: " << getFrequency() << " Hz." << endl << endl << endl;
         }
@@ -66,6 +82,7 @@ namespace msv {
         KeyValueConfiguration kv = getKeyValueConfiguration();
 
         // Create built-in recorder.
+        /*
         const bool useRecorder = kv.getValue<uint32_t>("proxy.useRecorder") == 1;
         if (useRecorder) {
             // URL for storing containers.
@@ -80,7 +97,7 @@ namespace msv {
 
             m_recorder = new Recorder(recordingURL.str(), MEMORY_SEGMENT_SIZE, NUMBER_OF_SEGMENTS, THREADING);
         }
-
+*/
         // Create the camera grabber.
         const string NAME = getKeyValueConfiguration().getValue<string>("proxy.camera.name");
         string TYPE = getKeyValueConfiguration().getValue<string>("proxy.camera.type");
@@ -117,19 +134,7 @@ namespace msv {
         getConference().send(c);
     }
 
-    double front_us, fr_ir, rr_ir, fr_us, rear_ir, temp = 0; // values to pass to HLB
-    int wheel_encoder = 0;
-    SensorBoardData sbd;
-    VehicleControl vc;
-    VehicleData vd;
-    string vcDataString, sensorData;
-    serial::Serial my_serial("/dev/ttyACM0", 19200, serial::Timeout::simpleTimeout(1000));
-    stringstream ss;
-    bool dataReceived = true;
-    int failCount = 0;
-    bool decodeFail = false;
-
- // This method will do the main data processing job.
+    // This method will do the main data processing job.
     ModuleState::MODULE_EXITCODE Proxy::body() {
         uint32_t captureCounter = 0;
         while (getModuleState() == ModuleState::RUNNING) {
@@ -141,90 +146,103 @@ namespace msv {
                 distribute(c);
                 captureCounter++;
             }
+            Container containerVehicleControl = getKeyValueDataStore().get(Container::VEHICLECONTROL);
+                VehicleControl vc = containerVehicleControl.getData<VehicleControl>();
+                cerr << "Speed: '" << vc.getSpeed() << "'" << endl;
+                cerr << "Angle: '" << vc.getSteeringWheelAngle() << "'" << endl;
 
             // TODO: Here, you need to implement the data links to the embedded system
             // to read data from IR/US.
 
-            Container containerVehicleControl = getKeyValueDataStore().get(Container::VEHICLECONTROL);
-            vc = containerVehicleControl.getData<VehicleControl> ();
-            Container c1(Container::USER_DATA_0, sbd);
-            Container c2(Container::VEHICLEDATA, vd);
-
-            cerr << (decodeFail ? "Decode status: failed, car stopped" : "Decode status: success") << endl;
-            cerr << "fail count " << failCount << endl;
-
-        if(dataReceived && !decodeFail){
-            ss << (vc.getSteeringWheelAngle() * -1);
-            vcDataString = "WA=" + ss.str();
-            ss.str("");
-            ss << vc.getSpeed();
-            vcDataString += "SP=";
-            vcDataString += ss.str();
-            ss.str("");
-            my_serial.write(encodeNetstring(vcDataString));
-            cerr << vcDataString << endl;
-            dataReceived = false;
+            // Test ***************************
+            // Markus Erlach
+            string in = "";
+            char command[10];
+            cout << "Enter command to send, " << endl;
+            cout << "Command alternatives: w, f, s, r, n, h, v, m" << endl;
+            cin >> in;
+            /* w, f, s, r, n, h, v
+            w = set speed to 1560, f = accelerate by 10
+            s = slow down, r = reverse, n = neutral
+            h = turn right, v = turn left    
+            */
+            strcpy(command, in.c_str());            
+            write(port, command, 10);
+            cout << "Proxy2 wrote: "<< command << endl;
+            msv::readSerial();
+           
         }
-        if(dataReceived && decodeFail){
-            vcDataString = "WA=0SP=0";
-            my_serial.write(encodeNetstring(vcDataString));
-            dataReceived = false;
-        }
-
-
-        if(my_serial.available()){
-            string result =  my_serial.readline(50, ",");
-            sensorData = decodeNetstring(result);
-            cerr << sensorData << endl;
-            if(sensorData != "NETSTRING_ERROR"){
-                temp = extractData("IR1", sensorData);
-                temp >= 199 ? fr_ir = 0 : fr_ir = temp/10;
-                temp = extractData("IR2", sensorData);
-                temp >= 199 ? rear_ir = 0 : rear_ir = temp/10;
-                temp = extractData("IR3", sensorData);
-                temp >= 199 ? rr_ir = 0 : rr_ir = temp/10;
-                temp = extractData("US1", sensorData);
-                temp >= 199 ? front_us = 0 : front_us = temp/10;
-                temp = extractData("US2", sensorData);
-                temp >= 199 ? fr_us = 0 : fr_us = temp/10;
-                temp = extractData("WE", sensorData);
-                temp >= 199 ? wheel_encoder = 0 : wheel_encoder = temp;
-                wheel_encoder = extractData("WE", sensorData);
-                decodeFail = false;
-            }else{
-                 cerr << "bad string" << endl;
-                sbd.putTo_MapOfDistances(0, fr_ir); // IR front right
-                sbd.putTo_MapOfDistances(1, rear_ir); // IR rear
-                sbd.putTo_MapOfDistances(2, rr_ir); // IR rear right
-                sbd.putTo_MapOfDistances(3, front_us); // US front
-                sbd.putTo_MapOfDistances(4, fr_us); // US front right
-                vd.setAbsTraveledPath(wheel_encoder); // wheel encoder
-                failCount ++;
-            }
-
-            if(failCount >= 10){
-                decodeFail = true;
-            }
-
-            distribute(c1);
-            distribute(c2);
-            dataReceived = true;
-            }
-        }
-
         cout << "Proxy: Captured " << captureCounter << " frames." << endl;
 
         return ModuleState::OKAY;
     }
 
+// Markus Erlach
+void open_port(std::string adr) {
+    USB_PORT = adr.c_str();
+    /*
+    O_RDWR = Posix read write
+    O_NOCTTY = Not a controlling terminal 
+    O_NDELAY = Ignore dcd signal state
+    */
+    port = open(USB_PORT, O_RDWR | O_NOCTTY);
+    if (port != 0) {
+        port_config();
+    } 
+    
+}
+
+// Markus Erlach
+void port_config() {
+    // Setup control structure
+    struct termios options;
+    struct termios oldOptions;
+    memset (&options, 0, sizeof(options));
+    
+    // Get currently set options
+    // Error handling
+    if (tcgetattr(port, &options) != 0) {
+        std::cout << "Error: " << errno << "from tcgetattr" << strerror(errno) << std::endl;
+    }
+    // Save old options
+    oldOptions = options;
+    // Set read and write speed to 9600, 19200 or 384000 baud
+    cfsetispeed(&options, B38400);
+    cfsetospeed(&options, B38400);
+    // 8bits, no parity, no stop bits
+    options.c_cflag &= ~PARENB;
+    options.c_cflag &= ~CSTOPB;
+    options.c_cflag &= ~CSIZE;
+    options.c_cflag |= CS8;
+    /*
+    No hw flow control and ignore status lines
+    options.c_cflag &= ~CRTSCTS;
+    options.c_cflag |= CREAD | CLOCAL
+    */
+    // turn off s/w flow ctrl and make raw
+    options.c_iflag &= ~(IXON | IXOFF | IXANY); 
+    options.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG); 
+    options.c_oflag &= ~OPOST; 
+    // wait for min 0 chars and wait time min
+    options.c_cc[VMIN]  = 1;
+    options.c_cc[VTIME] = 0;
+    // Commit
+    tcflush(port, TCIFLUSH);
+    tcsetattr(port, TCSANOW, &options);
+}
+
+// Markus Erlach 
+std::string readSerial() {
+    char start[255] = "";
+    
+    std::cout << "Serial available: " << port << std::endl;
+    
+    int n = read(port, start, 255);
+    start[n] = 0;
+    std::cout << "N: " << n << std::endl;
+    std::string received(start);
+    return received;
+}
+
 } // msv
 
-double extractData(string label, string sbData){
-
-    double sensorValue;
-    size_t stringPos = sbData.find(label);
-    if(stringPos >= std::string::npos) return 200;
-    stringstream convert(sbData.substr(stringPos + 4));
-    convert >> sensorValue;
-    return sensorValue;
-}
