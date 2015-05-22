@@ -87,14 +87,12 @@ namespace msv {
             
             
             
+            // Design your control algorithm here depending on the input data from above.
+            
+            
             
             // Create vehicle control data.
             VehicleControl vc;
-            
-
-            
-            // MY Code
-            ///////////////////////////////////////////////////////////////////////////
             
             
             
@@ -117,7 +115,7 @@ namespace msv {
             
             switch(mode){
                 case 1:
-                    vc.setSpeed(0.5);
+                    vc.setSpeed(1.5);
                     desiredSteeringWheelAngle = 0;
                     vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
                     if (sen2 > 0){
@@ -130,7 +128,7 @@ namespace msv {
                         }
                         freepath = abt - freeSpaceStart;
                         cerr <<freepath<< "Free = "<<endl;
-                        if(freepath >= 6){
+                        if(freepath >= 6.5){
                             vc.setSpeed(0.0);
                             mode = 5;
                         }
@@ -142,7 +140,7 @@ namespace msv {
                     if (back0 <= 0){
                         back0 = abt;
                     }
-                    if ((abt - back0) >= 4.3){
+                    if ((abt - back0) >= 5.8){
                         back0 = 0;
                         mode = 7;
                     }
@@ -158,7 +156,7 @@ namespace msv {
                         forward = 0;
                         mode = 6;
                     }
-                    desiredSteeringWheelAngle = -25;
+                    desiredSteeringWheelAngle = -30;
                     vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
                     vc.setSpeed(-0.2);
                     break;
@@ -168,12 +166,13 @@ namespace msv {
                 case 5:
                     if(forward <= 0) forward = abt;
                     vc.setSpeed(0.3);
-                    if ((abt - forward) >= 1.25) mode = 2;
+                    if ((abt - forward) >= 2.25) mode = 2;
                     break;
                 case 6:
                     if(forward <= 0) forward = abt;
-                    if((abt - forward) > 1) mode = 4;
-                    desiredSteeringWheelAngle = 20;
+                    if((abt - forward) > 1.5) mode = 8;
+                    back0 = 0;
+                    desiredSteeringWheelAngle = 25;
                     vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
                     vc.setSpeed(0.3);
                     break;
@@ -181,7 +180,7 @@ namespace msv {
                     if (back0 <= 0){
                         back0 = abt;
                     }
-                    if ((abt - back0) >= 1.3){
+                    if ((abt - back0) >= 1.4){
                         back0 = 0;
                         mode = 3;
                     }
@@ -189,10 +188,21 @@ namespace msv {
                     vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
                     vc.setSpeed(-0.3);
                     break;
+                case 8:
+                    if (back0 <= 0){
+                        back0 = abt;
+                    }
+                    if ((abt - back0) >= 1.0){
+                        back0 = 0;
+                        mode = 4;
+                    }
+                    desiredSteeringWheelAngle = -20;
+                    vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
+                    vc.setSpeed(-0.2);
+                    break;
                     
             }
-            
-          
+
             
             // You can also turn on or off various lights:
             vc.setBrakeLights(false);
@@ -208,4 +218,3 @@ namespace msv {
         return ModuleState::OKAY;
     }
 } // msv
-
