@@ -25,6 +25,7 @@
 #include "core/data/environment/VehicleData.h"
 #include "core/data/control/VehicleControl.h"
 #include "Parking.h"
+#include "Overtaking.h"
 
 
 namespace msv {
@@ -66,6 +67,7 @@ namespace msv {
             };
 
             Parking parking;
+            Overtaking overtaking;
             virtual void setUp();
             virtual void tearDown();
 

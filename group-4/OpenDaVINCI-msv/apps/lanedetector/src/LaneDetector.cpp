@@ -133,7 +133,7 @@ namespace msv {
         // Portion of the image cropped away
         const double crop = 0.5;
         // Total value exponent
-        const double exp = 1.12;
+        const double exp = 1.15;
         // Total value to turning degrees ratio
         const double ratio = 0.075;
         // Amount of rows when going straight
@@ -162,7 +162,6 @@ namespace msv {
         Mat dst, cdst;
         const int rowturn = floor(abs(prevAngle * turnCoef));
         const int rows = maxRows - (rowturn > (maxRows - minRows) ? (maxRows - minRows) : rowturn);
-        const int rowdist = src.rows * rowDist;
         const int center = src.cols / 2;
         const int wbot = center * 18 / 20;
         const int wtop = center * 8 / 20;
@@ -170,7 +169,7 @@ namespace msv {
         int rnull[rows];
         for(int i = 0; i < rows; i++)
         {
-            const int y = src.rows - ((i + 1) * rowdist);
+            const int y = src.rows - ((i + 1) * src.rows * rowDist);
             lnull[i] = ((center - wtop) - (center - wbot)) * ((src.rows - y) / (double)src.rows) + (center - wbot);
             rnull[i] = ((center + wtop) - (center + wbot)) * ((src.rows - y) / (double)src.rows) + (center + wbot);
         }
@@ -217,7 +216,7 @@ namespace msv {
 
             if(angle < 15 || angle > 165)
             {
-                line(cdst, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0, 0, 64), 1, CV_AA);
+                line(cdst, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0, 128, 255), 1, CV_AA);
                 lines.erase(lines.begin() + i);
                 stoplines.push_back(l);
                 i--;
@@ -244,7 +243,7 @@ namespace msv {
         // Calculate distance to lines
         for(int i = 0; i < rows; i++)
         {
-            const int y = src.rows - ((i + 1) * rowdist);
+            const int y = src.rows - ((i + 1) * src.rows * rowDist);
             int lx = lnull[i];
             int rx = rnull[i];
             for(size_t j = 0; j < lines.size(); j++)
@@ -287,7 +286,7 @@ namespace msv {
             }
         }
 
-        // Predict rows forwards
+        // Estimate rows forwards
         for(int i = 1; i < rows; i++)
         {
             if(left[i] == lnull[i] && left[i - 1] != lnull[i - 1] && lcount > 2)
@@ -318,7 +317,7 @@ namespace msv {
             }
         }
 
-        // Predict rows backwards
+        // Estimate rows backwards
         for(int i = rows - 2; i >= 0; i--)
         {
             if(left[i] == lnull[i] && left[i + 1] != lnull[i + 1] && lcount > 2)
@@ -352,7 +351,7 @@ namespace msv {
         // Calculate sum of distances
         for(int i = 0; i < rows; i++)
         {
-            const int y = src.rows - ((i + 1) * rowdist);
+            const int y = src.rows - ((i + 1) * src.rows * rowDist);
             int value = (-left[i] + center - (right[i] - center)) * (i * weight + 1);
             total += value;
             totalWeight += (i * weight + 1);
@@ -382,6 +381,7 @@ namespace msv {
             if((l[0] < center && l[2] > center) || (l[0] > center && l[2] < center))
             {
                 const int distance = src.rows - (l[1] + l[3]) / 2;
+
                 if(distance < frontDist)
                 {
                     frontDist = distance;

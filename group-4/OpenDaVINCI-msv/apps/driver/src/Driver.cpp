@@ -43,13 +43,18 @@ namespace msv {
 //  using namespace libdata::generated::msv;
 
     int parkingMode = 0;
+    int overtakingActive = 0;
+    const int samplesize = 25;
 
     Driver::Driver(const int32_t &argc, char **argv) :
-        ConferenceClientModule(argc, argv, "Driver"),parking()   {
+        ConferenceClientModule(argc, argv, "Driver"),parking(),overtaking()   {
         for(int i = 0; i < argc; i++)
             if(!strcmp(argv[i], "--parking"))
                 parkingMode = 1;
+            else if(!strcmp(argv[i], "--overtaking"))
+                overtakingActive = 1;
         cout << "PARKING: " << parkingMode << endl;
+        cout << "OVERTAKING: " << overtakingActive << endl;
     }
 
     Driver::~Driver() {}
@@ -67,44 +72,44 @@ namespace msv {
 
     float Driver::filter(float newData,float arr[]){
 
-        float temp[3];
-        for (int i = 0; i < 3; ++i)
+        float temp[samplesize];
+        for (int i = 0; i < samplesize; ++i)
         {
             temp[i] = arr[i];
 
         }
-        sort(temp, temp + 3);
-        for (int i = 0; i < 2; ++i)
+        sort(temp, temp + samplesize);
+        for (int i = 0; i < samplesize - 1; ++i)
         {   
             arr[i] = arr[i+1];
 
         }
-        arr[2] = newData;
+        arr[samplesize - 1] = newData;
 
-        return temp[1];
+        return temp[samplesize / 2];
     }
 
     // This method will do the main data processing job.
     ModuleState::MODULE_EXITCODE Driver::body()
     {
         Time *startTime = NULL;
-        //bool isReversing = false;
+        bool isReversing = false;
         bool atStopline = false;
 
-        float usFrontRightArr[3] = {-1};
-        float usRearRightArr[3] =  {-1};
-        float usFrontCentreArr[3] =  {-1};
-        float irFrontRightArr[3] = {-1};
-        float irRearArr[3] = {-1};
-        float irRearRightArr[3] = {-1};
-
+        float usFrontRightArr[samplesize] = {-1};
+        float usRearRightArr[samplesize] =  {-1};
+        float usFrontCentreArr[samplesize] =  {-1};
+        float irFrontRightArr[samplesize] = {-1};
+        float irRearArr[samplesize] = {-1};
+        float irRearRightArr[samplesize] = {-1};
 
         while (getModuleState() == ModuleState::RUNNING)
         {
             // 1. Get most recent vehicle data:
-            //VehicleData vd;
-            //Container containerVehicleData = getKeyValueDataStore().get(Container::VEHICLEDATA);
-            //vd = containerVehicleData.getData<VehicleData> ();
+            VehicleData vd;
+            Container containerVehicleData = getKeyValueDataStore().get(Container::VEHICLEDATA);
+            vd = containerVehicleData.getData<VehicleData> ();
+            float pathTraveled = vd.getAbsTraveledPath();
             //float headingAngle = vd.getHeading() * Constants :: RAD2DEG;
             //float currentSpeed = vd.getSpeed();
 
@@ -127,6 +132,13 @@ namespace msv {
             float irRearRight = filter(irRearRightData,irRearRightArr);
             float irRear = filter(irRearData,irRearArr);
 
+            if(irFrontRight > 20)
+                irFrontRight = -1;
+            if(irRearRight > 20)
+                irRearRight = -1;
+            if(irRear > 20)
+                irRear = -1;
+
             float sensorData[6] = {
                 usFrontCentre,
                 usFrontRight,
@@ -145,7 +157,7 @@ namespace msv {
             Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_1);
             SteeringData sd = containerSteeringData.getData<SteeringData> ();
 
-            double speed = 1;
+            double speed = 3;
             double steeringWheelAngle = 0.0;
 
             if(parkingMode)
@@ -156,8 +168,12 @@ namespace msv {
             {
                 steeringWheelAngle = sd.getWheelAngle();
 
+                if(overtakingActive)
+                {
+                    overtaking.doOvertaking(pathTraveled, usFrontRight, irFrontRight, usFrontCentre, steeringWheelAngle);
+                }
                 // Emergency break
-                if(usFrontCentre < 10 && usFrontCentre > 0)
+                else if(usFrontCentre < 10 && usFrontCentre > 0)
                 {
                     speed = 0;
                 }
@@ -195,7 +211,7 @@ namespace msv {
 
             VehicleControl vc;
 
-/*            // Reversing car fix.
+            // Reversing car fix.
             if (speed < 0 && !isReversing) {
                 Time *t = TimeFactory::getInstance().now();
 
@@ -223,7 +239,7 @@ namespace msv {
                 isReversing = false;
                 delete startTime;
                 startTime = NULL;
-            }*/
+            }
 
             vc.setSpeed(speed);
             vc.setSteeringWheelAngle(steeringWheelAngle * Constants::DEG2RAD);
