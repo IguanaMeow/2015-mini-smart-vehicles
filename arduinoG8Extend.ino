@@ -1,68 +1,59 @@
-//----Libraries---
+/*----Libraries---*/
 
 #include <Wire.h>            //For US sensors
 #include <SonarSRF08.h>      //For US sensors
-#include "FastRunningMedian.h" //median class for all sensors
 #include <Servo.h>           //For Driving
 #include "I2Cdev.h"          //For MPU6050 Gyro/Accel
 #include "MPU6050_6Axis_MotionApps20.h" //For MPU6050 Gyro/Accel - Yaw calc
 #include <PPMrcIn.h>         //For RC Override
 #include <Statistic.h>       //For RC Override
 
-//----Special Bytes----
+/*----Special Bytes----*/
+
 const byte endByte = 0xFF;
 const byte startByte = 0xAA;
 int driving = 0;
 
-//----Incoming Data ----
+/*----Incoming Data----*/
+
 byte recSignal[7];         // a byte array to hold incoming data
 unsigned int speedIn = 1500;               //incoming speed data
 unsigned int steeringIn = 90;            //incoming steering data
 //byte lightsIn = 0;
 boolean recComplete = false; //Check if valid packet
 
-//----Old Incoming Data ----
-unsigned int speedInOld;               //Last changed speed data
-unsigned int steeringInOld;            //Last changed steering data
-//byte lightsInOld;
+/*----Outgoing Data----*/
 
-//----Outgoing Data ----
 byte sendSignal[17];         // a byte array to hold outgoing data
-unsigned int speedOut = 105;              //outgoing speed data from Wheel encoder
-unsigned int steeringOut = 101;           //outgoing steering data (current setting)
+unsigned int distanceOut = 105;              //outgoing speed data from Wheel encoder
+unsigned int directionOut = 101;           //outgoing steering data (current setting)
 unsigned int irFrontOut = 0;            //IR sensor right front outgoing
 unsigned int irMiddleOut = 0;           //IR sensor right back outgoing
 unsigned int irBackOut = 0;             //IR sensor back outgoing
 unsigned int usFrontOut = 0;                //US sensor 1 outgoing
 unsigned int usRightOut = 0;                //US sensor 2 outgoing
 
-FastRunningMedian<unsigned int,5, 0> irFrontMedian;
-FastRunningMedian<unsigned int,5, 0> irMiddleMedian;
-FastRunningMedian<unsigned int,5, 0> irBackMedian;
-FastRunningMedian<unsigned int,5, 0> usFrontMedian;
-FastRunningMedian<unsigned int,5, 0> usRightMedian;
+/*---- Servo and ESC ----*/
 
-//----Servo and ESC----
 Servo esc;
 Servo servo;
-int throttle = 1520; //Nuetral
+int throttle = 1500; //Nuetral
 int angle = 90;      //Straight
 int speedNow = 0;
 
 
-//----Wheel encoder and speed----
-unsigned long mmAbsDistance = 0;
+/*----Wheel encoder and speed----*/
+
+volatile unsigned long mmAbsDistance = 0;
 unsigned int cmOldDistance = 0;
 int cmPerSecond = 2;
 unsigned long oldMillis;
-unsigned long ticks = 1;
-//int encoderValue = LOW;
-//int oldEncoderValue = LOW;
-//value to send out
 unsigned int cmAbsDistance = 0;
+unsigned int avSpeed[5];
+int elementCounter = 0;
 
 
-//----Accelerometer + Gyro Fusion for Abs direction----
+/*----Accelerometer + Gyro Fusion for Abs direction----*/
 
 MPU6050 mpu;
 
@@ -73,7 +64,6 @@ uint16_t packetSize;    // expected DMP packet size (default is 42 bytes)
 uint16_t fifoCount;     // count of all bytes currently in FIFO
 uint8_t fifoBuffer[64]; // FIFO storage buffer
 Quaternion q;           // [w, x, y, z]         quaternion container
-float euler[3];         // [psi, theta, phi]    Euler angle container
 VectorFloat gravity;    // [x, y, z]            gravity vector
 float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
 
@@ -83,7 +73,8 @@ volatile bool mpuInterrupt = false;     // indicates whether MPU interrupt pin h
 unsigned int absDirection = 0;
 
 
-//----Defining Sensor Data----
+/*----Defining Sensor Data----*/
+
 #define irFrontPin  0      //IR sensor right front in analog pin 0
 #define irMiddlePin 1      //IR sensor right back in analog pin 1
 #define irBackPin   2      //IR sensor back in analog pin 2
@@ -99,17 +90,20 @@ char unit = 'c'; // 'i' for inches, 'c' for centimeters, 'm' for micro-seconds u
 #define GAIN_REGISTER 0x09
 // Setup Range Location
 // http://www.robot-electronics.co.uk/htm/srf08tech.html section "Changing the Range"
-#define LOCATION_REGISTER 0x46
+#define RANGE_REGISTER 0x46
 
-//---------RC Override ------
-Channel channel1;
-Channel channel2;
-int rcThrottle;
-int rcAngle;
+/*---------RC Override ------*/
+/*-****NOTE - All RC Override code is integration tested but not perfected and so remains experimental and commented out******-*/ 
+//Channel channel1;
+//Channel channel2;
+//int rcThrottle;
+//int rcAngle;
+
+
 
 void setup() {
   // initialize serial:
-  Serial.begin(57600);
+  Serial.begin(115200);
   
   //RC Override setup
 //  pinMode (10, INPUT);
@@ -120,7 +114,7 @@ void setup() {
   
   //  delay(5000);
   
-  //-----setup Gyro/Accel-----
+//-----setup Gyro/Accel ADAPTED FROM EXAMPLE CODE-----
   #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
         Wire.begin();
         TWBR = 24; // 400kHz I2C clock (200kHz if CPU is 8MHz)
@@ -155,72 +149,80 @@ void setup() {
         packetSize = mpu.dmpGetFIFOPacketSize();
     }
   
-  usFront.connect(FRONT_08_ADDRESS, GAIN_REGISTER, LOCATION_REGISTER);//connect to the front US sensor
-  usRight.connect(RIGHT_08_ADDRESS, GAIN_REGISTER, LOCATION_REGISTER);//connect yo the right US sensor
+//---Connect the US front and front-right using i2c addresses
+  usFront.connect(FRONT_08_ADDRESS, GAIN_REGISTER, RANGE_REGISTER);
+  usRight.connect(RIGHT_08_ADDRESS, GAIN_REGISTER, RANGE_REGISTER);
+  
+//---Attach the two main servos, steering and ESC
   esc.attach(9);
   servo.attach(8);
   
-  //Set neutral and straight 
+//---Set neutral and straight 
   esc.writeMicroseconds(throttle); 
-  servo.write(angle);
+  servo.write(angle + 2);//Correct for slight steering offset
   
-  //Setup wheel Encoder
+//---Setup wheel Encoder
   attachInterrupt(1, updateDistance, RISING);
-  //pinMode(INPUT, 2);
-  
-  // wait five seconds to bypass throttle neutral protection
+
 }
 
 void loop() {
+  cmAbsDistance = (int)(mmAbsDistance / 10);
   
+//---experimental but unstable speed based ESC adjustment
 //  if (millis() - oldMillis > 200){
 //    oldMillis = millis();
 //    calculateSpeed();
+//    checkSpeed();
 //  }
+
   if (recComplete) {
     distIncoming();
+    
 //    if((rcThrottle<2000 && rcThrottle>1000) || (rcAngle<2000 && rcAngle>1000)){
 //      rcControl();
 //    }else{  
+  
       setTheSpeed();
       setTheSteering();
+      
 //    }   
+
     recComplete = false;
   }
+
   //Gather sensor Data
+  
   if(dmpReady){
     getAbsDirection();
   }
-  
-  getSpeed();
-  getSteering();
+
+  getDistance();
+  getDirection();
   getIRFront();
   getIRMiddle();
   getIRBack();
   getUSFront();
   getUSRight();
   sendData();
-  if(driving){
-    //checkSpeed();
-  }
+
 }
 
-//Distribute incoming instructions to arduino structures
+//---Distribute incoming instructions to arduino structures
 void distIncoming(){
   speedIn = recSignal[1] + ((int)recSignal[2] << 8);
   steeringIn = recSignal[3] + ((int)recSignal[4] << 8);
-  //lightsIn = recSignal[5]
 }
 
-//Build buffer for serial out, send it over the wire
+//---Build buffer for serial out, send it over the wire
 void sendData(){
   sendSignal[16] = 0;
   byte i = 0;
   sendSignal[0] = startByte;
-  sendSignal[1] = speedOut & 0xFF; //00000000 11111111
-  sendSignal[2] = (speedOut >> 8) & 0xFF;
-  sendSignal[3] = steeringOut & 0xFF;
-  sendSignal[4] = (steeringOut >> 8) & 0xFF;
+  sendSignal[1] = distanceOut & 0xFF;
+  sendSignal[2] = (distanceOut >> 8) & 0xFF;
+  sendSignal[3] = directionOut & 0xFF;
+  sendSignal[4] = (directionOut >> 8) & 0xFF;
   sendSignal[5] = irFrontOut & 0xFF;
   sendSignal[6] = (irFrontOut >> 8) & 0xFF;
   sendSignal[7] = irMiddleOut & 0xFF;
@@ -235,33 +237,15 @@ void sendData(){
   for(i = 0; i < 16; i++){
     sendSignal[16] ^= sendSignal[i];
   } 
-//  Serial.write(sendSignal, 17);
-  Serial.print("IRFront");
-  Serial.print(irFrontOut);
-  Serial.print("\n");
-  Serial.print("IRMiddle");
-  Serial.print(irMiddleOut);
-  Serial.print("\n");
-  Serial.print("IRBack");
-  Serial.print(irBackOut);
-  Serial.print("\n");
-  Serial.print("USFRONT");
-  Serial.print(usFrontOut);
-  Serial.print("\n");
-  Serial.print("USRIGHT");
-  Serial.print(usRightOut);
-  Serial.print("\n");
-  Serial.print("\n");
-  Serial.print("\n");
+  Serial.write(sendSignal, 17);
 }
 
-//Adjust the throttle based on current speed
-
+//---Adjust the throttle based on current speed - Experimental (not called)
 void checkSpeed(){
-  if(throttle != 1520 && throttle != 1200 && (throttle - 1560) * 15 > cmPerSecond){
+  if(throttle > 1520 && 30 < cmPerSecond){
     speedNow++;
     esc.writeMicroseconds(speedNow);
-  }else if(throttle != 1520 && throttle != 1200 && (throttle - 1560) * 15 < cmPerSecond){
+  }else if(throttle < 1500 && 30 < cmPerSecond){
     speedNow--;
     esc.writeMicroseconds(speedNow);
   }
@@ -269,7 +253,6 @@ void checkSpeed(){
 }
 
 //Get Absolute Direction
-
 void getAbsDirection(){
   if(mpuInterrupt || fifoCount >= packetSize) {
       // reset interrupt flag and get INT_STATUS byte
@@ -298,17 +281,12 @@ void getAbsDirection(){
           mpu.dmpGetQuaternion(&q, fifoBuffer);
           mpu.dmpGetGravity(&gravity, &q);
           mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
-          absDirection = ((int)round(ypr[0] * 180/M_PI))+180;
-          
-  //        mpu.dmpGetQuaternion(&q, fifoBuffer);
-  //        mpu.dmpGetEuler(euler, &q);
-  //        absDirection = (int)round(euler[0] * 180/M_PI);
-          
+          absDirection = ((int)round(ypr[0] * 180/M_PI))+180;        
       }
   }
 }
 
-//RC Overide Commands
+//---RC Overide Commands
 
 //void rcControl(){
 //    esc.writeMicroseconds(1500);
@@ -320,124 +298,99 @@ void getAbsDirection(){
 //    servo.write(rcAngle); 
 //}
 
-//Set the speed controller
+//---Set the speed controller
 void setTheSpeed(){
-  driving = 1;
+  driving = 1; 
   throttle = speedIn;
-  if(throttle > 1520){
-    if(speedNow < 1500){
-      esc.writeMicroseconds(1500);
-      delay(5);
-      esc.writeMicroseconds(throttle+20);
-    }else{
-      esc.writeMicroseconds(throttle+20);
-    }
-  }else{
+  if(throttle > 1520){  
     esc.writeMicroseconds(throttle);
-    delay(5);
-    esc.writeMicroseconds(1500);
-    delay(5);
+  }else if (throttle < 1500){
+    esc.writeMicroseconds(throttle);
+  }else{
+    driving = 0;
     esc.writeMicroseconds(throttle);
   }
   speedNow = throttle;
-   
 }
 
-//Set the steering servo angle
+//---Set the steering servo angle
 void setTheSteering(){
-  servo.write(steeringIn);
+  servo.write(steeringIn + 2);
   
 }
 
-//void setTheLights(){
-//  //TODO
-//}
-
-//Get speed from wheel encoder
-void getSpeed(){
-  //TODO
-  speedOut = cmAbsDistance;
-//  Serial.print("Distance");
-//  Serial.print(speedOut);
-//  Serial.print('\n');
+//Get distance from wheel encoder
+void getDistance(){
+  distanceOut = cmAbsDistance;
 }
 
-//Check current steering data (uneccessary maybe?)
-void getSteering(){
-  //TODO
-  steeringOut = absDirection;
-//  Serial.print("Steering");
-//  Serial.print(steeringOut);
-//  Serial.print('\n');
+//---Check current heading data (uneccessary maybe?)
+void getDirection(){
+  directionOut = absDirection;
 }
 
-//get right front IR Sensor by reading the analog pin
+//---get right front IR Sensor by reading the analog pin
 void getIRFront(){
-  irFrontMedian.addValue(analogRead (irFrontPin));
-  irFrontOut = irFrontMedian.getMedian();
+  irFrontOut = analogRead (irFrontPin);
 }
 
-//get right back IR Sensor by reading the analog pin
+//---get right back IR Sensor by reading the analog pin
 void getIRMiddle(){
-  irMiddleMedian.addValue(analogRead (irMiddlePin));
-  irMiddleOut = irMiddleMedian.getMedian();
-  //Serial.println (irMiddleOut);
+  irMiddleOut = analogRead (irMiddlePin);
 }
 
-//get back IR Sensor by reading the analog pin
+//---get back IR Sensor by reading the analog pin
 void getIRBack(){
-  irBackMedian.addValue(analogRead (irBackPin));
-  irBackOut = irBackMedian.getMedian();
-  //Serial.println (irBackOut);
+  irBackOut = analogRead (irBackPin);
 }
 
-//get first Ultra Sonic Sensor
+//---get first Ultra Sonic Sensor
 void getUSFront(){
   int usFrontOutTemp = usFront.getRange(unit);
   if(usFrontOutTemp != 255 && usFrontOutTemp != 0){
-    usFrontMedian.addValue(usFrontOutTemp);
-    usFrontOut = usFrontMedian.getMedian();
+    usFrontOut = usFrontOutTemp;
   }
-  //Serial.println (usFrontOut);
 }
 
-//get second Ultra Sonic Sensor
+//---get second Ultra Sonic Sensor
 void getUSRight(){
   int usRightOutTemp = usRight.getRange(unit);
   if(usRightOutTemp != 255 && usRightOutTemp != 0){
-    usRightMedian.addValue(usRightOutTemp);
-    usRightOut = usRightMedian.getMedian();
+    usRightOut = usRightOutTemp;
   }
-  //Serial.println (usRightOut);
 }
 
 
-//Interrupt fucntion for distance
+//---Interrupt fucntion for distance
 void dmpDataReady() {
     mpuInterrupt = true;
 }
 
 
-//Interrupt fucntion for distance
+//---Interrupt fucntion for distance
 void updateDistance(){  
     mmAbsDistance+= 30;
-    cmAbsDistance = (int)(mmAbsDistance / 10);
 }
 
-//void updateDistance(){
-//  encoderValue = digitalRead(wheelEncoderPin);
-//   if ((oldEncoderValue == LOW) && (encoderValue == HIGH)) {
-//     mmAbsDistance+= 15;
-//   }
-//   oldEncoderValue = encoderValue;
-//   cmAbsDistance = (int)mmAbsDistance / 10;
-//}
-
+//---Calculate speed based on wheel encoder - Experimental, not called
 void calculateSpeed(){
-  cmPerSecond = ((cmAbsDistance - cmOldDistance) * 5);
+  int i;
+  int avSpeedCalc = 0;
+  if(elementCounter > 3){
+    elementCounter = 0;
+  }else{
+    elementCounter++;
+  }
+  avSpeed[elementCounter] = (cmAbsDistance - cmOldDistance);
+  for(i = 0; i< 4 ; i++){
+    avSpeedCalc += avSpeed[i];
+  }
+  cmPerSecond = avSpeedCalc;
   cmOldDistance = cmAbsDistance;
 }
 
+
+//---Serial incoming, when serial is avaliable runs after loop
 void serialEvent(){
   byte i;
   byte badread;
@@ -458,6 +411,15 @@ void serialEvent(){
       badread = Serial.read();
     }
   Serial.read();
+  }
+  if(recComplete == false && Serial.peek() == startByte){
+    Serial.readBytes((char*)recSignal, 7);
+    for(i=0;i<7;i++){
+        check ^= recSignal[i];
+    }
+    if(i==7 && recSignal[0]== startByte && recSignal[5] == endByte && check == 0){
+        recComplete=true;
+    }
   }
 }
 
