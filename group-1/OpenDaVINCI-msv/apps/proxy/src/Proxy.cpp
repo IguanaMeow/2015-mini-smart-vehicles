@@ -59,7 +59,7 @@ int valIr3;
 int valUs1;
 int valUs2;
 int valUs3;
-
+int valWheelE;
 
 
 
@@ -71,7 +71,7 @@ struct termios oldW;
 const char *MODEMDEVICE ;
 string readings;
 double distance;
-string userInput="6:512060,";
+string userInput="512060,";
 
 void close(int x);
 
@@ -100,8 +100,8 @@ using namespace core::data::control;
     }
 
     void Proxy::setUp() {
-    //  msv::connect("/dev/ttyACM7",1); // connect to arduino reading from
-     msv::connect("/dev/ttyACM0",2); // connect to arduino sending to
+      msv::connect("/dev/ttyACM0",1); // connect to arduino reading from
+     //msv::connect("/dev/ttyACM0",2); // connect to arduino sending to
 
 
 	    // This method will be call automatically _before_ running body().
@@ -200,81 +200,79 @@ using namespace core::data::control;
              string convertedAngle="0"+ss.str();
           
             if(vc.getSpeed()>0)
-              userInput="6:600"+convertedAngle+",";
+              userInput="600"+convertedAngle+",";
             else if(vc.getSpeed()<1 && vc.getSpeed()>-1)
-              userInput="6:512"+convertedAngle+",";
+              userInput="512060,";
             else if(vc.getSpeed()<-1)
-              userInput="6:200"+convertedAngle+"0,";
+              userInput="200"+convertedAngle+"0,";
               
               
               cout<<userInput<<endl;
                     
-
-              msv::write(userInput);
+              if(wd!=0)
+             msv::write(userInput);
 
 
       if(fd!=0){
-readings=msv::read();
-	
-	
-  
-  cout<< "readings are "<< readings << endl;
 
-//strcpy(test,buff);
-//  
+  readings=msv::read();
+	
+  cout<< "readings are "<< readings << endl;
   
-  if(readings.length()==23){
+  int length=atoi(readings.substr(0,2).c_str());
+  unsigned int finalLength=length+5;
+  
+  if(readings.length()==finalLength){
     string ir1=readings.substr(3,3);
 
     valIr1=atoi(ir1.c_str());
   	
-
-
     string ir2=readings.substr(6,3);
 
     valIr2=atoi(ir2.c_str());
     
-
     string ir3=readings.substr(9,3);
 
     valIr3=atoi(ir3.c_str());
     
-
     string us1=readings.substr(12,3);
 
     valUs1=atoi(us1.c_str());
     
-
-  string us2=readings.substr(15,3);
+    string us2=readings.substr(15,3);
 
     valUs2=atoi(us2.c_str());
     
-
-
-  string us3=readings.substr(18,3);
+    string us3=readings.substr(18,3);
 
     valUs3=atoi(us3.c_str());
+
+    string wheelE=readings.substr(21,length-18);
+
+    valWheelE=atoi(wheelE.c_str());
     
 }
+  cout<<"Wheel Encoder value " << valWheelE <<endl;
+  sensorBoardData.putTo_MapOfDistances(4,valUs2);
+  sensorBoardData.putTo_MapOfDistances(3,valUs1);
+  sensorBoardData.putTo_MapOfDistances(1,valIr3);
+  sensorBoardData.putTo_MapOfDistances(2,valIr2);
+  sensorBoardData.putTo_MapOfDistances(0,valIr1);
+  sensorBoardData.putTo_MapOfDistances(5,valUs3);
 
-sensorBoardData.putTo_MapOfDistances(4,valUs2);
-sensorBoardData.putTo_MapOfDistances(3,valUs1);
-sensorBoardData.putTo_MapOfDistances(1,valIr3);
-sensorBoardData.putTo_MapOfDistances(2,valIr2);
-sensorBoardData.putTo_MapOfDistances(0,valIr1);
-sensorBoardData.putTo_MapOfDistances(5,valUs3);
-
-Container c = Container(Container::USER_DATA_0, sensorBoardData);
+  Container c = Container(Container::USER_DATA_0, sensorBoardData);
   distribute(c);
- tcflush(fd, TCIFLUSH);
+  tcflush(fd, TCIFLUSH);
 }
-
+if(wd!=0)
+  tcflush(wd, TCOFLUSH);
 //usleep(2000000);
 
- }
-        msv::write("6:512060,");
-        if(wd!=0)
+ }  
+        if(wd!=0){
+        msv::write("512060,");
         msv::close(wd);
+        }
         if(fd!=0)
         msv::close(fd);
         
