@@ -84,9 +84,8 @@ namespace msv {
 
                 // Create vehicle control data.
                 VehicleControl vc;
-                // With setSpeed you can set a desired speed for the vehicle in the range of -2.0 (backwards) .. 0 (stop) .. +2.0 (forwards)
 
-                double speed = spd.getSpeedData();                // With setSpeed you can set a desired speed for the vehicle in the range of -2.0 (backwards) .. 0 (stop) .. +2.0 (forwards)
+                double speed = spd.getSpeedData(); //Set desired speed
                 vc.setSpeed(speed);            
 
                     // With setSteeringWheelAngle, you can steer in the range of -26 (left) .. 0 (straight) .. +25 (right)
