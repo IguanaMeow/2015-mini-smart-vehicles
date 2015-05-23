@@ -64,7 +64,7 @@ void loop()
     sonarFrontRight = US_getRange(USFRtrig, USFRecho); 
    
   
-  
+
   // Creating temporary concatenation variables for each sensor
      String FUS = String(sonarFront);
      String FRUS = String(sonarFrontRight); 
