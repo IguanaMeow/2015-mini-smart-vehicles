@@ -149,5 +149,6 @@ void loop() {
         input = "";
       }
       
+      delay(2);
   }
 }
