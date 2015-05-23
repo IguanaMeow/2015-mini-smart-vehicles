@@ -287,8 +287,8 @@ namespace msv {
         int angle;
 
         /* Open usb ports, specify which port is for sensors and which port is for vehicle */
-        sensorPort = openSerial("/dev/ttyACM0");
-        vehiclePort = openSerial("/dev/ttyACM1");
+        sensorPort = openSerial("/dev/ttyACM1");
+        vehiclePort = openSerial("/dev/ttyACM0");
 
         while (getModuleState() == ModuleState::RUNNING) 
         {
@@ -328,19 +328,22 @@ namespace msv {
             VehicleData vd;
             vd.setAbsTraveledPath(distance);
 
-            Container contVD(Container::USER_DATA_1, vd);
+			cout << "Getabs is =" << vd.getAbsTraveledPath() << endl;
+
+            Container contVD(Container::VEHICLEDATA, vd);
             distribute(contVD);
 
             // Send steering data to LLB
 
-            Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_2);
+            Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_1);
 			SteeringData sd = containerSteeringData.getData<SteeringData> ();
 
-			Container containerVehicleControl = getKeyValueDataStore().get(Container::USER_DATA_3);
+			Container containerVehicleControl = getKeyValueDataStore().get(Container::VEHICLECONTROL);
 
 			VehicleControl vc = containerVehicleControl.getData<VehicleControl> (); 
 
-			double speed = vc.getSpeed(); 
+			double speed = sd.getSpeedData(); 
+            cout  << "Proxy: SpeedData = " << sd.getSpeedData() << endl;
 			char escValue [10];
 
 
@@ -350,7 +353,7 @@ namespace msv {
 			if (speed < 0.0)
 			{
 				strcpy(escValue, "");
-				strcpy(escValue, "r,");
+				strcpy(escValue, " r");
 			}
 
 			// Drive car
@@ -358,7 +361,9 @@ namespace msv {
 			else if (speed > 0.0)
 			{
 				strcpy(escValue, "");
-				strcpy(escValue, "f,");
+				strcpy(escValue, " f");
+
+                
 			}
 
 			// Stop car
@@ -366,7 +371,7 @@ namespace msv {
 			else
 			{
 				strcpy(escValue, "");
-				strcpy(escValue, "s,");
+				strcpy(escValue, " s");
 			}
 
 
@@ -374,33 +379,37 @@ namespace msv {
         	char str2[16];
 
 			
-			angle = vc.getSteeringWheelAngle();
+			angle = sd.getExampleData();
+
+            cout  << "Proxy: ExampleData = " << sd.getExampleData() << endl;
+			
+			//sd.setExampleData(angle);
 			
 			printf("Angle is:  %d\n", angle);
 			
 			if (angle > 0) 
 			{
 				strcpy(vehicleValue, "");
-				strcpy(vehicleValue, "l ");
+				strcpy(vehicleValue, ",r");
 			} 
 			
 			else if (angle < 0) 
 			{
 				strcpy(vehicleValue, "");
-				strcpy(vehicleValue, "r ");
+				strcpy(vehicleValue, ",l");
 			} 
 
 			else 
 			{
 				strcpy(vehicleValue, "");
-				strcpy(vehicleValue, "f ");
+				strcpy(vehicleValue, ",f");
 			}
 
 			strcpy(str1, vehicleValue);
         	strcpy(str2, escValue);
-        	strcat(str1, str2);
+        	//strcat(str1, str2);
 
-			writeVehicleValues(vehicleValue, vehiclePort, 4); 
+			writeVehicleValues(strcat(str1, str2), vehiclePort, 4); 
 
             
 
