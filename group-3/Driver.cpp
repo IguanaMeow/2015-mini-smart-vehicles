@@ -77,6 +77,7 @@ namespace msv {
                 Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_1);
                 SteeringData sd = containerSteeringData.getData<SteeringData> ();
                 cerr << "Most recent steering data: '" << sd.toString() << "'" << endl;
+                
                 Container containerSpeedData = getKeyValueDataStore().get(Container::USER_DATA_2);
                 SpeedData spd = containerSpeedData.getData<SpeedData>();
                 cerr << "Most recent Speed data: '" << spd.toString() << "'" << endl;
