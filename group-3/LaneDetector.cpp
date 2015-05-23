@@ -165,7 +165,6 @@ Point DrawingVertical(Mat img, Point point, bool top)
                 if(FindWhiteLine(drawVertical)==true){
                    cout << "State: Intersection" << endl;
                  tds= true;
-                   spd.setSpeedData(0);
                 }
             }
         } 
@@ -243,10 +242,9 @@ if(tds==true)
         //((bRightPointEnd.x < 478 && rightPointTopEnd.x>280)
         if((myPointRightEnd[2].x < 480 && myPointRightEnd[0].x>320))
         {
-        double steeringAngle = -1 * (myPointRightEnd[2].x % 26); //turns right
-        sd.setExampleData(steeringAngle+3);  //sends the steering data to the driver.cpp code          sd.setExampleData(angle);         }
-
-         }         //turns right
+        double steeringAngle = -1 * (myPointRightEnd[2].x % 26); 
+        sd.setExampleData(steeringAngle+2); // +2 keeps the car straight       
+         }   
         else if(myPointLeftEnd[0].x > 160)
         {
          double steeringAngle = myPointRightEnd[0].x / 24.615384615;// 640/26 = 24.615384615;
