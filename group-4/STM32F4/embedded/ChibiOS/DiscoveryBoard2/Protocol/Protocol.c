@@ -195,7 +195,7 @@ void prepareDataFeed(void) {
 
         getWheelEncoderData(&WC);
 
-        if (WC.speedRightWheel > 8) {
+        if (WC.speedRightWheel > 10 || WC.speedRightWheel < -10) {
             setCutSpeed(1);
         } else {
             setCutSpeed(0);

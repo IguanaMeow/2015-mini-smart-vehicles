@@ -76,8 +76,14 @@ namespace msv {
                 if (*it == '[') {
                     label = "";
                     ++it;
+                    if (it == s.end()) {
+                        break;
+                    }
                     label += *it;
                     ++it;
+                    if (it == s.end()) {
+                        break;
+                    }
                     label += *it;
                 } else if (*it == ']') {
                     takeAction(label, value);
@@ -180,7 +186,7 @@ namespace msv {
                     }
                     
                 }
-                cout << id << " " << value << endl;
+                //cout << id << " " << value << endl;
                 value = 0;
                 neg = false;
                 ++it;
@@ -226,7 +232,7 @@ namespace msv {
                 double heading = vc.getSteeringWheelAngle() * Constants::RAD2DEG;
 
                 if(speed > 0)
-                    speed = 1590;
+                    speed = 1600;
                 else if(speed < 0)
                     speed = 1300;
                 else
