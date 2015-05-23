@@ -101,6 +101,10 @@ void checkIndex(String input)
   
   switch(index)
   {
+    case -1:
+    
+      break;
+      
     case 0:
       
       setAngle(input.charAt(1));
