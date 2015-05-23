@@ -152,7 +152,7 @@ namespace msv {
                 int id = 0;
                 int value = 0;
                 bool neg = false;
-                for (;*it != ')';++it) {
+                for (;*it != ')' && it != data.end();++it) {
                      if (*it == ';') {
                         if (neg) {
                             value = -value;
