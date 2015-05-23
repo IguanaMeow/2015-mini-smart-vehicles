@@ -243,11 +243,14 @@ if(tds==true)
         //((bRightPointEnd.x < 478 && rightPointTopEnd.x>280)
         if((myPointRightEnd[2].x < 480 && myPointRightEnd[0].x>320))
         {
-        sd.setExampleData(-10);
-        }
-        else if(myPointLeftEnd[0].x > 160 || myPointLeftEnd[1].x  > 170 || myPointLeftEnd[2].x  > 180 || myPointLeftEnd[3].x  > 190 )
+        double steeringAngle = -1 * (myPointRightEnd[2].x % 26); //turns right
+        sd.setExampleData(steeringAngle+3);  //sends the steering data to the driver.cpp code          sd.setExampleData(angle);         }
+
+         }         //turns right
+        else if(myPointLeftEnd[0].x > 160)
         {
-        sd.setExampleData(18);
+         double steeringAngle = myPointRightEnd[0].x / 24.615384615;// 640/26 = 24.615384615;
+        sd.setExampleData(steeringAngle);
         }
 //End of emily part
         //TODO: Start here.
