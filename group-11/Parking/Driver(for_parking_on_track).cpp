@@ -69,18 +69,27 @@ namespace msv {
              //           cerr << "Most recent steering data: '" << sd.toString() << "'" << endl;
 // Design your control algorithm here depending on the input data from above.
 // Create vehicle control data.
+
+                       // Container containerVehicleControl = getKeyValueDataStore().get(Container::VEHICLECONTROL);
+
+                       // VehicleControl vc = containerVehicleControl.getData<VehicleControl> (); 
+
+
                         VehicleControl vc;
                         
 // With setSpeed you can set a desired speed for the vehicle in the range of -2.0 (backwards) .. 0 (stop) .. +2.0 (forwards)
 
 
 
-                         vc.setSpeed(1);
-                         vc.setAcceleration(1);
+                         sd.setSpeedData(1.0);
+                        // vc.setAcceleration(1);
                          double angle = sd.getExampleData();
-                         cout << "" << endl;
+                         cout  << "Driver: ExampleData = " << sd.getExampleData() << endl;
+                         cout  << "Driver: SpeedData = " << sd.getSpeedData() << endl;
 
 
+                        cout << "Speed is = " << vc.getSpeed() << endl;
+                        
 
                         if (vd.getAbsTraveledPath() >= count + 50 && sbd.getValueForKey_MapOfDistances(0) < 0 && park == false && rearObjectDetected == false){
                         cout << "Park is now true! AbsPath is = " << vd.getAbsTraveledPath() << endl;
@@ -99,16 +108,16 @@ namespace msv {
                             cout << "RearObject now true!" << endl;
 
                             cout << "RearObject: AbsPath = " << vd.getAbsTraveledPath() << endl;
-                            vc.setSpeed(1);
+                            sd.setSpeedData(1.0);
                             cout << "RearObject: Count = " << count << endl;
                             cout << "RearObject: CountParkDistance = " << countParkDistance << endl;
                            
                             if (vd.getAbsTraveledPath() >= count + 16){
-                                angle = 100000;
+                                sd.setExampleData(23.0);
                             }
 
                             if (vd.getAbsTraveledPath() >= count + countParkDistance){
-                                angle = 0;
+                                sd.setExampleData(0.0);
                                 cout << "RearObject: Setting angle to 0 now and ending." << endl;
                                 count = 10000;
                                 park = false,
@@ -121,8 +130,8 @@ namespace msv {
                          if (park == true && rearObjectDetected == false){
                             cout << "Park now true!" << endl;
                             cout << "AbsPath in park-mode = " << vd.getAbsTraveledPath() << endl;
-                            vc.setSpeed(0);
-                            angle = 0;
+                            sd.setSpeedData(1.0);
+                            sd.setExampleData(0.0);
 
                             if (vd.getAbsTraveledPath() <= count + 160 && sbd.getValueForKey_MapOfDistances(1) > 0 && sbd.getValueForKey_MapOfDistances(1) < 2.5){
                                 cout << "RearObject has been detected, reversing to road.." << endl;
@@ -136,31 +145,27 @@ namespace msv {
                             if (vd.getAbsTraveledPath() >= count && vd.getAbsTraveledPath() <=count + 100){
                                 cout << "Moving forward in parking" << endl;
                                 subtractPark = count + 109;
-                                vc.setSpeed(1);
+                                sd.setSpeedData(1.0);
                             }
                             if (vd.getAbsTraveledPath() >= count + 100 && vd.getAbsTraveledPath() <= count + 215){
                                  cout << "Setting speed -1 in parking" << endl;
                                 countParkDistance = vd.getAbsTraveledPath();
-                                vc.setSpeed(-1);
+                                sd.setSpeedData(-1.0);
                             }
                             if (vd.getAbsTraveledPath() >= count + 110 && vd.getAbsTraveledPath() <= count + 150){
                                  cout << "Setting angle to right in parking" << endl;
-                                angle = 100000;
+                                sd.setExampleData(23.0);
                             }
-                            if (vd.getAbsTraveledPath() >= count + 150 && vd.getAbsTraveledPath() <= count + 180){
+                            if (vd.getAbsTraveledPath() >= count + 150 && vd.getAbsTraveledPath() <= count + 170){
                                 cout << "Setting angle to 0 in parking" << endl;
-                                angle = 0;
+                                sd.setExampleData(0.0);
                             }
                             if (vd.getAbsTraveledPath() >= count + 170 && vd.getAbsTraveledPath() <= count + 215){
                                 cout << "Setting angle to left in parking" << endl;
-                                angle = -100000;
+                                sd.setExampleData(23.0);
                             }
-                            /*
 
-                if (vd.getAbsTraveledPath() >= count + 20 && (sbd.getValueForKey_MapOfDistances(1) > 2.3 || sbd.getValueForKey_MapOfDistances(1) < 0) && (sbd.getValueForKey_MapOfDistances(3) > 2.4 || sbd.getValueForKey_MapOfDistances(3) <= 0) && (sbd.getValueForKey_MapOfDistances(4) <= 0 || sbd.getValueForKey_MapOfDistances(4) >= 2.6)){
-                                angle = 0;
-                                vc.setSpeed(0);
-                            }*/
+
 
 
                             if (vd.getAbsTraveledPath() >= count + 180 && (sbd.getValueForKey_MapOfDistances(1) > 0 && sbd.getValueForKey_MapOfDistances(1) <= 2.2) && park == true){
@@ -171,58 +176,45 @@ namespace msv {
 
                             if (smallspace == true && vd.getAbsTraveledPath() <= count + 250){
                                 cout << "Small space is now true!" << endl;
-                                vc.setSpeed(1);
+                                sd.setSpeedData(1.0);
                                 
                                 if (vd.getAbsTraveledPath() >= count + 200){
-                                    angle = 100000;
+                                    sd.setExampleData(23.0);
                                 }
                                 if (vd.getAbsTraveledPath() >= count + 210){
-                                    angle = 7;
-                                    vc.setSpeed(0);
+                                    sd.setExampleData(7.0);
+                                    sd.setSpeedData(0);
 
                                 }
                           
 
                             }
                             
- /*
-                            if (vd.getAbsTraveledPath() >= count + 20 && sbd.getValueForKey_MapOfDistances(4) >= 0 && (sbd.getValueForKey_MapOfDistances(3) > 10 || sbd.getValueForKey_MapOfDistances(3) <= 0)){
-                                vc.setSpeed(-1);
-                                angle = -100000;
-                            }
 
-                            if (vd.getAbsTraveledPath() >= count + 18 && (sbd.getValueForKey_MapOfDistances(3) > 0 && sbd.getValueForKey_MapOfDistances(3) <= 2.2)){
-                                vc.setSpeed(-1);
-                            }
-                            if (vd.getAbsTraveledPath() >= count + 20 && (sbd.getValueForKey_MapOfDistances(3) > 0 && sbd.getValueForKey_MapOfDistances(3) <= 2.2)){
-                                vc.setSpeed(-1);
-                                angle = -100000;
-                            }
-
-*/
-
+/*
                             //Emergancy break
                             if (vd.getAbsTraveledPath() >= count + 250 && (sbd.getValueForKey_MapOfDistances(1) < 2.8 || sbd.getValueForKey_MapOfDistances(1) <= 0)){
                             cout << "Rear IR has detected object, stopping" << endl;
-                                angle = 0;
-                                vc.setSpeed(0);                              
+                                sd.setExampleData(0.0);
+                                sd.setSpeedData(0.0);                            
                             }
 
 
                             //Emergancy break
                             if (vd.getAbsTraveledPath() >= count + 250 && (sbd.getValueForKey_MapOfDistances(3) < 2 || sbd.getValueForKey_MapOfDistances(3) < 0)){
                                  cout << "Front Ultra has detected object, stopping" << endl;
-                                vc.setSpeed(0);
-                                angle = 0;
+                                sd.setSpeedData(0.0);
+                                sd.setExampleData(0.0);
                             }
                          }        
                                 
-
+*/
+                         }  
                      
                         
                         
 // With setSteeringWheelAngle, you can steer in the range of -26 (left) .. 0 (straight) .. +25 (right)
-                        
+                        angle = sd.getExampleData();
                         vc.setSteeringWheelAngle(angle * Constants::DEG2RAD);
 
 
@@ -233,7 +225,9 @@ namespace msv {
                         vc.setLeftFlashingLights(false);
                         vc.setRightFlashingLights(true);
 // Create container for finally sending the data.
-                        Container c(Container::VEHICLECONTROL, vc);
+                        //Container c (Container::VEHICLECONTROL, vc);
+                        Container c(Container::USER_DATA_1, sd);
+
 // Send container.
                         getConference().send(c);
                 }
