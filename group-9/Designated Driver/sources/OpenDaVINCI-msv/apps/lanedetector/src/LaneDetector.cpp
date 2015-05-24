@@ -108,7 +108,7 @@ namespace msv {
           m_sharedImageMemory->unlock();
 
           // Mirror the image.
-          cvFlip(m_image, 0, -1);
+        //  cvFlip(m_image, 0, -1);
 
           retVal = true;
         }
@@ -116,64 +116,53 @@ namespace msv {
       return retVal;
     }
 
-    // You should start your work in this method.
+// You should start your work in this method.
+//Sara Johansson
     void LaneDetector::processImage() {
 
-//change the image
-const int low_threshold  = 50;
-const int high_threshold = 150;
-IplImage* grayImg; 
-IplImage* cannyImg; 
+        //changing the image
+        const int low_threshold  = 50;
+        const int high_threshold = 150;
+        IplImage* grayImg;
+        IplImage* cannyImg;
 
-//IplImage* last;
-  
+        grayImg = cvCreateImage( cvSize(m_image->width, m_image->height), IPL_DEPTH_8U, 1 );
+        cvCvtColor( m_image, grayImg, CV_RGB2GRAY );//makes the image grey
+        cannyImg = cvCreateImage(cvGetSize(m_image), IPL_DEPTH_8U, 1);
 
-  
+        cvCanny(grayImg, cannyImg, low_threshold, high_threshold, 3);//does canny edge detection on image
+        cvCvtColor( cannyImg, m_image, CV_GRAY2RGB );
 
-grayImg = cvCreateImage( cvSize(m_image->width, m_image->height), IPL_DEPTH_8U, 1 );
-  
-cvCvtColor( m_image, grayImg, CV_RGB2GRAY );//makes the image grey
-cannyImg = cvCreateImage(cvGetSize(m_image), IPL_DEPTH_8U, 1);
+        cvReleaseImage(&grayImg);
+        cvReleaseImage(&cannyImg);
 
-cvCanny(grayImg, cannyImg, low_threshold, high_threshold, 3);//does canny on image
-//converts back to color but doesnt work, makes it crash
-//last = cvCreateImage(cvGetSize(m_image), IPL_DEPTH_8U, 1 ); 
-cvCvtColor( cannyImg, m_image, CV_GRAY2RGB );
+   //variables
 
-cvReleaseImage(&grayImg);
-cvReleaseImage(&cannyImg);
-
-   // cvNamedWindow   ("Source", 1);
-   
-
-        // Example: Show the image.
-      
-      //draw a line       
-              int width = m_image -> width;
-              int height = m_image -> height;
+      int width = m_image -> width;
+      int height = m_image -> height;
     cout << "width"<< width<<endl;
-              int move  = m_image ->widthStep;
-    //int moveupp = m_image ->heightStep;
-              unsigned char* image = (unsigned char*)m_image->imageData;
-              int sample_right = 60; // define near vision
+      int move  = m_image ->widthStep;
+
+        unsigned char* image = (unsigned char*)m_image->imageData;
+        int sample_right = 60; // define near vision
     int right_2 = 200;
-              int sample_left1 = 60; // define further vision
+    int left_2 = 200;
+    int sample_left1 = 60; // define further vision
     int sample_left2 = 100;
     int sample_left3 = 140;
     int sample_left4 = 180;
-              int desired_right =244; //220
+        //desired_right determines where we want the car to be positioned when going straight.
+    int desired_right = 130;//244; //220
     int desired_left = 174;
     int desired_left2 = 206;
     int desired_left3 = 168;
     int desired_left4 = 131;
-    //int right1 = width/2;
-    //int right2 = height -60;
-  
 
+    // start points x and y variables for the lines
     cv::Point pt1; //right_sample_start
     pt1.x=width/2;
     pt1.y= height -60;
-    
+
     cv::Point pt3; //left_sample_start1
     pt3.x=width/2;
     pt3.y=height -60;
@@ -194,62 +183,63 @@ cvReleaseImage(&cannyImg);
     pt11.x=width/2;
     pt11.y=height -200;
 
+        cv::Point pt13;
+        pt13.x=width/2;
+        pt13.y=height - 200;
 
-    //int front = 399;
-             // CvScalar red = CV_RGB(250,0,0);
-             // CvScalar green = CV_RGB(0,250,0);
+
+
     CvScalar blue = CV_RGB(0,0,250);
-              int thickness = 1;
-              int connectivity = 8;
-              //int uppheight = height/2
-              CvPoint ver_centr_start = cvPoint(width/2,height);
-              CvPoint ver_centr_end = cvPoint(width/2,0);
-              //CvPoint right_sample_start = cvPoint(width/2,height- sample_right);//first line
-              //CvPoint right_sample_end ;
-    //CvPoint right_inter_start = cvPoint(width/2,height - right_2);
-               // CvPoint right_inter_end;
-    
-             // CvPoint left_sample_start1 = cvPoint(width/2,height- sample_left1);
-    //CvPoint left_sample_start2 = cvPoint(width/2,height- sample_left2);
-    //CvPoint left_sample_start3 = cvPoint(width/2,height- sample_left3);
-    //CvPoint left_sample_start4 = cvPoint(width/2,height- sample_left4);
-             // CvPoint left_sample_end ;
-    //CvPoint left_sample_end2 ;
-    //CvPoint left_sample_end3 ;
-           //  CvPoint left_sample_end4 ;
-              
-       
+        int thickness = 1;
+        int connectivity = 8;
+
+        CvPoint ver_centr_start = cvPoint(width/2,height);
+        CvPoint ver_centr_end = cvPoint(width/2,0);
+
+
 
         //TODO: Start here.
-        
+
         int right = 0;
-  int right_i = 0;
+
         int left = 0;
-  int left2 = 0;
-  int left3 = 0;
-  int left4 = 0;
-  //int upp = 0;
-        // 1. Do something with the image m_image here, for example: find lane marking features, optimize quality, ...
-        // find right distance 
-            
-while((image + move * (height- sample_right+2)) [(width/2+right)*3]==0 && right < width/2 ){ right ++;
-} 
-while((image + move * (height- right_2 + 2)) [(width/2+right_i)*3]==0 && right_i < width/2 ){ right_i ++;
-        } 
-while((image + move * (height- sample_left1+2)) [(width/2+left)*3]==0 && left < width/2 ) {left--;
- }
-while((image + move * (height- sample_left2+2)) [(width/2+left2)*3]==0 && left2 < width/2 ) {left2--;
- }
-while((image + move * (height- sample_left3+2)) [(width/2+left3)*3]==0 && left3 < width/2 ) {left3--;
- }
-while((image + move * (height- sample_left4+2)) [(width/2+left4)*3]==0 && left4 < width/2 ) {left4--;
- }
-  
-          cout << "right:"<< right<<endl;
-          cout << "right 2: "<<right_i<<endl;
-          cout << "left:"<< left<<endl;
-    //int lenright = width/2+right;
-    //int lenright1 = height -60;
+        int left2 = 0;
+        int left3 = 0;
+        int left4 = 0;
+
+        // the while loops count the number of widthsteps has to be taken before reaching a lane marking.
+        while((image + move * (height- sample_right+2)) [(width/2+right)*3]==0 && right < width/2 ){ right ++;
+        }
+        while((image + move * (height- sample_left1+2)) [(width/2+left)*3]==0 && left < width/2 ) {left--;
+        }
+        while((image + move * (height- sample_left2+2)) [(width/2+left2)*3]==0 && left2 < width/2 ) {left2--;
+        }
+        while((image + move * (height- sample_left3+2)) [(width/2+left3)*3]==0 && left3 < width/2 ) {left3--;
+        }
+        while((image + move * (height- sample_left4+2)) [(width/2+left4)*3]==0 && left4 < width/2 ) {left4--;
+        }
+
+//Simon
+//This line is created to detect and acknowledge an intersection
+        int right_i = 0;
+        int left_i = 0;
+        while((image + move * (height- right_2 + 2)) [(width/2+right_i)*3]==0 && right_i < width/2 ){ right_i ++;}
+        while((image + move * (height- left_2 + 2)) [(width/2+left_i)*3]==0 && left_i < width/2 ){ left_i --;} 
+        cv::Point pt12;//rightinter end
+        pt12.x=width/2 +right_i;
+        pt12.y=height-200;
+
+        cv::Point pt14;
+        pt14.x=width/2 + left_i;
+        pt14.y=height-200;
+
+
+
+
+//Sara Johansson
+      cout << "right:"<< right<<endl;
+      cout << "left:"<< left<<endl;
+      // all the endpoints x and y variables of the lines
     cv::Point pt2;//right end
     pt2.x=width/2+right;
     pt2.y=height -60;
@@ -270,76 +260,63 @@ while((image + move * (height- sample_left4+2)) [(width/2+left4)*3]==0 && left4 
     pt10.x=width/2 +left4;
     pt10.y=height-180;
 
-    cv::Point pt12;//rightinter end
-    pt12.x=width/2 +right_i;
-    pt12.y=height-200;
-          //right_sample_end = cvPoint(width/2 + right ,height- sample_right);
-    //right_inter_end = cvPoint(width/2 + right_i,height - right_2);
-          //left_sample_end = cvPoint(width/2 + left ,height- sample_left1);
-    //left_sample_end2 = cvPoint(width/2 + left2 ,height- sample_left2);
-    //left_sample_end3 = cvPoint(width/2 + left3 ,height- sample_left3);
-    //left_sample_end4 = cvPoint(width/2 + left4 ,height- sample_left4);
+
 
        if (m_debug) {
                   if (m_image != NULL) {
 
-
+                    //Drawing the lines on the m_image
                     cvLine(m_image,ver_centr_start,ver_centr_end,blue,thickness,connectivity);//center line
-                    cvLine(m_image,pt1,pt2,blue,thickness,connectivity);//line one 
+                    cvLine(m_image,pt1,pt2,blue,thickness,connectivity);//line one
                     cvLine(m_image,pt3,pt4,blue,thickness,connectivity);//line two (1)
-      cvLine(m_image,pt5,pt6,blue,thickness,connectivity);//line two (2)
-      cvLine(m_image,pt7,pt8,blue,thickness,connectivity);//line two (3)
+                    cvLine(m_image,pt5,pt6,blue,thickness,connectivity);//line two (2)
+                    cvLine(m_image,pt7,pt8,blue,thickness,connectivity);//line two (3)
                     cvLine(m_image,pt9,pt10,blue,thickness,connectivity);//line two (4)
-      cvLine(m_image,pt11,pt12,blue,thickness,connectivity);// second right line
-      
-                   //  cvShowImage("WindowShowImage", last);// the lines above should perhaps be last instead of cannyImg? 
-    cvShowImage("WindowShowImage", m_image);
-                      cvWaitKey(10);
-                  }
-              }
-       
-        // 2. Calculate desired steering commands from your image features to be processed by driver.
-         SteeringData sd;
+                    cvLine(m_image,pt11,pt12,blue,thickness,connectivity);// second right line
+                    cvLine(m_image,pt13,pt14,blue,thickness,connectivity);
+
+                    cvShowImage("WindowShowImage", m_image);
+                    cvWaitKey(10);
+            }
+        }
+
+        SteeringData sd;
 
         double angle = ((right + 1) - desired_right); //difference between the distance we want and the actual distance
-  double backupangle1 = ((left +1) +desired_left);//backupangle
-  double backupangle2 = ((left2 +1) +desired_left2);    
-  double backupangle3 = ((left3 +1) +desired_left3);
-  double backupangle4 = ((left4 +1) +desired_left4);
-  double backupangle = 0;
-  /*if (backupangle1 <= -489 || backupangle2 <= -489 || backupangle3 <= -303 || backupangle4 <= -400 ){ backupangle = 0;
-}else { backupangle = ((backupangle1 + backupangle2 + backupangle3 + backupangle4)/4);}*/
+        //All the backupangles were a backup plan incase the lanefollowing needed more assistans on the real track.
+        double backupangle1 = ((left +1) +desired_left);
+        double backupangle2 = ((left2 +1) +desired_left2);
+        double backupangle3 = ((left3 +1) +desired_left3);
+        double backupangle4 = ((left4 +1) +desired_left4);
+        double backupangle = 0;
 
 
+        cout << "angle1 ="<< backupangle<<endl;//-489  on line 70
 
-//double backupangle = ((((left +1) +desired_left)+((left2 +1) +desired_left2) + ((left3 +1) +desired_left3) + ((left4 +1) +desired_left4)) /4);
-cout << "angle1 ="<< backupangle<<endl;//-489  on line 70
-/*cout << "angle2 ="<< backupangle2<<endl;//-489  on line 70
-cout << "angle3 ="<< backupangle3<<endl;//on line (32) -303
-cout << "angle4 ="<< backupangle4<<endl;// -400  on line 113*/
-//if(backupangle <= -400){ backupangle =0;}
-  //if(right >= 320) { angle = 0;}// ignoring intersection
-/*if(right >= 320) { angle = 0;}
-     if(right < 300 && right > 200 && right_i >=320){angle = 500;}
-      if(right>=320 && right_i>=320){angle = 1000;}*/
-  if( right<= 3 || right >= 320 || right_i <=5 || right_i >=320) {// if the right line does not work for some reason then it uses the 4 left lines isntead.
-    if (backupangle1 <= 10 || backupangle1 >= -10) { backupangle = backupangle1;
-         if(backupangle2 <=10 || backupangle2 >= -10) { backupangle = backupangle2;
-        if(backupangle3 <=10 || backupangle3 >= -10) { backupangle = backupangle3;
-          if(backupangle4 <=10 || backupangle4 >= -10) { backupangle = backupangle4;}
-}}}backupangle = backupangle * 0.20491803278;
-  sd.setExampleData(backupangle);}
+        if( right<= 3 || right >= 320 || right_i <=5 || right_i >=320) {// if the right line does not work for some reason then it uses the 4 left lines instead.
+            if (backupangle1 <= 10 || backupangle1 >= -10) { backupangle = backupangle1;
+                if(backupangle2 <=10 || backupangle2 >= -10) { backupangle = backupangle2;
+                    if(backupangle3 <=10 || backupangle3 >= -10) { backupangle = backupangle3;
+                        if(backupangle4 <=10 || backupangle4 >= -10) { backupangle = backupangle4;
+                        }
+                    }
+                }
+            }
+        backupangle = backupangle * 0.20491803278;
+        sd.setExampleData(backupangle);
+        }
+//Simon
+        if(right >= 320) { angle = 0;}
 
-  if(right >= 320) { angle = 0;}
-      if(right < 300 && right > 200 && right_i >= 320){angle = 500;}
-       if(right>=320 && right_i>= 320){angle = 1000;}
-  
-        // Here, you see an example of how to send the data structure SteeringData to the ContainerConference. This data structure will be received by all running components. In our example, it will be processed by Driver. To change this data structure, have a look at Data.odvd in the root folder of this source.
+        if(((left_i <=-320 && left4 <=-320 && left3 <= -320) || (right_i >=320)) && (right > 200 && right < 300) ){angle = 500;}
+
+        if((left<=-320 && left2<=-320 && left3<=-320 && left4 <=-320 && right >=320)&&(right_i >=320 || left_i <= -320)){angle = 1000;}
+
         angle = angle * 0.20491803278;
         cout << "angle"<< angle<<endl;
-        sd.setExampleData(angle); // sending the steeringwheel degree to driver.
+        sd.setExampleData(angle); // sending the steering wheel degree to driver.
 
-  
+
 
         // Create container for finally sending the data.
         Container c(Container::USER_DATA_1, sd);
@@ -371,7 +348,7 @@ cout << "angle4 ="<< backupangle4<<endl;// -400  on line 113*/
         player = new Player(url, AUTO_REWIND, MEMORY_SEGMENT_SIZE, NUMBER_OF_SEGMENTS);
 */
 
-        
+
       while (getModuleState() == ModuleState::RUNNING) {
         bool has_next_frame = false;
 
@@ -384,7 +361,7 @@ cout << "angle4 ="<< backupangle4<<endl;// -400  on line 113*/
             else {
             // Get the most recent available container for a SHARED_IMAGE.
             c = getKeyValueDataStore().get(Container::SHARED_IMAGE);
-            }                
+            }
 
         if (c.getDataType() == Container::SHARED_IMAGE) {
           // Example for processing the received container.
