@@ -346,9 +346,9 @@
             upline2.setXPos((imgWidth / 2) + (imgWidth * 0.04));
             yCount = 1;
         }
-            upline1.setYPos(measureDistance(upline1.getXPos(), 2, m_image));
-            upline2.setYPos(measureDistance(upline2.getXPos(), 2, m_image));
-        }
+        upline1.setYPos(measureDistance(upline1.getXPos(), 2, m_image));
+        upline2.setYPos(measureDistance(upline2.getXPos(), 2, m_image));
+        
 
         //calculate critical distance for each line once
         if (critCounter < 20) {
@@ -378,22 +378,6 @@
                 return false;
         }
         return true;
-    }
-
-    bool LaneDetector::isObject(){
-        SensorBoardData sbd;
-        KeyValueConfiguration kv = getKeyValueConfiguration();
-        double carLength = kv.getValue<double> ("global.carLength");
-
-        if (sbd.getValueForKey_MapOfDistances(3) > 0 && sbd.getValueForKey_MapOfDistances(3) 
-            < carLength * 3) {
-            return true;
-        } else if (sbd.getValueForKey_MapOfDistances(4) > 0 && sbd.getValueForKey_MapOfDistances(4) 
-            < carLength * 3){
-            return true;
-        } else {
-            return false;
-        }
     }
 
     void LaneDetector::validLines(std::vector<Lines>& lines, int LorR){
@@ -533,7 +517,7 @@
                     angle = -26* Constants::DEG2RAD;
 
                 cout << "THE ANGLE WILL BE ----------->>>>>>>>>>    " << angle 
-                    << " <-radius   degree->"<< angle* Constants::RAD2DEG <<endl;
+                << " <-radius   degree->"<< angle* Constants::RAD2DEG <<endl;
                 tempAngle = angle;
             }else {
                 angle = tempAngle;
@@ -542,7 +526,7 @@
             /*---follow tempangle in case of no data---*/
             angle = tempAngle;
             cout << "THE TEMP ANGLE WILL BE ----------->>>>>>>>>>    " << angle 
-                << " <-radius   degree->"<< angle* Constants::RAD2DEG <<endl;
+            << " <-radius   degree->"<< angle* Constants::RAD2DEG <<endl;
         }
         return angle;
     }
