@@ -197,6 +197,10 @@ namespace msv {
             }
             // Create speed
             // Simon Lobo Roca
+            if (speed < 0 ){
+                speed = speed * -30;
+            }
+            
             int intSpeed = (int)speed;
             if (intSpeed < 10) {
                 sprintf(fromIntSpeed, "%d", intSpeed);
