@@ -47,13 +47,13 @@
 #define USB "/dev/ttyACM0"
 
 namespace msv { 
-    int port;
+    int port, len, toCheck, IR1, IR2, IR3, US1, US2, WE, CSUM;
     void open_port(std::string adr);
     void port_config();
     //void write_int();
-    //std::string readString();
+    string decode(string x);
     //void readSerial(int q);
-    std::string readSerial(); 
+    string readSerial(); 
 
     const char *USB_PORT;
 
@@ -159,6 +159,7 @@ namespace msv {
 
             // Test ***************************
             // Markus Erlach
+            string toDecode;
             char checkSum[3];
             char fromIntAngle[3];
             char fromIntSpeed[3];
@@ -169,7 +170,7 @@ namespace msv {
             double speed = vc.getSpeed()*10;
             double steeringAngle = vc.getSteeringWheelAngle();
             steeringAngle = steeringAngle * 57.3;
-            std::cout << "After calc: " << steeringAngle << std::endl;
+            cout << "After calc: " << steeringAngle << endl;
             
             if (steeringAngle < -1) {
                 steeringAngle = 90 - (steeringAngle * -1);
@@ -178,7 +179,7 @@ namespace msv {
             } else {
                 steeringAngle = 90;
             }
-            std::cout << "Int angle: " << steeringAngle << std::endl;
+            cout << "Int angle: " << steeringAngle << endl;
             if (steeringAngle > 115) {
                 steeringAngle = 115;
             }
@@ -197,10 +198,9 @@ namespace msv {
             }
             // Create speed
             // Simon Lobo Roca
-            if (speed < 0 ){
+            if (speed < 0) {
                 speed = speed * -30;
             }
-            
             int intSpeed = (int)speed;
             if (intSpeed < 10) {
                 sprintf(fromIntSpeed, "%d", intSpeed);
@@ -227,13 +227,11 @@ namespace msv {
             strcat(sentence, padAngle);   
             
             write(port, sentence, 10);
-            std::cout << "Wrote: "<< sentence << std::endl;
-            msv::readSerial();
+            cout << "Wrote: "<< sentence << endl;
+            toDecode = msv::readSerial();
+            cout << "Read: " << toDecode << endl;
+            decode(toDecode);
             
-            /*************************
-            Test this read
-            msv::readString();
-            *************************/
         }
         cout << "Proxy: Captured " << captureCounter << " frames." << endl;
 
@@ -288,93 +286,51 @@ void port_config() {
     options.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG); 
     options.c_oflag &= ~OPOST; 
     // wait for min 1 chars and wait time min
-    options.c_cc[VMIN]  = 1;
+    options.c_cc[VMIN]  = 22;
     options.c_cc[VTIME] = 0;
     // Commit
     tcflush(port, TCIFLUSH);
     tcsetattr(port, TCSANOW, &options);
 }
 
-// Markus Erlach
-// <16:100:2020202020>
-// XXX:IR1IR2IR3US1US2 Example: 100:2020202020
+// <19:101:2020202020001>
+// XXX:IR1IR2IR3US1US2 Example: 100:2020202020000
 // All sensors should equal XXX (checksum) Like above.
-/*
-std::string readString() {
-    char start[1] = "";
-    char length[1] = "";
-    char sum[1] = "";
-    char next[1] = "";
-    char svar[18] = ""; 
-    string result = ""; 
-    string csum = "";
-    string stringlength = "";
-    cout << "Serial available: " << port << endl;
-    // <17:200:
-    read(port, start, 1);
-    cout << "Start: " << start << endl;
-    if (start[0] != '<') {
-        cout << "No start" << endl;
-        //readString();
-        return svar;
-    } else {
-        result += start;
-        for (int o = 0; o < 3; o++) {
-            read(port, length, 1);
-            stringlength += length;
-        }
-        int len = atoi(stringlength.c_str());
-        cout << "Len: " << len  << endl;
-        for (int p = 0; p < 3; p++) {
-            read(port, sum, 1);
-            csum += sum;
-        }
-        int cs = atoi(csum.c_str());
-        cout << "CS: " << cs << endl;
-        for (int q = 0; q < len; q++) {
-            read(port, next, 1);
-            result += next;
-        }
-        cout << "Efter loopen: " << result << " Csum: " << cs << endl;
-        memcpy(svar, result.c_str(), result.size() + 1);
-       
-        //svar[9] = '\0';
-        svar[17] = '\0';
-        cout << "Svar kopia: " << svar << endl;        
-
-        if (svar[0] == '<' && isdigit(svar[1])) {
-            cout << "Svar: " << svar << endl;
-            if (svar[16] == '>') {
-                //checksum
-                // Set to containers
-                cout << "Done: " << svar << endl;
-                return svar;
-            } else {
-                cout << "Rerunning, no closing bracket" << endl;
-                readString();
-                //return svar;
-            }
-            //return svar;
-        } else {
-                cout << "Rerunning!" << svar << endl;
-                readString();
-                //return svar;
-            }
-        } 
-    return svar;
+// Markus Erlach & Fredric Ola Eidsvik
+string decode(string x) {
+    
+    len = atoi(x.substr(1, 2).c_str());
+    string toCheck_Str = x.substr(4, 3);
+    toCheck = atoi(toCheck_Str.c_str());
+    string IR1_Str = x.substr(8, 2);
+    IR1 = atoi(IR1_Str.c_str());
+    string IR2_Str = x.substr(10, 2);
+    IR2 = atoi(IR2_Str.c_str());
+    string IR3_Str = x.substr(12, 2);
+    IR3 = atoi(IR3_Str.c_str());
+    string US1_Str = x.substr(14, 2);
+    US1 = atoi(US1_Str.c_str());
+    string US2_Str = x.substr(16, 2);
+    US2 = atoi(US2_Str.c_str());
+    string WE_Str = x.substr(18, 3); 
+    WE = atoi(WE_Str.c_str());
+    CSUM = IR1 + IR2 + IR3 + US1 + US2 + WE;
+    if (toCheck == CSUM) {
+        cout << "Checksum matches" << endl;
+    }
+    return x;
 }
-*/
 
 // Markus Erlach
-std::string readSerial() {
+string readSerial() {
     char start[255] = "";
     
-    std::cout << "Serial available: " << port << std::endl;
+    cout << "Serial available: " << port << endl;
     
     int n = read(port, start, 255);
     start[n] = 0;
-    std::cout << "N: " << n << std::endl;
-    std::string received(start);
+    cout << "N: " << n << endl;
+    string received(start);
     return received;
 }
 
