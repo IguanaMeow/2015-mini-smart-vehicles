@@ -307,7 +307,13 @@ void setData() {
     }
     if (speedy < 1) {
       throttle = 1500;  
-    }     
+    }
+    if (speedy == 15){
+      throttle = 1500;
+      while (speedy > 14){
+        throttle = 1420;
+    }
+  }     
     // Markus Erlach
     // Max and min values
     if (throttle > 1620) {
