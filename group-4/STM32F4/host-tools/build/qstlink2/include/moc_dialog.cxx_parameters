@@ -1,0 +1,5 @@
+-I/home/kento/dev/Skolan/2015-mini-smart-vehicles/project-template/sources/STM32F4/host-tools/build/qstlink2
+-I/home/kento/dev/Skolan/2015-mini-smart-vehicles/project-template/sources/STM32F4/host-tools/qstlink2/include
+-o
+/home/kento/dev/Skolan/2015-mini-smart-vehicles/project-template/sources/STM32F4/host-tools/build/qstlink2/include/moc_dialog.cxx
+/home/kento/dev/Skolan/2015-mini-smart-vehicles/project-template/sources/STM32F4/host-tools/qstlink2/include/dialog.h
