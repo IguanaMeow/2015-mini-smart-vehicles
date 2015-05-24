@@ -54,6 +54,7 @@ namespace msv {
     string decode(string x);
     //void readSerial(int q);
     string readSerial(); 
+    msv::SensorBoardData sensorBoardData;
 
     const char *USB_PORT;
 
@@ -139,6 +140,7 @@ namespace msv {
 
     // This method will do the main data processing job.
     ModuleState::MODULE_EXITCODE Proxy::body() {
+
         uint32_t captureCounter = 0;
         while (getModuleState() == ModuleState::RUNNING) {
             // Capture frame.
@@ -231,7 +233,15 @@ namespace msv {
             toDecode = msv::readSerial();
             cout << "Read: " << toDecode << endl;
             decode(toDecode);
-            
+         
+            Container c = Container(Container::USER_DATA_0, sensorBoardData);
+            distribute(c);
+
+            /*int IR1Data = sensorBoardData.getValueForKey_MapOfDistances(0);
+            cout << "SBD IR1: " << IR1Data << endl;
+            */
+            //flushes the input queue, which contains data that have been received but not yet read.
+            tcflush(port, TCIFLUSH);   
         }
         cout << "Proxy: Captured " << captureCounter << " frames." << endl;
 
@@ -296,7 +306,7 @@ void port_config() {
 // <19:101:2020202020001>
 // XXX:IR1IR2IR3US1US2 Example: 100:2020202020000
 // All sensors should equal XXX (checksum) Like above.
-// Fredric Ola Eidsvik
+// Fredric Ola Eidsvik & PeiLi Ge
 string decode(string x) {
     
     len = atoi(x.substr(1, 2).c_str());
@@ -317,6 +327,12 @@ string decode(string x) {
     CSUM = IR1 + IR2 + US1 + US2 + WE;  // Add IR3 when assembled.
     if (toCheck == CSUM) {
         cout << "Checksum matches" << endl;
+        //store into container 
+        sensorBoardData.putTo_MapOfDistances(0,IR1);
+        sensorBoardData.putTo_MapOfDistances(1,IR2);
+        //sensorBoardData.putTo_MapOfDistances(2,IR3);
+        sensorBoardData.putTo_MapOfDistances(3,US1);
+        sensorBoardData.putTo_MapOfDistances(4,US2);
     }
     return x;
 }
