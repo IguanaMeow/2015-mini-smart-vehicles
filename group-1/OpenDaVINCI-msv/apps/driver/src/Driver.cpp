@@ -363,30 +363,9 @@ dState=1;
                 }
 
             }
-cout<<"distance " << distance << endl; 
+	cout<<"distance " << distance << endl; 
 }
-               /*if(sd.getIntersectionFound()<1.0 && state==0){
-                        desiredSteeringWheelAngle=sd.getExampleData();
-                vc.setSpeed(7.0);
-                cout<<floor(desiredSteeringWheelAngle)<<endl;
-                vc.setSteeringWheelAngle(desiredSteeringWheelAngle* Constants::DEG2RAD);
-
-
-                }else{
-                        state=1;
-        }
-        if(state==1){
-            
-                cout<<"state 1"<<endl;
-                vc.setSpeed(0.0);
-                vc.setSteeringWheelAngle(desiredSteeringWheelAngle* Constants::DEG2RAD);
-                count++;
-                if(count > 100){
-                        state=0;
-                        sd.setIntersectionFound(0.0);
-                        count=0;
-                }
-        }*/
+           
                 // You can also turn on or off various lights:
                 vc.setBrakeLights(false);
                 vc.setLeftFlashingLights(false);
