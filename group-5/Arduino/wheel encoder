@@ -1,0 +1,34 @@
+Enter file contents here//cheapscience.com
+#define encoderA 4
+#define encoderB 6
+
+volatile int count;
+
+void setup(){
+  Serial.begin(9600);
+  count = 0;
+  pinMOde (encoderA, INPUT);
+
+  pinMOde (encoderA, INPUT);
+  
+  attachInterrupt(0, handleEncoder, CHANGE);
+}
+
+void loop()
+
+{
+
+Serial.println(count);
+delay(10);
+}
+
+void handleEncoder()
+{
+  if (digitalRead(encoderA) == digitalRead(encoderB))
+{
+  count++;
+}
+ else
+{
+ count--;
+}

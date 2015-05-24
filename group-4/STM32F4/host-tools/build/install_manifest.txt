@@ -1,0 +1,2 @@
+/home/kento/dev/Skolan/2015-mini-smart-vehicles/group-4/bin/qstlink2
+/home/kento/dev/Skolan/2015-mini-smart-vehicles/group-4/bin/devices.xml

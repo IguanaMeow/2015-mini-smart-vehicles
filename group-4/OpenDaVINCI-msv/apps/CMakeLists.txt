@@ -12,6 +12,8 @@ IF((NOT "${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin") AND (NOT "${CMAKE_SYSTEM_NAME}
 
     # Application for recording a video of the driving performance.
     ADD_SUBDIRECTORY (VCR)
+
+    ADD_SUBDIRECTORY (serial_killer)
 ENDIF()
 
 # Special target to simplify the rsync command.

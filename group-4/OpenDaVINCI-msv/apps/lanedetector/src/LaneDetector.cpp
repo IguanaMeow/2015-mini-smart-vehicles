@@ -25,7 +25,10 @@
 #include "core/macros.h"
 #include "core/base/KeyValueConfiguration.h"
 #include "core/data/Container.h"
+#include "core/data/Constants.h"
 #include "core/data/image/SharedImage.h"
+#include "core/data/control/VehicleControl.h"
+#include "core/data/environment/VehicleData.h"
 #include "core/io/ContainerConference.h"
 #include "core/wrapper/SharedMemoryFactory.h"
 
@@ -41,6 +44,7 @@ namespace msv {
     using namespace core::base;
     using namespace core::data;
     using namespace core::data::image;
+    using namespace core::data::control;
     using namespace tools::player;
     using namespace cv;
 
@@ -108,7 +112,7 @@ namespace msv {
 			    m_sharedImageMemory->unlock();
 
 			    // Mirror the image.
-			    cvFlip(m_image, 0, -1);
+			    //cvFlip(m_image, 0, -1);
 
 			    retVal = true;
 		    }
@@ -117,58 +121,140 @@ namespace msv {
     }
 
     void LaneDetector::processImage() {
-        // Example: Show the image.
         if (m_debug) {
             if (m_image != NULL) {
-                //cvShowImage("WindowShowImage", m_image);
                 cvWaitKey(10);
             }
         }
 
+        /////////////////////
+        //  CONFIGURATION  //
+        /////////////////////
+        // Portion of the image cropped away
+        const double crop = 0.5;
+        // Total value exponent
+        const double exp = 1.15;
+        // Total value to turning degrees ratio
+        const double ratio = 0.075;
+        // Amount of rows when going straight
+        const int maxRows = 36;
+        // Amount of rows when turning
+        const int minRows = 26;
+        // Distance between each row
+        const double rowDist = 0.025;
+        // Coefficient of angle to amount of rows
+        const double turnCoef = 1;
+        // Increased weight of each row (1 + weight * row#)
+        const double weight = 0.25;
 
+        // Create Mat from image
         Mat src(m_image);
+
+        // Crop upper half of the image
+        src = src(Rect(0, src.rows * crop, src.cols, src.rows * (1 - crop)));
+
+        // Retrieve previous angle
+        Container vehicleControlData = getKeyValueDataStore().get(Container::VEHICLECONTROL);
+        VehicleControl vc = vehicleControlData.getData<VehicleControl>();
+        const double prevAngle = vc.getSteeringWheelAngle() * Constants::RAD2DEG;
+
+        // Variable declarations
         Mat dst, cdst;
-        Canny(src, dst, 50, 200, 3);
+        const int rowturn = floor(abs(prevAngle * turnCoef));
+        const int rows = maxRows - (rowturn > (maxRows - minRows) ? (maxRows - minRows) : rowturn);
+        const int center = src.cols / 2;
+        const int wbot = center * 18 / 20;
+        const int wtop = center * 8 / 20;
+        int lnull[rows];
+        int rnull[rows];
+        for(int i = 0; i < rows; i++)
+        {
+            const int y = src.rows - ((i + 1) * src.rows * rowDist);
+            lnull[i] = ((center - wtop) - (center - wbot)) * ((src.rows - y) / (double)src.rows) + (center - wbot);
+            rnull[i] = ((center + wtop) - (center + wbot)) * ((src.rows - y) / (double)src.rows) + (center + wbot);
+        }
+        int lcount = 0;
+        int rcount = 0;
+        int total = 0;
+        int left[rows];
+        int right[rows];
+        double totalWeight = 0;
+
+        // Edge detection
+        Canny(src, dst, 100, 300, 3);
         cvtColor(dst, cdst, CV_GRAY2BGR);
         cdst.setTo(Scalar::all(0));
 
+        // Line detection
         vector<Vec4i> lines;
-        HoughLinesP(dst, lines, 1, CV_PI/180, 10, 15, 15);
+        vector<Vec4i> stoplines;
+        HoughLinesP(dst, lines, 1, CV_PI/180, 8, 10, 10);
 
-        // Remove lines on upper half of screen
-        for(size_t i = lines.size(); i > 0; i--)
-        {
-            Vec4i l = lines[i-1];
-            if(l[1] < src.rows/2 && l[3] < src.rows/2)
-            {
-                lines.erase(lines.begin() + i - 1);
-            }
-        }
-        // Draw lines
+        // Calculate angle of lines and filter horizontal ones
         for(size_t i = 0; i < lines.size(); i++)
         {
             Vec4i l = lines[i];
-            line(cdst, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0, 0, 255), 1, CV_AA);
+            int dy = l[3] - l[1];
+            int dx = l[2] - l[0];
+            double angle = 0;
+            if(dx != 0)
+            {
+                double theta = atan2(dy, dx);
+                angle = theta * 180/CV_PI;
+            }
+            else
+            {
+                if(dy > 0)
+                    angle = 90;
+                else
+                    angle = -90;
+            }
+
+            angle *= -1;
+            if(angle < 0)
+                angle = 180 + angle;
+
+            if(angle < 15 || angle > 165)
+            {
+                line(cdst, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0, 128, 255), 1, CV_AA);
+                lines.erase(lines.begin() + i);
+                stoplines.push_back(l);
+                i--;
+            }
         }
-        
-        // Draw center line
-        int center = src.cols / 2;
-        line(cdst, Point(center, 0), Point(center, src.rows), Scalar(255,0,0), 1, CV_AA);
-        int total = 0;
-        for(int i = 1; i < src.rows / (10 / (3.0 / 10.0)); i++)
+
+        if (m_debug)
         {
-            int lx = -1;
-            int rx = 10000;
-            int y = src.rows - (i * 10);
+            // Draw lines
+            for(size_t i = 0; i < lines.size(); i++)
+            {
+                Vec4i l = lines[i];
+                line(cdst, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0, 0, 255), 1, CV_AA);
+            }
+
+            // Draw center line
+            line(cdst, Point(center, 0), Point(center, src.rows), Scalar(255,0,0), 1, CV_AA);
+
+            // Draw filter limit
+            line(cdst, Point(center - wbot, src.rows), Point(center - wtop, 0), Scalar(255, 192, 0), 1, CV_AA);
+            line(cdst, Point(center + wbot, src.rows), Point(center + wtop, 0), Scalar(255, 192, 0), 1, CV_AA);
+        }
+
+        // Calculate distance to lines
+        for(int i = 0; i < rows; i++)
+        {
+            const int y = src.rows - ((i + 1) * src.rows * rowDist);
+            int lx = lnull[i];
+            int rx = rnull[i];
             for(size_t j = 0; j < lines.size(); j++)
             {
                 Vec4i l = lines[j];
 
                 if((l[1] < y && l[3] > y) || (l[1] > y && l[3] < y))
                 {
-                    float ytotal = l[1] - l[3];
-                    float ypart = l[1] - y;
-                    float percent = ypart / ytotal;
+                    double ytotal = l[1] - l[3];
+                    double ypart = l[1] - y;
+                    double percent = ypart / ytotal;
 
                     int x = (l[2] - l[0]) * percent + l[0];
 
@@ -188,28 +274,138 @@ namespace msv {
                     }
                 }
             }
-            line(cdst, Point(lx, y), Point(src.cols/2, y), Scalar(0, 255, 255), 1, CV_AA);
-            line(cdst, Point(rx, y), Point(src.cols/2, y), Scalar(0, 255, 0), 1, CV_AA);
-            if(lx != -1 && rx != 10000)
+            left[i] = lx;
+            right[i] = rx;
+            if(lx != lnull[i])
             {
-                int t = (lx - src.cols/2) + (rx - src.cols/2);
-                total += (t * (i * 0.15 + 1));
+                lcount++;
+            }
+            if(rx != rnull[i])
+            {
+                rcount++;
             }
         }
-        
-        imshow("asdf", cdst);
 
-        // 2. Calculate desired steering commands from your image features to be processed by driver.
-        printf("Total: %i\n", total);
+        // Estimate rows forwards
+        for(int i = 1; i < rows; i++)
+        {
+            if(left[i] == lnull[i] && left[i - 1] != lnull[i - 1] && lcount > 2)
+            {
+                int j = i;
+                while(++j < rows && left[j] == lnull[j]);
+                if(j != rows)
+                {
+                    left[i] = limit(left[i - 1] + (left[j] - left[i - 1]) / (j - (i - 1)), lnull[i], center);
+                }
+                else
+                {
+                    left[i] = limit(left[i - 1] + (left[i - 1] - left[i - 2]), lnull[i], center);
+                }
+            }
+            if(right[i] == rnull[i] && right[i - 1] != rnull[i - 1] && rcount > 2)
+            {
+                int j = i;
+                while(++j < rows && right[j] == rnull[j]);
+                if(j != rows)
+                {
+                    right[i] = limit(right[i - 1] + (right[j] - right[i - 1]) / (j - (i - 1)), center, rnull[i]);
+                }
+                else
+                {
+                    right[i] = limit(right[i - 1] + (right[i - 1] - right[i - 2]), center, rnull[i]);
+                }
+            }
+        }
 
+        // Estimate rows backwards
+        for(int i = rows - 2; i >= 0; i--)
+        {
+            if(left[i] == lnull[i] && left[i + 1] != lnull[i + 1] && lcount > 2)
+            {
+                int j = i;
+                while(--j >= 0 && left[j] == lnull[j]);
+                if(j != -1)
+                {
+                    left[i] = limit(left[i + 1] + (left[j] - left[i + 1]) / (j - (i + 1)), lnull[i], center);
+                }
+                else
+                {
+                    left[i] = limit(left[i + 1] + (left[i + 1] - left[i + 2]), lnull[i], center);
+                }
+            }
+            if(right[i] == rnull[i] && right[i + 1] != rnull[i + 1] && rcount > 2)
+            {
+                int j = i;
+                while(--j >= 0 && right[j] == rnull[j]);
+                if(j != -1)
+                {
+                    right[i] = limit(right[i + 1] + (right[j] - right[i + 1]) / (j - (i + 1)), center, rnull[i]);
+                }
+                else
+                {
+                    right[i] = limit(right[i + 1] + (right[i + 1] - right[i + 2]), center, rnull[i]);
+                }
+            }
+        }
 
-        // Here, you see an example of how to send the data structure SteeringData to the ContainerConference. This data structure will be received by all running components. In our example, it will be processed by Driver. To change this data structure, have a look at Data.odvd in the root folder of this source.
+        // Calculate sum of distances
+        for(int i = 0; i < rows; i++)
+        {
+            const int y = src.rows - ((i + 1) * src.rows * rowDist);
+            int value = (-left[i] + center - (right[i] - center)) * (i * weight + 1);
+            total += value;
+            totalWeight += (i * weight + 1);
+
+            if (m_debug)
+            {
+                line(cdst, Point(left[i], y), Point(center, y), Scalar(0, 255, 255), 1, CV_AA);
+                line(cdst, Point(right[i], y), Point(center, y), Scalar(0, 255, 0), 1, CV_AA);
+            }
+        }
+
+        // Calculate new angle
+        total /= totalWeight;
+        const int sign = (total < 0) ? -1 : 1;
+        total *= sign;
+        total = pow(total, exp);
+        total *= sign;
+        if(total < 0)
+            total *= 1.4;
+        const double newAngle = total * -ratio;
+
+        // Calculate distance to stoplines
+        int frontDist = src.rows;
+        for(size_t i = 0; i < stoplines.size(); i++)
+        {
+            Vec4i l = stoplines[i];
+            if((l[0] < center && l[2] > center) || (l[0] > center && l[2] < center))
+            {
+                const int distance = src.rows - (l[1] + l[3]) / 2;
+
+                if(distance < frontDist)
+                {
+                    frontDist = distance;
+                }
+            }
+        }
+
+        // Create SteeringData
         SteeringData sd;
-        sd.setExampleData(total);
+        sd.setWheelAngle(newAngle);
+        sd.setFrontDistance(frontDist);
 
-        // Create container for finally sending the data.
+        // Show image
+        if (m_debug)
+        {
+            imshow("Source", src);
+            imshow("Canny", dst);
+            imshow("Lane Detection", cdst);
+        }
+        printf("Total: %i, Angle: %f\n", total, newAngle);
+
+        // Create container for sending the data
         Container c(Container::USER_DATA_1, sd);
-        // Send container.
+        // Send container
         getConference().send(c);
     }
 
@@ -268,5 +464,10 @@ namespace msv {
 	    return ModuleState::OKAY;
     }
 
+    // Constrains input between low and high
+    int LaneDetector::limit(int input, int low, int high)
+    {
+        return min(high, max(low, input));
+    }
 } // msv
 

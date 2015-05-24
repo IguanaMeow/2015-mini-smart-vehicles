@@ -86,6 +86,7 @@ namespace msv {
 	        virtual void tearDown();
 
             void processImage();
+            int limit(int input, int low, int high);
     };
 
 } // msv

@@ -145,7 +145,8 @@ namespace core {
 
             const string VehicleData::toString() const {
                 stringstream s;
-                s << "Position:" << m_position.toString() << ", heading: " << m_heading << ", abs: " << m_absTraveledPath << ", rel: " << m_relTraveledPath << ", velocity: " << m_velocity.toString() << ", speed: " << m_speed << ", V_log: " << m_v_log << ", V_batt: " << m_v_batt << ", temp: " << m_temp;
+                //s << "Position:" << m_position.toString() << ", heading: " << m_heading << ", abs: " << m_absTraveledPath << ", rel: " << m_relTraveledPath << ", velocity: " << m_velocity.toString() << ", speed: " << m_speed << ", V_log: " << m_v_log << ", V_batt: " << m_v_batt << ", temp: " << m_temp;
+                s << "Speed: " << m_speed << ", Position:" << m_position.toString() << ", Heading: " << m_heading << ", Abs: " << m_absTraveledPath << ", Rel: " << m_relTraveledPath << ", Velocity: " << m_velocity.toString() << ", V_log: " << m_v_log << ", V_batt: " << m_v_batt << ", Temp: " << m_temp;
                 return s.str();
             }
 

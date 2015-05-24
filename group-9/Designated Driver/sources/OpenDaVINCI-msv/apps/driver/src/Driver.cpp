@@ -200,7 +200,7 @@ namespace msv {
                     }
                 // In leftlane state and infraRightRear detects obstacle,
                 
-                    if(delay >= 90 && inLHLane && infraRightRear > 0){
+                    if(delay >= 110 && inLHLane && infraRightRear > 0){
                         counting = false;
                  // if infrared sensors have almost equal values enable lane following
                         if( infraRightRear >= (infraRightFront - 0.1) && infraRightRear <= (infraRightFront + 0.1) ){
@@ -236,13 +236,14 @@ namespace msv {
                             inRHLane = false;
                             overtake = false;
                             obstacle = false;
+                            counting = false;
                             counter = false;
                             mode = "follow lanedetection";
                         }
                     }
                 }
 
-    /************* parking mode *************************/            
+    /************* parking mode ****** Mengjiaos part*******************/            
                 if(selection == 1){ 
                     
                 switch(stage){ 

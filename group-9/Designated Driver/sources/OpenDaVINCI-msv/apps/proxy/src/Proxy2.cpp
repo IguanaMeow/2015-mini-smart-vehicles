@@ -47,10 +47,13 @@
 #define USB "/dev/ttyACM0"
 
 namespace msv { 
-    int port;
+    int port, CSUM, len, toCheck, IR1, IR2, IR3, US1, US2, WE;
     void open_port(std::string adr);
     void port_config();
-    std::string readSerial(); 
+    string readSerial(); 
+    string encode(string x);
+    msv::SensorBoardData sensorBoardData;
+
 
     const char *USB_PORT;
 
@@ -136,6 +139,7 @@ namespace msv {
 
     // This method will do the main data processing job.
     ModuleState::MODULE_EXITCODE Proxy::body() {
+
         uint32_t captureCounter = 0;
         while (getModuleState() == ModuleState::RUNNING) {
             // Capture frame.
@@ -157,6 +161,7 @@ namespace msv {
             // Test ***************************
             // Markus Erlach
             string in = "";
+            string rec;
             char command[10];
             cout << "Enter command to send, " << endl;
             cout << "Command alternatives: w, f, s, r, n, h, v, m" << endl;
@@ -169,7 +174,17 @@ namespace msv {
             strcpy(command, in.c_str());            
             write(port, command, 10);
             cout << "Proxy2 wrote: "<< command << endl;
-            msv::readSerial();
+            rec = msv::readSerial();
+            decode(rec);
+
+            Container c = Container(Container::USER_DATA_0, sensorBoardData);
+            distribute(c);
+
+            /*int IR1Data = sensorBoardData.getValueForKey_MapOfDistances(0);
+            cout << "SBD IR1: " << IR1Data << endl;
+            */
+            //flushes the input queue, which contains data that have been received but not yet read.
+            tcflush(port, TCIFLUSH); 
            
         }
         cout << "Proxy: Captured " << captureCounter << " frames." << endl;
@@ -224,23 +239,56 @@ void port_config() {
     options.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG); 
     options.c_oflag &= ~OPOST; 
     // wait for min 0 chars and wait time min
-    options.c_cc[VMIN]  = 1;
+    options.c_cc[VMIN]  = 20;
     options.c_cc[VTIME] = 0;
     // Commit
     tcflush(port, TCIFLUSH);
     tcsetattr(port, TCSANOW, &options);
 }
 
-// Markus Erlach 
-std::string readSerial() {
+// Fredric Ola Eidsvik & PeiLi Ge
+string decode(string x) {
+    
+    len = atoi(x.substr(1, 2).c_str());
+    string toCheck_Str = x.substr(4, 3);
+    toCheck = atoi(toCheck_Str.c_str());
+    string IR1_Str = x.substr(8, 2);
+    IR1 = atoi(IR1_Str.c_str());
+    string IR2_Str = x.substr(10, 2);
+    IR2 = atoi(IR2_Str.c_str());
+    //string IR3_Str = x.substr(12, 2);
+    //IR3 = atoi(IR3_Str.c_str());
+    string US1_Str = x.substr(12, 2);
+    US1 = atoi(US1_Str.c_str());
+    string US2_Str = x.substr(14, 2);
+    US2 = atoi(US2_Str.c_str());
+    string WE_Str = x.substr(16, 3); 
+    WE = atoi(WE_Str.c_str());
+    CSUM = IR1 + IR2 + US1 + US2 + WE;  // Add IR3 when assembled.
+    if (toCheck == CSUM) {
+        cout << "Checksum matches" << endl;
+        cout << "Wheel Encoder value: " << WE << endl;
+        //store into container 
+        sensorBoardData.putTo_MapOfDistances(0,IR1);
+        sensorBoardData.putTo_MapOfDistances(1,IR2);
+        //sensorBoardData.putTo_MapOfDistances(2,IR3);
+        sensorBoardData.putTo_MapOfDistances(3,US1);
+        sensorBoardData.putTo_MapOfDistances(4,US2);
+    }
+    
+    return x;
+}
+
+// Markus Erlach
+string readSerial() {
     char start[255] = "";
     
-    std::cout << "Serial available: " << port << std::endl;
+    cout << "Serial available: " << port << endl;
     
     int n = read(port, start, 255);
     start[n] = 0;
-    std::cout << "N: " << n << std::endl;
-    std::string received(start);
+    cout << "N: " << n << endl;
+    string received(start);
     return received;
 }
 

@@ -18,7 +18,8 @@
  */
 
 message msv.SteeringData {
-    double exampleData;
+    double wheelAngle;
+    uint32 frontDistance;
 }
 
 message msv.UserButtonData {
