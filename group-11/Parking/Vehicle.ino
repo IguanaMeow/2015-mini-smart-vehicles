@@ -106,7 +106,7 @@ void loop() {
       }
             
             
-      if (inByte == 144)
+      if (inByte == 114)
       {
          setAngle(inByte);       
       }
