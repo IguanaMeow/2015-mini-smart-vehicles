@@ -1,11 +1,12 @@
-/**
+
+/** intersection
 * lanedetector - Sample application for detecting lane markings.
 * Copyright (C) 2012 - 2015 Christian Berger
 *
 * This program is free software; you can redistribute it and/or
 * modify it under the terms of the GNU General Public License
 * as published by the Free Software Foundation; either version 2
-* of the License, or (at your option) any later version.
+* of the License, or (at your option) any later version.a
 *
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -16,9 +17,6 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-
-//Jose & Saleh
-
 #include <iostream>
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
@@ -178,8 +176,8 @@ namespace msv {
         double count_green_medel = 0.0;
         double count_green7 = 0.0;
         double count_green8 = 0.0;
-
-
+        double count_intersection  =0.0;
+       
         // Example: Show the image.
         if (m_debug) {
             if (m_image != NULL) {
@@ -189,12 +187,13 @@ namespace msv {
         }
 
         Mat img, dst, cdst;
-        img = cvarrToMat(m_image, true);  //The IplImage is converted to Mat
+        img = cvarrToMat(m_image, true);
 
+       // int w = img.cols/2;
         int rows = img.rows;
         int cols = img.cols;
 
-        Point p1, p2, p3, p4, p5, p6, p7;  // for angle
+        Point p1, p2, p3, p4, p5, p6, p7,p9;  // for angle
 
         p1.x = cols / 2;
         p1.y = 0;
@@ -206,6 +205,11 @@ namespace msv {
         p4.x = cols;
         p4.y = rows / 1.4;
 
+
+        p9.x = cols/1.5;    
+        p9.y = rows -22 ;
+
+
         //Edge Detection
         Canny(img, dst, 50, 200, 3);
         cvtColor(dst, cdst, CV_GRAY2BGR);
@@ -215,7 +219,7 @@ namespace msv {
         vector<Vec4i> lines;
         HoughLinesP(dst, lines, 1, CV_PI / 180, 8, 10, 10);
 
-        //Remove lines upper lines 
+        //Remove lines
         for (size_t i = lines.size(); i > 0; i--) {
 
             Vec4i l = lines[i - 1];
@@ -234,11 +238,9 @@ namespace msv {
 
         vertical_Line(cdst, p1, p2);
 
-        //horizontal green_line7
-        for (int j = p3.x; j > = 0; j--) {
+        for (int j = p3.x; j >= 0; j--) {
             int i = p3.y / 0.87;
-           
-            // start drawing the horizental_green_Line until it detect a white color(long lane),by then stop drawing
+            // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
             if (cdst.at<Vec3b>(i, j)[0] == 255 && cdst.at<Vec3b>(i, j)[1] == 255 && cdst.at<Vec3b>(i, j)[2] == 255) {
 
                 p5.x = j;
@@ -255,11 +257,10 @@ namespace msv {
 
         }
 
-        //horizontal green_line8
-        for (int j = p3.x; j > = 0; j--) {
+
+        for (int j = p3.x; j >= 0; j--) {
             int i = p3.y / 0.77;
-            
-            // start drawing the horizental_green_Line until it detect a white color(long lane),by then stop drawing
+            // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
             if (cdst.at<Vec3b>(i, j)[0] == 255 && cdst.at<Vec3b>(i, j)[1] == 255 && cdst.at<Vec3b>(i, j)[2] == 255) {
 
                 p5.x = j;
@@ -276,11 +277,10 @@ namespace msv {
 
         }
 
-        //horizental_green_Line1
+        //horizental_green_Line
         for (int j = p3.x; j < img.cols; j++) {
             int i = p3.y / 1.5;
-            
-            // start drawing the horizental_green_Line until it detect a white color(long lane),by then stop drawing
+            // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
             if (cdst.at<Vec3b>(i, j)[0] == 255 && cdst.at<Vec3b>(i, j)[1] == 255 && cdst.at<Vec3b>(i, j)[2] == 255) {
 
                 p5.x = j;
@@ -296,11 +296,10 @@ namespace msv {
             }
         }
 
-        //horizontal green_line2
+
         for (int j = p3.x; j < img.cols; j++) {
             int i = p3.y / 1.4;
-           
-            // start drawing the horizental_green_Line until it detect a white color(long lane),by then stop drawing
+            // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
             if (cdst.at<Vec3b>(i, j)[0] == 255 && cdst.at<Vec3b>(i, j)[1] == 255 && cdst.at<Vec3b>(i, j)[2] == 255) {
 
                 p5.x = j;
@@ -316,11 +315,10 @@ namespace msv {
             }
         }
 
-        //horizontal green_line3
+
         for (int j = p3.x; j < img.cols; j++) {
             int i = p3.y / 1.2;
-            
-            // start drawing the horizental_green_Line until it detect a white color(long lane),by then stop drawing
+            // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
             if (cdst.at<Vec3b>(i, j)[0] == 255 && cdst.at<Vec3b>(i, j)[1] == 255 && cdst.at<Vec3b>(i, j)[2] == 255) {
 
                 p5.x = j;
@@ -336,11 +334,9 @@ namespace msv {
             }
         }
 
-        //horizontal green_line4
         for (int j = p3.x; j < img.cols; j++) {
             int i = p3.y / 1.1;
-            
-            // start drawing the horizental_green_Line until it detect a white color(long lane),by then stop drawing
+            // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
             if (cdst.at<Vec3b>(i, j)[0] == 255 && cdst.at<Vec3b>(i, j)[1] == 255 && cdst.at<Vec3b>(i, j)[2] == 255) {
 
                 p5.x = j;
@@ -355,11 +351,9 @@ namespace msv {
             }
         }
 
-        //horizontal green_line
         for (int j = p3.x; j < img.cols; j++) {
             int i = p3.y / 0.85;
-            
-            //start drawing the horizental_green_Line until it detect a white color(long lane),by then stop drawing
+            // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
             if (cdst.at<Vec3b>(i, j)[0] == 255 && cdst.at<Vec3b>(i, j)[1] == 255 && cdst.at<Vec3b>(i, j)[2] == 255) {
 
                 p5.x = j;
@@ -374,11 +368,9 @@ namespace msv {
             }
         }
 
-        //horizontal green_medel
         for (int j = p3.x; j < img.cols; j++) {
             int i = p3.y / 0.8;
-           
-            // start drawing the horizental_green_medel until it detect a white color(long lane),by then stop drawing
+            // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
             if (cdst.at<Vec3b>(i, j)[0] == 255 && cdst.at<Vec3b>(i, j)[1] == 255 && cdst.at<Vec3b>(i, j)[2] == 255) {
                 p6.x = j;
                 p6.y = i;
@@ -396,8 +388,7 @@ namespace msv {
         //horizental_yellow_Line
         for (int j = p3.x; j < img.cols; j++) {
             int i = p3.y / 0.75;
-           
-            // start drawing the horizental_yellow_Line until it detect a white color(long lane),by then stop drawing
+            // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
             if (cdst.at<Vec3b>(i, j)[0] == 255 && cdst.at<Vec3b>(i, j)[1] == 255 && cdst.at<Vec3b>(i, j)[2] == 255) {
                 p7.x = j;
                 p7.y = i;
@@ -410,6 +401,22 @@ namespace msv {
                 count_yellow++;
             }
         }
+        // intersection line
+for (int i=p9.y; i<img.rows ; i++)
+        {  int j=p9.x;
+  // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
+        if(cdst.at<Vec3b>(i,j)[0] == 255 && cdst.at<Vec3b>(i,j)[1] == 255 && cdst.at<Vec3b>(i,j)[2]  ==255)
+       
+               
+        break; 
+
+                else{cdst.at<Vec3b>(i,j)[0] = 0;
+                cdst.at<Vec3b>(i,j)[1] = 200;
+                cdst.at<Vec3b>(i,j)[2] = 0;
+        
+        count_intersection++; } }
+
+
 
 
         // counter_inter
@@ -438,21 +445,48 @@ namespace msv {
         double critical_dist = sd_old.getDistanceData();
         ///////////////////////////////////////////////////////////////////////
 
-        int w = img.cols/2;
+  int w = img.cols/2;
+// intersection
+if( count_intersection < 22 ){
+
+for (int x=0 ;x<100000;x++){
+speed= 0;
+cout<< "speed = 0"<<endl;
+
+    sd.setDistanceData(critical_dist);
+    sd.setSpeedData(0);
+    sd.setExampleData(angle);
+
+    Container c444(Container::USER_DATA_1, sd);
+    getConference().send(c444);
+
+
+}
+
+
+
+
+        			
+         
+           //    speed=8;
+        cout << "stop &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&" <<  endl;
+    
+ }
+
 
         if((int)count_green_medel == w && (int)count_green != w && (int)count_yellow != w ){
 
-            speed = 0.1;
+            speed = 70.0;
             angle = 0;
 
             cout<<"Right side is middle lane"<<endl;
 
         } else if ((count_green / count_yellow) > 0.81 && (count_green / count_yellow) < 0.911)   {
 
-            speed = 1;
+            speed = 70;
 
             if (critical_dist < 0.1) {
-                angle = 0;
+                angle = 8;
                 critical_dist = count_green;
             } else {
                 angle = (count_green - critical_dist)/20;
@@ -461,19 +495,19 @@ namespace msv {
             cout << "STRAIGHT" << endl;
         } else if ((count_green / count_yellow) < 0.811 && (count_green / count_yellow) > 0.64) {
 
-            speed = 0.5;
+            speed = 70.0;
             angle = (count_green - critical_dist)/7;
             cout << "LEFT" << endl;
         } else if (((count_green / count_yellow) > 0.999 || (count_green3 / count_green4) > 0.999) &&
                  (count_green1 / count_green2 < 1)) {
 
 
-            speed = 0.5;
+            speed = 80.0;
             angle = 0;
             cout << "INTERSECTION" << endl;
         } else if ((count_green / count_yellow) > 0.91 && (count_green / count_yellow) < 0.999) {
 
-            speed = 0.5;
+            speed = 85.5;
             angle = (count_green - critical_dist)/5;
             cout << "RIGHT" << endl;
 
@@ -567,3 +601,5 @@ namespace msv {
 
     }
     // msv
+
+
