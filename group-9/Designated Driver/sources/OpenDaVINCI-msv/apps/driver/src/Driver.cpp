@@ -200,7 +200,7 @@ namespace msv {
                     }
                 // In leftlane state and infraRightRear detects obstacle,
                 
-                    if(delay >= 70 && inLHLane && infraRightRear > 0){
+                    if(delay >= 110 && inLHLane && infraRightRear > 0){
                         counting = false;
                  // if infrared sensors have almost equal values enable lane following
                         if( infraRightRear >= (infraRightFront - 0.1) && infraRightRear <= (infraRightFront + 0.1) ){
