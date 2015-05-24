@@ -81,6 +81,10 @@ namespace msv {
                 vc.setSpeed(speed);
                 vc.setSteeringWheelAngle(angle * Constants::DEG2RAD);
 
+                cout<<"Speed: "<<speed<<endl;
+                cout<<"Angle: "<<angle<<endl;
+                cout<<"Lane detection angle: "<<sd.getExampleData()<<endl;
+
                 Container c(Container::VEHICLECONTROL, vc);
                 getConference().send(c);
 
@@ -92,12 +96,22 @@ namespace msv {
                    irBackRight = sbd.getValueForKey_MapOfDistances(2);
 
             double duration = time(0) - timer; // seconds till last timer update
-            
+
+              //Safety check
+
+              if ((sonarFront > -1 && sonarFront < 0.1)||
+                      (sonarRight > -1 && sonarRight < 0.1)||
+                      (irBackRight > -1 && irBackRight < 0.1)||
+                      (irFrontRight > -1 && irFrontRight < 0.1)){
+                  speed = 0;
+              }
+
+
             switch(state){
 
                 case 0: // object found in front of car, initiate overtaking
                     state = 1;
-                    angle = -20 + sd.getExampleData() * 0.5;
+                    angle = -20 + sd.getExampleData() * 0.2;
                     speed = 1;
                     timer = time(0);
                     break;
@@ -105,7 +119,7 @@ namespace msv {
                 case 1: // drive onto the overtaking lane
                     if(sonarRight < 0 || sonarRight > 20) break;
                     angle = 0;
-                    speed = 2;
+                    speed = 1;
                     state = 2;
                     break;
 
@@ -117,16 +131,16 @@ namespace msv {
                     break;
 
                 case 3: // drive straight up the lane
-                    if(duration < 2 && irFrontRight > 5) break;
+                    if(duration < 4 && irFrontRight > 5) break;
                     angle = 0;
                     state = 4;
                     break;
 
                 case 4: // straighten out the car using the IRs
-                    speed = 2;
+                    speed = 1;
                     angle = 0;
                     timer = time(0);
-                    if(prevFrontRight < irFrontRight) angle = 25;
+                    if(prevFrontRight < irFrontRight) angle = 23.5;
                     else if(irFrontRight > irBackRight) angle = 12;
                     else state = 5;
 
@@ -139,25 +153,28 @@ namespace msv {
                     if(duration < 1 || (irFrontRight > -1 && irBackRight < 0) || (irFrontRight > -1 && irFrontRight < 25) || (sonarRight > 1 && sonarRight < 25)) break;
 
                     state = 6;
-                    angle = 25;
+                    angle = 23.5;
                     timer = time(0);
                     break;
 
                 case 6: // counter-steer to position straight onto right lane
-                    if(duration < 4 && (duration < 1 || sd.getExampleData() < 13 || prevNoLane)) break;
-                    angle = -25;
+                    if(duration < 6.5 && (duration < 1.5 || sd.getExampleData() < 13 || prevNoLane)) break;
+                    angle = -22.0;
                     state = 7;
                     timer = time(0);
                     break;
     
                 case 7: // switch back to the "lane following" state
-                    if(duration < 3 && (duration < 1.2 || sd.getExampleData() < 1 || prevNoLane)) break;
+                    if(duration < 6 && (duration < 2.4 || sd.getExampleData() < 1 || prevNoLane)) break;
                     state = 0;
                     break;
             }
+              cout<<"State: "<<state<<endl;
+              cout<<"Angle: "<<angle<<endl;
+              cout<<"Lane detection angle: "<<sd.getExampleData()<<endl;
 
             prevFrontRight = irFrontRight;
-            prevNoLane = sd.getExampleData() < 1 && sd.getExampleData() > -1;
+            prevNoLane = sd.getExampleData() < 0.1 && sd.getExampleData() > -0.1;
 
             vc.setSteeringWheelAngle(angle * Constants::DEG2RAD);
             vc.setSpeed(speed);
