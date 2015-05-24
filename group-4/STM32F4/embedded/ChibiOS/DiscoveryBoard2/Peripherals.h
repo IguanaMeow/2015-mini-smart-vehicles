@@ -20,7 +20,7 @@
 #ifndef PERIPHERALS_H
 #define PERIPHERALS_H
 
-#define USE_ONBOARD_ACCELEROMETER  1 // If this is set to 1, the onboard accelerometer can be read. Please be aware that using this sensor limits the RC receiver to read only to two input channels because TIM14 at pin PA7 is in conflict with this sensor.
+#define USE_ONBOARD_ACCELEROMETER  0 // If this is set to 1, the onboard accelerometer can be read. Please be aware that using this sensor limits the RC receiver to read only to two input channels because TIM14 at pin PA7 is in conflict with this sensor.
 #define USE_ONBOARD_TEMPERATURE    0 // If the onboard temperature sensor is used the infrared sensors cannot be used!
 #define USE_INFRARED               1 // Support reading values from analog infrared sensors (not available if the temperature sensor is used!).
 #define USE_ULTRASONIC             1 // Support reading values from I2C ultrasonic sensors.
