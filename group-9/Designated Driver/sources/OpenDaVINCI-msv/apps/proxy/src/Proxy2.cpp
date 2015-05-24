@@ -52,6 +52,8 @@ namespace msv {
     void port_config();
     string readSerial(); 
     string encode(string x);
+    msv::SensorBoardData sensorBoardData;
+
 
     const char *USB_PORT;
 
@@ -137,6 +139,7 @@ namespace msv {
 
     // This method will do the main data processing job.
     ModuleState::MODULE_EXITCODE Proxy::body() {
+
         uint32_t captureCounter = 0;
         while (getModuleState() == ModuleState::RUNNING) {
             // Capture frame.
@@ -173,6 +176,15 @@ namespace msv {
             cout << "Proxy2 wrote: "<< command << endl;
             rec = msv::readSerial();
             decode(rec);
+
+            Container c = Container(Container::USER_DATA_0, sensorBoardData);
+            distribute(c);
+
+            /*int IR1Data = sensorBoardData.getValueForKey_MapOfDistances(0);
+            cout << "SBD IR1: " << IR1Data << endl;
+            */
+            //flushes the input queue, which contains data that have been received but not yet read.
+            tcflush(port, TCIFLUSH); 
            
         }
         cout << "Proxy: Captured " << captureCounter << " frames." << endl;
@@ -234,7 +246,7 @@ void port_config() {
     tcsetattr(port, TCSANOW, &options);
 }
 
-// Markus Erlach & Fredric Ola Eidsvik
+// Fredric Ola Eidsvik & PeiLi Ge
 string decode(string x) {
     
     len = atoi(x.substr(1, 2).c_str());
@@ -256,6 +268,12 @@ string decode(string x) {
     if (toCheck == CSUM) {
         cout << "Checksum matches" << endl;
         cout << "Wheel Encoder value: " << WE << endl;
+        //store into container 
+        sensorBoardData.putTo_MapOfDistances(0,IR1);
+        sensorBoardData.putTo_MapOfDistances(1,IR2);
+        //sensorBoardData.putTo_MapOfDistances(2,IR3);
+        sensorBoardData.putTo_MapOfDistances(3,US1);
+        sensorBoardData.putTo_MapOfDistances(4,US2);
     }
     
     return x;
