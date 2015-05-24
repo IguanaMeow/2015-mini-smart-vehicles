@@ -20,6 +20,8 @@
 message msv.SteeringData {
     double exampleData;
     double speedData; //Lane detection
+    double distanceData; //Lane detection
+
 }
 
 message msv.UserButtonData {
@@ -36,4 +38,3 @@ message msv.SensorBoardData {
     uint32 numberOfSensors;
     map<uint32, double> distances;
 }
-
