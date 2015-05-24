@@ -271,24 +271,24 @@ return rightLineLength;
 		MeasureVertical(out_image,verticalLineLength , lenght, 0);
 		cout << "Height:"<< verticalLineLength<<endl;
 		
-	if(Line3right<=-320 && Line3left<=320 && state==0){
-        state=1;
-	sd.setState(1.0);
-	}
+		if(Line3right<=-320 && Line3left<=320 && state==0){
+        	state=1;
+		sd.setState(1.0);
+		}
 		
 
 
 	//Draw lines
         if (m_debug) {
 		if (m_image != NULL){
-			DrawLine( out_image, Point( lenght, lineheight1 ), Point( leftLineLength1, lineheight1),Scalar(0,0,255)); 
+	DrawLine( out_image, Point( lenght, lineheight1 ), Point( leftLineLength1, lineheight1),Scalar(0,0,255)); 
     	DrawLine( out_image, Point( lenght, lineheight1 ), Point( rightLineLength1, lineheight1),Scalar(255, 0, 0 )); 
-			//DrawLine( out_image, pt4, pt5,Scalar( 0, 255, 0 )); //draw vertical line
-			DrawLine( out_image, Point( lenght, lineheight2 ), Point( rightLineLength2, lineheight2),Scalar(255,0,0)); 
-			DrawLine( out_image, Point( lenght, lineheight2 ), Point( leftLineLength2, lineheight2),Scalar(0,0,255)); 
+	//DrawLine( out_image, pt4, pt5,Scalar( 0, 255, 0 )); //draw vertical line
+	DrawLine( out_image, Point( lenght, lineheight2 ), Point( rightLineLength2, lineheight2),Scalar(255,0,0)); 
+	DrawLine( out_image, Point( lenght, lineheight2 ), Point( leftLineLength2, lineheight2),Scalar(0,0,255)); 
     	DrawLine( out_image, pt4, Point( w/2, verticalLineLength),Scalar( 255, 0, 0 )); 
-			DrawLine( out_image, Point( lenght, lineheight3 ), Point( rightLineLength3, lineheight3),Scalar(255,0,0)); 
-			DrawLine( out_image, Point( lenght, lineheight3 ), Point( leftLineLength3, lineheight3),Scalar(0,0,255)); 
+	DrawLine( out_image, Point( lenght, lineheight3 ), Point( rightLineLength3, lineheight3),Scalar(255,0,0)); 
+	DrawLine( out_image, Point( lenght, lineheight3 ), Point( leftLineLength3, lineheight3),Scalar(0,0,255)); 
 		//cvShowImage("WindowShowImage", out_image);
 		cvWaitKey(10);
             }
