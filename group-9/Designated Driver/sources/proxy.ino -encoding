@@ -1,0 +1,186 @@
+#include <Servo.h> 
+#include <Wire.h>       
+
+// US
+int US_Front_R = 0x72; // Addresses for US sensors 
+int US_Front = 0x70;
+#define cmdByte 0x00              
+#define lightByte 0x01  // Byte to read light sensor
+#define rangeByte 0x02  // Byte for start of ranging data
+#define cm 0x51         // Choose if cm 
+#define inch 0x50       // or inches
+byte highByte = 0x00;  // Stores high byte from ranging
+byte lowByte = 0x00;   // Stored low byte from ranging
+ 
+#define servoPin 8
+#define escPin 9
+
+#define ESC_HIGH 2000
+#define ESC_LOW 1000
+
+// IR
+int a = 2914;               
+int distance, distance2;   
+int ir_back = 13;          // Addresses for IR sensors
+int ir_rfront = 14;
+int ir_rback = 15;
+int voltage, voltage2;    
+
+// Data
+String to_Send, IRP1, IRP2, IRP3, IR_FR_Str, IR_BR_Str, IR_Back_Str, 
+    USP1, USP2, US_FR_Str, US_FC_Str;
+char inData[255];      
+char c = -1; 
+int i = 0;
+int one, two, three, four, five, checksum, check, sum, steering, 
+US_FC_Int, US_FR_Int, IR_FR_Int, IR_BR_Int, IR_Back_Int;
+int angle = 90;
+int throttle = 1500;
+
+Servo servo, esc;
+
+void setup() 
+{ 
+  pinMode(ir_rfront, INPUT);
+  pinMode(ir_rback, INPUT);
+  pinMode(ir_back, INPUT);
+  Wire.begin();
+  servo.attach(servoPin); 
+  esc.attach(escPin);
+  Serial.begin(38400);
+  delay(1000);
+}
+
+void loop() {
+  
+  int a = getIR(13);
+  String One =  String('a');
+  encode(one);   
+  Serial.println(one);   //should return 5:hello,   
+  //Serial.println(a);
+  //Serial.write(a);
+  
+  //char d = Serial.read();
+  //Serial.println(d); 
+  delay(10);
+  esc.writeMicroseconds(throttle);
+  servo.write(angle);
+  delay(10);
+  String str = String(1);
+  char test[str.length()+1];
+  str.toCharArray(test, str.length()+1);
+  
+  Serial.write(test);   //Serial.write('1');
+}
+void serialEvent() { 
+  //Serial.println('1');
+  while (Serial.available() > 0) {
+      c = Serial.read();
+      inData[i] = c;
+      i++;
+      delay(2);
+  }
+  inData[i] = '\0';
+  // 40890 
+  if (isdigit(inData[0]) && isdigit(inData[1])) {
+    setData();
+    //delay(20);
+  }
+  i = 0;
+  if (inData[0] == 's' && inData[1] == 's') {
+    throttle = throttle - 10;  
+  }
+  i = 0;
+}
+
+int getUS(int address) {
+  int range = 0;
+
+  Wire.beginTransmission(address);  // Start communticating with SRF08
+  Wire.write((byte)cmdByte);           // Send Command Byte
+  Wire.write(cm);                      // Choose between inch and cm
+  Wire.endTransmission();
+ 
+  delay(20);                          // Wait for ranging to be complete
+ 
+  Wire.beginTransmission(address);  // start communicating with SRFmodule
+  Wire.write(rangeByte);               // Call the register for start of ranging data
+  Wire.endTransmission();
+ 
+  Wire.requestFrom(address, 2);     // Request 2 bytes from SRF module
+  while (Wire.available() < 2);
+  byte highByte = Wire.read();
+  byte lowByte = Wire.read();
+  
+  range = (highByte << 8) + lowByte;
+   
+  return(range); 
+
+}
+  
+void setData() {
+  
+  check = inData[0] - '0',
+  sum = inData[1] - '0',
+  one = inData[2] - '0',
+  two = inData[3] - '0',
+  three = inData[4] - '0',
+  four = inData[5] - '0',
+  five = inData[6] - '0';
+  
+  i = 0; // Reset i
+  checksum = (check * 10) + sum;
+  //408020
+  steering = ((three * 100) + (four * 10) + five);  
+  angle = steering;
+  throttle = 1571;
+  
+  if (throttle > 1620) {
+    throttle = 1620; 
+  }
+  if (angle > 120) {
+   angle = 120; 
+  } if (angle < 60) {
+    angle = 60;
+  }
+}
+
+// Get IR Distance
+int getIR(int ir) {
+  voltage = analogRead(ir);
+  distance = (a/(voltage+5))-1; 
+  //Serial.println("FrontRight: " + distance2);
+  delay(20);
+  return (distance);
+}
+
+
+//String one= "1020304050"   //ir data
+//String two = "<17:150:1020304050>"   //encoded
+//Peili Ge
+String encode (int one) {
+    int a = getIR(ir_rfront);
+    //String us1 = "US1=";
+    //int is1= us1.toInt();
+    //int a2 = is1 + a;
+    String sensor1 =  String(a); 
+    int b = getIR(ir_back);
+    String sensor2 =  String(b); 
+    int c = getIR(ir_rback);
+    String sensor3 =  String(c); 
+   // int d = getUS(US_Front);
+   // String sensor4=String(d); 
+   
+  //String myString = "US1=1 US2=30 IR1=10" 
+    
+    int total = sensor1.length() +sensor2.length()+ sensor3.length() ;
+    String totalN = String(total);
+   // int n = totalN.length();
+    int sum = a + b + c;
+    
+    String stringS = String(sum);
+    //String stringN =  String(n);   
+    String s =  totalN + ':' + stringS + ':' + sensor1 + sensor2 + sensor3;
+    Serial.println(s);
+return s; 
+}
