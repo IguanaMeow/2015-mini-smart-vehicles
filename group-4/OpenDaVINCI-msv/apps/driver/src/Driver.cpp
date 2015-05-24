@@ -40,11 +40,11 @@ namespace msv {
     using namespace core::data::environment;
     using core::wrapper::Time;
     using core::wrapper::TimeFactory;
-//  using namespace libdata::generated::msv;
 
     int parkingMode = 0;
     int overtakingActive = 0;
     const int samplesize = 25;
+
 
     Driver::Driver(const int32_t &argc, char **argv) :
         ConferenceClientModule(argc, argv, "Driver"),parking(),overtaking()   {
@@ -87,6 +87,7 @@ namespace msv {
         arr[samplesize - 1] = newData;
 
         return temp[samplesize / 2];
+
     }
 
     // This method will do the main data processing job.
@@ -95,6 +96,7 @@ namespace msv {
         Time *startTime = NULL;
         bool isReversing = false;
         bool atStopline = false;
+
 
         float usFrontRightArr[samplesize] = {-1};
         float usRearRightArr[samplesize] =  {-1};
@@ -162,7 +164,7 @@ namespace msv {
 
             if(parkingMode)
             {
-                parking.doParking(speed, steeringWheelAngle, sensorData);
+                parking.doParking(speed, steeringWheelAngle, pathTraveled, sensorData);
             }
             else
             {
