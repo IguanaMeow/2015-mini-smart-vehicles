@@ -47,10 +47,11 @@
 #define USB "/dev/ttyACM0"
 
 namespace msv { 
-    int port;
+    int port, CSUM, len, toCheck, IR1, IR2, IR3, US1, US2, WE;
     void open_port(std::string adr);
     void port_config();
-    std::string readSerial(); 
+    string readSerial(); 
+    string encode(string x);
 
     const char *USB_PORT;
 
@@ -157,6 +158,7 @@ namespace msv {
             // Test ***************************
             // Markus Erlach
             string in = "";
+            string rec;
             char command[10];
             cout << "Enter command to send, " << endl;
             cout << "Command alternatives: w, f, s, r, n, h, v, m" << endl;
@@ -169,7 +171,7 @@ namespace msv {
             strcpy(command, in.c_str());            
             write(port, command, 10);
             cout << "Proxy2 wrote: "<< command << endl;
-            msv::readSerial();
+            rec = msv::readSerial();
            
         }
         cout << "Proxy: Captured " << captureCounter << " frames." << endl;
@@ -231,16 +233,43 @@ void port_config() {
     tcsetattr(port, TCSANOW, &options);
 }
 
-// Markus Erlach 
-std::string readSerial() {
+// Markus Erlach & Fredric Ola Eidsvik
+string decode(string x) {
+    
+    len = atoi(x.substr(1, 2).c_str());
+    string toCheck_Str = x.substr(4, 3);
+    toCheck = atoi(toCheck_Str.c_str());
+    string IR1_Str = x.substr(8, 2);
+    IR1 = atoi(IR1_Str.c_str());
+    string IR2_Str = x.substr(10, 2);
+    IR2 = atoi(IR2_Str.c_str());
+    string IR3_Str = x.substr(12, 2);
+    IR3 = atoi(IR3_Str.c_str());
+    string US1_Str = x.substr(14, 2);
+    US1 = atoi(US1_Str.c_str());
+    string US2_Str = x.substr(16, 2);
+    US2 = atoi(US2_Str.c_str());
+    string WE_Str = x.substr(18, 3); 
+    WE = atoi(WE_Str.c_str());
+    CSUM = IR1 + IR2 + IR3 + US1 + US2 + WE;
+    if (toCheck == CSUM) {
+        cout << "Checksum matches" << endl;
+        cout << "Wheel Encoder value: " << WE << endl;
+    }
+    
+    return x;
+}
+
+// Markus Erlach
+string readSerial() {
     char start[255] = "";
     
-    std::cout << "Serial available: " << port << std::endl;
+    cout << "Serial available: " << port << endl;
     
     int n = read(port, start, 255);
     start[n] = 0;
-    std::cout << "N: " << n << std::endl;
-    std::string received(start);
+    cout << "N: " << n << endl;
+    string received(start);
     return received;
 }
 
