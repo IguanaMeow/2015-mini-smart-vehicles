@@ -296,7 +296,7 @@ void port_config() {
 // <19:101:2020202020001>
 // XXX:IR1IR2IR3US1US2 Example: 100:2020202020000
 // All sensors should equal XXX (checksum) Like above.
-// Markus Erlach & Fredric Ola Eidsvik
+// Fredric Ola Eidsvik
 string decode(string x) {
     
     len = atoi(x.substr(1, 2).c_str());
