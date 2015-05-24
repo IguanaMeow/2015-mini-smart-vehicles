@@ -16,7 +16,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
+// Lanedetection made by Nicolas Kheirallah
+// Intersection by Emily Lu
+//  Steering by Emily Lu & Nicolas helped , mostly Emily
 #include <iostream>
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
