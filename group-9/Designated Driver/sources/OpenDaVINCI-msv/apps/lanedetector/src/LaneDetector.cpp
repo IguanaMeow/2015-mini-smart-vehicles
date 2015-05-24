@@ -136,12 +136,7 @@ namespace msv {
         cvReleaseImage(&grayImg);
         cvReleaseImage(&cannyImg);
 
-<<<<<<< HEAD
-          // Mirror the image.
-        //  cvFlip(m_image, 0, -1);
-=======
    //variables
->>>>>>> 160a44c66121da2f060ee5b5cd81febc2f0ec8ff
 
     int width = m_image -> width;
     int height = m_image -> height;
@@ -201,91 +196,7 @@ namespace msv {
         CvPoint ver_centr_start = cvPoint(width/2,height);
         CvPoint ver_centr_end = cvPoint(width/2,0);
 
-<<<<<<< HEAD
-// You should start your work in this method.
-//Sara Johansson
-    void LaneDetector::processImage() {
 
-        //changing the image
-        const int low_threshold  = 50;
-        const int high_threshold = 150;
-        IplImage* grayImg;
-        IplImage* cannyImg;
-
-        grayImg = cvCreateImage( cvSize(m_image->width, m_image->height), IPL_DEPTH_8U, 1 );
-        cvCvtColor( m_image, grayImg, CV_RGB2GRAY );//makes the image grey
-        cannyImg = cvCreateImage(cvGetSize(m_image), IPL_DEPTH_8U, 1);
-
-        cvCanny(grayImg, cannyImg, low_threshold, high_threshold, 3);//does canny edge detection on image
-        cvCvtColor( cannyImg, m_image, CV_GRAY2RGB );
-
-        cvReleaseImage(&grayImg);
-        cvReleaseImage(&cannyImg);
-
-   //variables
-
-      int width = m_image -> width;
-      int height = m_image -> height;
-    cout << "width"<< width<<endl;
-      int move  = m_image ->widthStep;
-
-        unsigned char* image = (unsigned char*)m_image->imageData;
-        int sample_right = 60; // define near vision
-    int right_2 = 200;
-    int left_2 = 200;
-    int sample_left1 = 60; // define further vision
-    int sample_left2 = 100;
-    int sample_left3 = 140;
-    int sample_left4 = 180;
-        //desired_right determines where we want the car to be positioned when going straight.
-    int desired_right = 130;//244; //220
-    int desired_left = 174;
-    int desired_left2 = 206;
-    int desired_left3 = 168;
-    int desired_left4 = 131;
-
-    // start points x and y variables for the lines
-    cv::Point pt1; //right_sample_start
-    pt1.x=width/2;
-    pt1.y= height -60;
-
-    cv::Point pt3; //left_sample_start1
-    pt3.x=width/2;
-    pt3.y=height -60;
-
-    cv::Point pt5; //left_sample_start2
-    pt5.x=width/2;
-    pt5.y=height -100;
-
-    cv::Point pt7; //left_sample_start3
-    pt7.x=width/2;
-    pt7.y=height -140;
-
-    cv::Point pt9; //left_sample_start3
-    pt9.x=width/2;
-    pt9.y=height -180;
-
-    cv::Point pt11; //left_sample_start3
-    pt11.x=width/2;
-    pt11.y=height -200;
-
-        cv::Point pt13;
-        pt13.x=width/2;
-        pt13.y=height - 200;
-
-
-
-    CvScalar blue = CV_RGB(0,0,250);
-        int thickness = 1;
-        int connectivity = 8;
-
-        CvPoint ver_centr_start = cvPoint(width/2,height);
-        CvPoint ver_centr_end = cvPoint(width/2,0);
-
-
-=======
-
->>>>>>> 160a44c66121da2f060ee5b5cd81febc2f0ec8ff
 
         //TODO: Start here.
 
@@ -309,19 +220,11 @@ namespace msv {
         }
 
 //Simon
-<<<<<<< HEAD
-//This line is created to detect and acknowledge an intersection
-        int right_i = 0;
-        int left_i = 0;
-        while((image + move * (height- right_2 + 2)) [(width/2+right_i)*3]==0 && right_i < width/2 ){ right_i ++;}
-        while((image + move * (height- left_2 + 2)) [(width/2+left_i)*3]==0 && left_i < width/2 ){ left_i --;} 
-=======
 //These lines are created to detect and acknowledge an intersection
         int right_i = 0;
         int left_i = 0;
         while((image + move * (height- right_2 + 2)) [(width/2+right_i)*3]==0 && right_i < width/2 ){ right_i ++;}
         while((image + move * (height- left_2 + 2)) [(width/2+left_i)*3]==0 && left_i < width/2 ){ left_i --;}
->>>>>>> 160a44c66121da2f060ee5b5cd81febc2f0ec8ff
         cv::Point pt12;//rightinter end
         pt12.x=width/2 +right_i;
         pt12.y=height-200;
@@ -334,30 +237,6 @@ namespace msv {
 
 
 //Sara Johansson
-<<<<<<< HEAD
-      cout << "right:"<< right<<endl;
-      cout << "left:"<< left<<endl;
-      // all the endpoints x and y variables of the lines
-    cv::Point pt2;//right end
-    pt2.x=width/2+right;
-    pt2.y=height -60;
-
-    cv::Point pt4;//left1 end
-    pt4.x=width/2 +left;
-    pt4.y=height-60;
-
-    cv::Point pt6;//left2 end
-    pt6.x=width/2 +left2;
-    pt6.y=height-100;
-
-    cv::Point pt8;//left3 end
-    pt8.x=width/2 +left3;
-    pt8.y=height-140;
-
-    cv::Point pt10;//left3 end
-    pt10.x=width/2 +left4;
-    pt10.y=height-180;
-=======
 	  	cout << "right:"<< right<<endl;
 	  	cout << "left:"<< left<<endl;
 	  	// all the endpoints x and y variables of the lines
@@ -380,7 +259,6 @@ namespace msv {
 		cv::Point pt10;//left3 end
 		pt10.x=width/2 +left4;
 		pt10.y=height-180;
->>>>>>> 160a44c66121da2f060ee5b5cd81febc2f0ec8ff
 
 
 
@@ -430,15 +308,9 @@ namespace msv {
 //Simon
         if(right >= 320) { angle = 0;}
 
-<<<<<<< HEAD
-        if(((left_i <=-320 && left4 <=-320 && left3 <= -320) || (right_i >=320)) && (right > 200 && right < 300) ){angle = 500;}
-
-        if((left<=-320 && left2<=-320 && left3<=-320 && left4 <=-320 && right >=320)&&(right_i >=320 || left_i <= -320)){angle = 1000;}
-=======
         if(((left_i <=-320 && left4 <=-320) || (right_i >=320) )&&((right > 200 && right < 300) || (left2 < -200 && left2 > -300) )){angle = 500;}
 
         if((left<=-320 && left2<=-320 && left3<=-320 && left4 <=-320)&&(right_i >=320 || left_i <= -320)){angle = 1000;}
->>>>>>> 160a44c66121da2f060ee5b5cd81febc2f0ec8ff
 
         angle = angle * 0.20491803278;
         cout << "angle"<< angle<<endl;
@@ -463,25 +335,15 @@ namespace msv {
 /*
         // Lane-detector can also directly read the data from file. This might be interesting to inspect the algorithm step-wisely.
         core::io::URL url("file://recorder.rec");
-
         // Size of the memory buffer.
         const uint32_t MEMORY_SEGMENT_SIZE = kv.getValue<uint32_t>("global.buffer.memorySegmentSize");
-
         // Number of memory segments.
         const uint32_t NUMBER_OF_SEGMENTS = kv.getValue<uint32_t>("global.buffer.numberOfMemorySegments");
-
         // If AUTO_REWIND is true, the file will be played endlessly.
         const bool AUTO_REWIND = true;
-
         player = new Player(url, AUTO_REWIND, MEMORY_SEGMENT_SIZE, NUMBER_OF_SEGMENTS);
 */
 
-<<<<<<< HEAD
-
-      while (getModuleState() == ModuleState::RUNNING) {
-        bool has_next_frame = false;
-=======
->>>>>>> 160a44c66121da2f060ee5b5cd81febc2f0ec8ff
 
 	    while (getModuleState() == ModuleState::RUNNING) {
 		    bool has_next_frame = false;
@@ -493,13 +355,8 @@ namespace msv {
                 c = player->getNextContainerToBeSent();
             }
             else {
-<<<<<<< HEAD
-            // Get the most recent available container for a SHARED_IMAGE.
-            c = getKeyValueDataStore().get(Container::SHARED_IMAGE);
-=======
 		        // Get the most recent available container for a SHARED_IMAGE.
 		        c = getKeyValueDataStore().get(Container::SHARED_IMAGE);
->>>>>>> 160a44c66121da2f060ee5b5cd81febc2f0ec8ff
             }
 
 		    if (c.getDataType() == Container::SHARED_IMAGE) {
