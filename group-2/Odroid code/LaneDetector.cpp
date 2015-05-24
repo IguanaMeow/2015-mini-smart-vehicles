@@ -231,9 +231,13 @@ namespace msv {
             
             
         }
+        
+        
         SteeringData sd;
         //cerr << rightDistance<< " Right distance 2"<<endl;
         sd.setDistanceToRight(rightDistance);
+        
+        //check the distance to the right and goes in the right if-statement and set the SteeringData for the driver
         if(rightDistance > 132.5  && rightDistance < 187.5){
             sd.setDriveStraight(1);
             s1 = true;
@@ -269,7 +273,7 @@ namespace msv {
             l1 = false;
             hr1 = true;
             hl1 = false;
-        }else if (rightDistance > 319.5){
+        }else if (rightDistance > 319.5){// if not find a stop on the line to the right, if the previous was TurnHarderLeft or TurnHarderRight continue, else drive straight.
               if (hr1 == true){
                   sd.setTurnHarderRight(1);
               }

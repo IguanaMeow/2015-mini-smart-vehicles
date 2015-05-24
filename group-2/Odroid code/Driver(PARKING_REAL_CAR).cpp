@@ -42,6 +42,9 @@
 
 #include "Driver.h"
 
+
+//CODE WRITTEN BY JOHAN HERMANSSON, JONATHAN KLEMETZ, LUDWIG BJÖRK
+
 int count2 = 0;
 int parkmode = 1;
 int reverse2 = 0;
@@ -56,6 +59,8 @@ char * data;
 int mode;
 int loop = 10;
 
+//LUDWIG
+//making the data that will be sent to the odroid
 char * sendingData(int steering, int speed){
     
     if(speed > 0){
@@ -85,6 +90,8 @@ char * sendingData(int steering, int speed){
     return retVal;
 }
 
+//LUDWIG
+////Sends data to shared memory on the odroid
 void writeToMem(int steering, int speed){
     
     char * sendData = (char*)malloc(8);
@@ -173,6 +180,9 @@ namespace msv {
             Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_1);
             SteeringData sd = containerSteeringData.getData<SteeringData> ();
 
+            //EMIL SUNDKLEV, JOHAN HERMANSSON
+            
+            //Get the data from the sensors that we are using
             double sen3 = sbd.getValueForKey_MapOfDistances(2);
             double sen5 = sbd.getValueForKey_MapOfDistances(4);
 
@@ -182,15 +192,15 @@ namespace msv {
             }
 
 	    switch(parkmode){
-                case 1:
-		    if (sen3 < 35 && count2 > 34) {
-			parkmode = 2;
+                case 1://tries to find a empty parking-spot
+		    if (sen3 < 35 && count2 > 34) { //when a new object is found after the empty spot
+			parkmode = 2;//goes to the next case.
 			count2 = 0;
 		    }
-                    else if (sen3 < 35) {
+                    else if (sen3 < 35) {//if anything is detected on the right reset the counter
                         count2 = 0;
                     }
-                    else if (sen3 > 35) {
+                    else if (sen3 > 35) {//if nothing is detected increment the counter
                         count2++;
                     }
 		    writeToMem(50,1);
@@ -198,66 +208,66 @@ namespace msv {
 		    cerr << "Count  " << count2  << endl;
 		    cerr << "Parking  " << parkmode  << endl;
                     break;
-                case 2:
+                case 2://moves forward 5 frames.
                     if (count2 < 5) {
                         count2++;
                     }
                     else {
                         count2 = 0;
-                        parkmode = 3;
+                        parkmode = 3;//goes to the next case.
                     }
 		    writeToMem(50,1);
 		    cerr << "Parking  " << parkmode  << endl;
                     break;
-		case 3:
+		case 3://start the reverse takes 1 second(30 frames) for extra safty
 		    if (count2 < 30) {
                         count2++;
                     }
                     else {
                         count2 = 0;
-                        parkmode = 4;
+                        parkmode = 4;//goes to the next case.
                     }
 		    writeToMem(50,-1);
                     cerr << "Parking  " << parkmode  << endl;
                     break;
-		case 4:
+		case 4://reverse full right 50 frames
                     if (count2 < 50) {
                         count2++;
                     }
                     else {
                         count2 = 0;
-                        parkmode = 5;
+                        parkmode = 5;//goes to the next case.
                     }
                     writeToMem(80,-1);
                     cerr << "Parking  " << parkmode  << endl;
                     break;
-		case 5:
+		case 5://reverse straight 18 frames
                     if (count2 < 18) {
                         count2++;
                     }
                     else {
                         count2 = 0;
-                        parkmode = 6;
+                        parkmode = 6;//goes to the next case.
                     }
                     writeToMem(50,-1);
                     cerr << "Parking  " << parkmode  << endl;
                     break;
-		case 6:
+		case 6://reverse full left 50 frames or until the back-sensor detects any object less than 20 centimeter from the car.
 		    if (count2 < 50) {
                         count2++;
                     }
                     else if (sen5 < 20) {
                         count2 = 0;
-                        parkmode = 7;
+                        parkmode = 7;//goes to the next case.
                     }
 		    else {
 			count2 = 0;
-                        parkmode = 7;
+                        parkmode = 7;//goes to the next case.
                     }
                     writeToMem(20,-1);
                     cerr << "Parking  " << parkmode  << endl;
                     break;
-		case 7:
+		case 7://stand still parking done.
 		    writeToMem(50,0);
 		    cerr << "Parking  " << parkmode  << endl;
 		    break;

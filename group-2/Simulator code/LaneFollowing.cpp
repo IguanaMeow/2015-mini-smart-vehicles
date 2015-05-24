@@ -39,6 +39,7 @@ bool s1 = false;
 bool hr1 = false;
 bool hl1 = false;
 
+//code by Magnus Johansson; function just draws a line between two Points
 void DrawLine( cv::Mat img, cv::Point start, cv::Point end, cv::Scalar color)
 {
     int thickness = 2;
@@ -149,6 +150,9 @@ namespace msv {
     // You should start your work in this method.
     void LaneDetector::processImage() {
         // Here, you see an example of how to send the data structure SteeringData to the ContainerConference. This data structure will be received by all running components. In our example, it will be processed by Driver. To change this data structure, have a look at Data.odvd in the root folder of this source.
+        
+        
+        
         SteeringData sd;
         sd.setExampleData(1234.56);
         
@@ -211,12 +215,13 @@ namespace msv {
             cvWaitKey(10);
         }
         
-
-        
-        
+        //From this point on, Jonathan Klemetz and Johan Hermansson, started implementing the logic
+        //that had been planned for the lane following algorithm.
 
         sd.setDistanceToStop(distanceToStop);
         sd.setDistanceToRight(distance);
+        
+        //check the distance to the right and goes in the right if-statement and set the SteeringData for the driver
         if(distance > -231 && distance < -219){
             sd.setDriveStraight(1);
             s1 = true;
@@ -252,7 +257,7 @@ namespace msv {
             l1 = false;
             hr1 = true;
             hl1 = false;
-        }else if (distance < -319){
+        }else if (distance < -319){// if not find a stop on the line to the right, if the previous was TurnHarderLeft or TurnHarderRight continue, else drive straight.
             if (hr1 == true){
                 sd.setTurnHarderRight(1);
             }
@@ -262,7 +267,7 @@ namespace msv {
             else {
                 sd.setDriveStraight(1);
             }
-        }
+        }//if a intersection is found set StopAtIntersect to true
         if (distanceToStop > -50 && sd.getTurnHarderLeft() != true && sd.getTurnHarderRight() != true){
             sd.setStopAtIntersect(1);
             sd.setDriveStraight(0);        }

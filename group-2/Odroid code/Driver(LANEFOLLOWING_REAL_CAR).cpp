@@ -42,6 +42,8 @@
 
 #include "Driver.h"
 
+//CODE WRITTEN BY JOHAN HERMANSSON, JONATHAN KLEMETZ, LUDWIG BJÖRK
+
 int count2 = 0;
 int parkmode = 1;
 int reverse2 = 0;
@@ -56,6 +58,8 @@ char * data;
 int mode;
 int loop = 10;
 
+//LUDWIG
+//making the data that will be sent to the odroid
 char * sendingData(int steering, int speed){
     
     if(speed > 0){
@@ -85,6 +89,8 @@ char * sendingData(int steering, int speed){
     return retVal;
 }
 
+//LUDWIG
+////Sends data to shared memory on the odroid
 void writeToMem(int steering, int speed){
     
     char * sendData = (char*)malloc(8);
