@@ -57,8 +57,15 @@ namespace msv {
 
         // This method will do the main data processing job.
         ModuleState::MODULE_EXITCODE Driver::body() {
-
+                double initialTraveledPath;
+                KeyValueConfiguration kv = getKeyValueConfiguration();
+                double carLength = kv.getValue<double> ("global.carLength");
 	        while (getModuleState() == ModuleState::RUNNING) {
+
+                // Get most recent vehicle data:
+                Container containerVehicleData = getKeyValueDataStore().get(Container::VEHICLEDATA);
+                VehicleData vd = containerVehicleData.getData<VehicleData> ();
+                cerr << "Most recent vehicle data: '" << vd.toString() << "'" << endl;
 
                 // Get most recent sensor board data:
                 Container containerSensorBoardData = getKeyValueDataStore().get(Container::USER_DATA_0);
@@ -70,11 +77,16 @@ namespace msv {
                 SteeringData sd = containerSteeringData.getData<SteeringData> ();
                 cerr << "Most recent steering data: '" << sd.toString() << "'" << endl;
 
+                // Create vehicle control data.
+                VehicleControl vc;
+
                 // Design your control algorithm here depending on the input data from above.
                 switch(state) {
                 case 1:
                         cout << "state 1" << endl;
-                        sd.setSpeedData(SPEED);
+                        //vc.setSteeringWheelAngle(sd.getHeadingData());
+                        vc.setSpeed(SPEED);
+                        vc.setSteeringWheelAngle(sd.getHeadingData());
 
                         if (sd.getIntersectionLine() > 0) {
                                 state = 2;
@@ -83,35 +95,31 @@ namespace msv {
                 case 2:
                         cout << "state 2" << endl;
                         
-                        sd.setSpeedData(0);
+                        vc.setSpeed(0);
+                        
                         counter++;
                         
                         if (counter > 90 /*&& !isObject()*/) {
                                 counter = 0;
+                                initialTraveledPath = vd.getAbsTraveledPath();    
                                 state = 3;
                         }
                         break;
                 case 3:
                         cout << "state 3" << endl;
-                        sd.setSpeedData(SPEED);
-                        if (sd.getIntersectionLine() < 1) {
+                        
+                        vc.setSteeringWheelAngle(0.0);
+                        vc.setSpeed(SPEED);
+                        //sd.setSpeedData(SPEED);
+                        
+
+                        if ((vd.getAbsTraveledPath()-initialTraveledPath) >= carLength * 2 ) {
                                 sd.setIntersectionLine(0);
                                 state = 1;
                         }
                         break;
                 }
-
-
-                // Create vehicle control data.
-                VehicleControl vc;
-
-                // With setSpeed you can set a desired speed for the vehicle in the range of -2.0 (backwards) .. 0 (stop) .. +2.0 (forwards)
-                vc.setSpeed(sd.getSpeedData());
-
-                // With setSteeringWheelAngle, you can steer in the range of -26 (left) .. 0 (straight) .. +25 (right)
-                //double desiredSteeringWheelAngle = 4; // 4 degree but SteeringWheelAngle expects the angle in radians!
-                vc.setSteeringWheelAngle(sd.getHeadingData());
-
+                
                 // You can also turn on or off various lights:
                 vc.setBrakeLights(false);
                 vc.setLeftFlashingLights(false);

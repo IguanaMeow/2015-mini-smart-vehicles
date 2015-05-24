@@ -348,7 +348,10 @@
         }
         upline1.setYPos(measureDistance(upline1.getXPos(), 2, m_image));
         upline2.setYPos(measureDistance(upline2.getXPos(), 2, m_image));
-        
+
+        cout<< " distance upline1 is:" << upline1.getYPos() <<endl;
+        cout<< " distance upline2 is:" << upline2.getYPos() <<endl;
+       
 
         //calculate critical distance for each line once
         if (critCounter < 20) {
@@ -501,6 +504,7 @@
                         alphaX = translatePoint(((int)tempListLeft[i].getYPos()), alphaX);
                     }
                     ptEnd.x = alphaX+x/2;
+                    ptEnd.y =y-tempListLeft[i].getYPos();
                     line(newImage, ptBegin, ptEnd, cvScalar(255, 100, 0), 2, 8);
                     if(alphaX == 0 ){
                         array[i] = 0.0;
@@ -610,17 +614,23 @@
         }
     // Scans for upper full-white line
         else {
-            for(i = 0; i< y-1; ++i){
-                int r = data[step*(y-1)+ yPos*channel + 0 -i*step];
-                int g = data[step*(y-1)+ yPos*channel + 1 -i*step];
-                int b = data[step*(y-1)+ yPos*channel + 2 -i*step];
+        	            
+        	int startPoint = round (rightList[0].getYPos());
+            for(i =0; i< y-startPoint; ++i){
+                int r = data[step*(y-startPoint)+ yPos*channel + 0 -i*step];
+                int g = data[step*(y-startPoint)+ yPos*channel + 1 -i*step];
+                int b = data[step*(y-startPoint)+ yPos*channel + 2 -i*step];
 
                 if (r == 255 && g == 255 && b == 255){
-                    ptUp.y = y-i;
+                    ptUp.y = y-i-startPoint;
                     break;
                 }
             }
-            ptDown.y -= rightList[0].getYPos();
+            i+=startPoint;
+
+            cout<< "i is " <<i <<endl;
+            ptDown.y -= round (rightList[0].getYPos());
+            cout<< "ptUp.y is " << ptUp.y <<endl;
             line(newImage, ptDown, ptUp, cvScalar(0,184,245), 1, 8);
         }
         return i;
