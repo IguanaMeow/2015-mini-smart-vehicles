@@ -117,7 +117,7 @@ namespace msv {
                 double IR_FR = sbd.getValueForKey_MapOfDistances(0);    //ir front right
                 double IR_R = sbd.getValueForKey_MapOfDistances(1);   //ir rear rear
                 double IR_RR = sbd.getValueForKey_MapOfDistances(2);    //ir rear right
-                //double US_FC = sbd.getValueForKey_MapOfDistances(3);  //ultra sonic front cener
+                double US_FC = sbd.getValueForKey_MapOfDistances(3);  //ultra sonic front cener
                 //double US_FR = sbd.getValueForKey_MapOfDistances(4);    //ultra sonic front right
                 double US_RR = sbd.getValueForKey_MapOfDistances(5);    //ultra sonic rear right
 
@@ -162,8 +162,8 @@ namespace msv {
                 // speed to 1 and lanefollowing when parking1(state) is equal 0
                 if (parking1 ==0){    
                     vc.setSpeed(1.0);
-                    desiredSteeringWheelAngle = sd.getExampleData();
-                vc.setSteeringWheelAngle(desiredSteeringWheelAngle); // lane following
+                  //  desiredSteeringWheelAngle = sd.getExampleData();
+                  // vc.setSteeringWheelAngle(desiredSteeringWheelAngle); // lane following
                 } if(IR_RR<0 && state==0){                //state is 1 when is_rr is bigger than 0
                     gapStart = vd.getAbsTraveledPath();    //start calculating the traveled path
                     state=1;
@@ -174,17 +174,18 @@ namespace msv {
                   if(gapSum > xd && xd > parkspace && trigger ==0 ){       // if travel path gapSum is bigger than xd path and if xd path
                     vc.setSpeed(0.0);
                     state =2;
-                } if(state ==2 && US_RR>0 && trigger ==0){                                     
+                } if(state ==2 && US_RR>0 && trigger ==0){                                     //in state 3,
                     vc.setSpeed(1.0);
                     counter++;
-                } if(state ==2 && US_RR<0 && IR_FR <0 && trigger ==0){                                   
+                } if(state ==2 && (US_RR<0 || US_RR >7) && IR_FR <0 && trigger ==0 ){                                     //in state 3,
                     vc.setSpeed(0.0);
                     counter=143;
                     state=3;
-                } if(state ==2 && US_RR<0 && IR_RR >0 && IR_FR >0  && trigger ==0){                                     
+                } if(state ==2 && (US_RR<0 || US_RR >7) && IR_RR >0 && IR_FR >0  && trigger ==0){                                     //in state 3,
                     vc.setSpeed(0.0);
-                    parking1=1; 
+                    parking1=1; // the speed on state 0 will be of
                     counter=158;
+                    trigger=2;
                     state=4;
                 } if(state ==3 && counter > 140 && trigger<2){      
                     trigger=1;
@@ -195,26 +196,27 @@ namespace msv {
                     parking1=1;
                     trigger=2;
                     state=4;
-                } if(state ==4 && counter >150 && trigger ==2){                                     
-                    vc.setSteeringWheelAngle(26);              
+                } if(state ==4 && counter >150 && trigger ==2){                                     //in state 3,
+                    vc.setSteeringWheelAngle(26);              //the car wheels turn max to the right,
                     vc.setSpeed(-0.5);
                     trajCounter++;
                 } if(state ==4  &&  (trajCounter/100)  >= aaqq && trigger ==2){
                     vc.setSteeringWheelAngle(-26);
                     vc.setSpeed(-0.4);
                 } if(state == 4 && (IR_R > 0.9 && IR_R <=1.9) && trigger == 2){
-                    trigger =3; // increase trigger to not go back to state less then 5
+                    trigger =3; // increase triggerger to not go back to state less then 5
                     vc. setSpeed(0.0);
                     state =5;
-                } if(state == 5 && vd.getHeading() >= 0.09 && trigger==3){
+                } if(state == 5 && vd.getHeading() >= 0.09 && trigger==3 && (US_FC > 1.6 || US_FC <0)){
                     vc.setSteeringWheelAngle(27 );
                     vc.setSpeed(0.2);   
-                } else if (state==5 &&   vd.getHeading() <= -0.09 && trigger==3) {
+                } else if (state==5 &&   vd.getHeading() <= -0.09 && trigger==3 && (US_FC > 1.6 || US_FC <0)) {
                     vc.setSteeringWheelAngle(-27 );
                     vc.setSpeed(0.2);
-                } else if(state == 5 && trigger==3  &&  IR_R <0){
-                    vc.setSpeed(-0.2);                       
-                } else if(state == 5 && trigger==3 && (IR_R > 1.5 && IR_R <=1.9)){
+                } else if(state == 5 && trigger>2  &&  (IR_R <0 || IR_R>1.7)){
+                    vc.setSpeed(-0.2);
+                    trigger=4;                       
+                } else if(state == 5 && trigger==4 && (IR_R > 1.5 && IR_R <=1.9)){
                     vc.setSpeed(0);
                 }
              
@@ -222,7 +224,6 @@ namespace msv {
                 std::cout << "Parking Space "<< parkspace << std::endl;
                 std::cout << "Heading "<< vd.getHeading() << std::endl;
                 std::cout << "STATE "<< state << std::endl;
-              
            
 
                 // You can also turn on or off various lights:
