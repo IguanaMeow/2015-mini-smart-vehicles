@@ -72,11 +72,11 @@ void setup()
   and send it to HLB
 */
 void loop() {
-  //delay(10);
+  delay(10);
   esc.writeMicroseconds(throttle);
   servo.write(angle);
-  delay(5);
-  
+  delay(10);
+  /*
   // US
   US_FR_Int = getUS(US_Front);    // 12;
   US_FC_Int = getUS(US_Front_R);  // 11;
@@ -130,6 +130,7 @@ void loop() {
     IR_BR_Str = String(IR_BR_Int);    
   }
   */
+  /*
   if (IR_Back_Int >= 100) {             
     IR_Back_Int = 99;                   
     IR_Back_Str = String(IR_Back_Int);    
@@ -156,7 +157,7 @@ void loop() {
   //delay(10);
   //Checksum
   CSum_Int = US_FR_Int + US_FC_Int + IR_FR_Int + IR_Back_Int + WE_Int; 
-   // + IR_Back_Int;
+   // + IR_Back_Int + WE_Int;
   if (CSum_Int < 10 && CSum_Int > 0) { 
     CSum_toPad = String(CSum_Int);    
     CSum_Str = "00" + CSum_toPad;    
@@ -184,12 +185,19 @@ void loop() {
   will be: <Len:CSum_Send:IR1IR2IR3US1US2WE  
   Example: <16:044:0304021520001>             
   */
+  /*
   to_Send = "<" + len_Str + ":" + CSum_Str + ":" +IR_FR_Str //+ IR_BR_Str 
     + IR_Back_Str + US_FR_Str + US_FC_Str + WE_Str + ">";   
+  */
+  String str = "<17:080:20202020000>";
+  char test[str.length()+1];
+  str.toCharArray(test, str.length()+1);
+  /*
   char byteArray[to_Send.length() + 1];
   to_Send.toCharArray(byteArray, to_Send.length()+1);
   Serial.write(byteArray);
-  //Serial.println();
+  */
+  Serial.write(test);
 }
 
 /* 
@@ -307,13 +315,7 @@ void setData() {
     }
     if (speedy < 1) {
       throttle = 1500;  
-    }
-    if (speedy == 15){
-      throttle = 1500;
-      while (speedy > 14){
-        throttle = 1420;
-    }
-  }     
+    }     
     // Markus Erlach
     // Max and min values
     if (throttle > 1620) {
