@@ -31,7 +31,7 @@ void setSpeed(char value)
       delay(10); 
       break;
       
-    case 'r':
+    case 'b':
       
       control = 280;
       throttle = map(control, 0, 1023, 1000, 2000); 
@@ -44,7 +44,6 @@ void setSpeed(char value)
       control = 580;
       throttle = map(control, 0, 1023, 1000, 2000); 
       esc.writeMicroseconds(throttle);
-      Serial.println("9");
       delay(10);  
       break;
     
@@ -103,10 +102,23 @@ void loop() {
       if (inByte == 32)
       {
          inByte = Serial.read();
-         setSpeed(inByte);
-         if(Serial.read() == 44) break;    
+         setSpeed(inByte);       
+      }
+            
+            
+      if (inByte == 144)
+      {
+         setAngle(inByte);       
       }
       
-         setAngle(inByte);
+      if (inByte == 108)
+      {
+         setAngle(inByte);       
+      }
+      
+      if (inByte == 102)
+      {
+         setAngle(inByte);       
+      }
   }
 }
