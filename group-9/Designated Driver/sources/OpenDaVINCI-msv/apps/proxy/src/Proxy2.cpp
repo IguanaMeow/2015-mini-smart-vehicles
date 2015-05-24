@@ -172,6 +172,7 @@ namespace msv {
             write(port, command, 10);
             cout << "Proxy2 wrote: "<< command << endl;
             rec = msv::readSerial();
+            decode(rec);
            
         }
         cout << "Proxy: Captured " << captureCounter << " frames." << endl;
