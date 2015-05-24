@@ -10,3 +10,5 @@
 [AutodriveSim](https://github.com/davidkron/AutodriveSim) - AutoDrive simulation using opendavinci
 
 [AndroidCar] (https://github.com/ylmzcaglar/AndroidCar) - An arduino library to control the Android Autonomous Vehicle by Team Pegasus
+
+[Netstrings](https://github.com/platisd/Netstrings) - An arduino library to encode and decode Netstrings
