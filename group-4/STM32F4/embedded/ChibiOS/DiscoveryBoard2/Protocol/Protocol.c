@@ -195,7 +195,7 @@ void prepareDataFeed(void) {
 
         getWheelEncoderData(&WC);
 
-        if (WC.speedRightWheel > 10 || WC.speedRightWheel < -10) {
+        if (WC.speedRightWheel > 8 || WC.speedRightWheel < -8) {
             setCutSpeed(1);
         } else {
             setCutSpeed(0);
@@ -236,7 +236,7 @@ void produceDataForHost_WithoutConsumption(DataT *ptrToDataForHost, int maxBuffe
     if (ptrToDataForHost != NULL && maxBufferLength > 0) {
         myData.length = 0;
 
-    	dataFeed = ONBOARD_ACCELEROMETER_FEED | INFRARED_FEED | ULTRASONIC_FEED | WHEELENCODER_FEED;
+    	dataFeed = INFRARED_FEED | ULTRASONIC_FEED | WHEELENCODER_FEED;
         prepareDataFeed();
 
         myData.payload[myData.length] = '\0';

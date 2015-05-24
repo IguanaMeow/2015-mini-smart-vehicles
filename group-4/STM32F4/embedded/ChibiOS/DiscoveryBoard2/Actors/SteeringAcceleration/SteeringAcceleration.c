@@ -115,7 +115,7 @@ static msg_t Thread_Acceleration(void *arg) {
 
     while (TRUE) {
 
-        if (last_width_CH1 >= 10) {
+        if ((last_width_CH1 >= 10 && last_width_CH1 <= 21 && last_width_CH1 != 16) && 0) {
             if (last_width_CH1 == 16) {
                 pwmEnableChannel(&PWMD3, TIM3_CHANNEL3, 1500);
             } else {
@@ -145,7 +145,7 @@ static msg_t Thread_Steering(void *arg) {
  
     while (TRUE) {
    
-        if (last_width_CH1 >= 10) {
+        if ((last_width_CH1 >= 10 && last_width_CH1 <= 21 && last_width_CH1 != 16) && 0) {
             int new_steering = CENTER_STEERING +  (((last_width_CH0 - 11) * 11.25) * 11.75);
             pwmEnableChannel(&PWMD3, TIM3_CHANNEL4, (new_steering > CENTER_STEERING) ? new_steering : CENTER_STEERING);
         } else {

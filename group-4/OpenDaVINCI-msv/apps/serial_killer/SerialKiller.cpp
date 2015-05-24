@@ -232,7 +232,7 @@ namespace msv {
                 double heading = vc.getSteeringWheelAngle() * Constants::RAD2DEG;
 
                 if(speed > 0)
-                    speed = 1600;
+                    speed = 1590;
                 else if(speed < 0)
                     speed = 1300;
                 else
