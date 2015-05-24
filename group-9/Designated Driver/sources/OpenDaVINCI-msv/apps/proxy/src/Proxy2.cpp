@@ -227,7 +227,7 @@ void port_config() {
     options.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG); 
     options.c_oflag &= ~OPOST; 
     // wait for min 0 chars and wait time min
-    options.c_cc[VMIN]  = 1;
+    options.c_cc[VMIN]  = 20;
     options.c_cc[VTIME] = 0;
     // Commit
     tcflush(port, TCIFLUSH);
@@ -244,15 +244,15 @@ string decode(string x) {
     IR1 = atoi(IR1_Str.c_str());
     string IR2_Str = x.substr(10, 2);
     IR2 = atoi(IR2_Str.c_str());
-    string IR3_Str = x.substr(12, 2);
-    IR3 = atoi(IR3_Str.c_str());
-    string US1_Str = x.substr(14, 2);
+    //string IR3_Str = x.substr(12, 2);
+    //IR3 = atoi(IR3_Str.c_str());
+    string US1_Str = x.substr(12, 2);
     US1 = atoi(US1_Str.c_str());
-    string US2_Str = x.substr(16, 2);
+    string US2_Str = x.substr(14, 2);
     US2 = atoi(US2_Str.c_str());
-    string WE_Str = x.substr(18, 3); 
+    string WE_Str = x.substr(16, 3); 
     WE = atoi(WE_Str.c_str());
-    CSUM = IR1 + IR2 + IR3 + US1 + US2 + WE;
+    CSUM = IR1 + IR2 + US1 + US2 + WE;  // Add IR3 when assembled.
     if (toCheck == CSUM) {
         cout << "Checksum matches" << endl;
         cout << "Wheel Encoder value: " << WE << endl;
