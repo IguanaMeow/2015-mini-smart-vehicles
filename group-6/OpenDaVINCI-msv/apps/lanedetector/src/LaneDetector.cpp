@@ -16,6 +16,9 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+
+//Jose & Saleh
+
 #include <iostream>
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
@@ -186,9 +189,8 @@ namespace msv {
         }
 
         Mat img, dst, cdst;
-        img = cvarrToMat(m_image, true);
+        img = cvarrToMat(m_image, true);  //The IplImage is converted to Mat
 
-       // int w = img.cols/2;
         int rows = img.rows;
         int cols = img.cols;
 
@@ -213,7 +215,7 @@ namespace msv {
         vector<Vec4i> lines;
         HoughLinesP(dst, lines, 1, CV_PI / 180, 8, 10, 10);
 
-        //Remove lines
+        //Remove lines upper lines 
         for (size_t i = lines.size(); i > 0; i--) {
 
             Vec4i l = lines[i - 1];
@@ -232,9 +234,11 @@ namespace msv {
 
         vertical_Line(cdst, p1, p2);
 
-        for (int j = p3.x; j >= 0; j--) {
+        //horizontal green_line7
+        for (int j = p3.x; j > = 0; j--) {
             int i = p3.y / 0.87;
-            // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
+           
+            // start drawing the horizental_green_Line until it detect a white color(long lane),by then stop drawing
             if (cdst.at<Vec3b>(i, j)[0] == 255 && cdst.at<Vec3b>(i, j)[1] == 255 && cdst.at<Vec3b>(i, j)[2] == 255) {
 
                 p5.x = j;
@@ -251,10 +255,11 @@ namespace msv {
 
         }
 
-
-        for (int j = p3.x; j >= 0; j--) {
+        //horizontal green_line8
+        for (int j = p3.x; j > = 0; j--) {
             int i = p3.y / 0.77;
-            // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
+            
+            // start drawing the horizental_green_Line until it detect a white color(long lane),by then stop drawing
             if (cdst.at<Vec3b>(i, j)[0] == 255 && cdst.at<Vec3b>(i, j)[1] == 255 && cdst.at<Vec3b>(i, j)[2] == 255) {
 
                 p5.x = j;
@@ -271,10 +276,11 @@ namespace msv {
 
         }
 
-        //horizental_green_Line
+        //horizental_green_Line1
         for (int j = p3.x; j < img.cols; j++) {
             int i = p3.y / 1.5;
-            // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
+            
+            // start drawing the horizental_green_Line until it detect a white color(long lane),by then stop drawing
             if (cdst.at<Vec3b>(i, j)[0] == 255 && cdst.at<Vec3b>(i, j)[1] == 255 && cdst.at<Vec3b>(i, j)[2] == 255) {
 
                 p5.x = j;
@@ -290,10 +296,11 @@ namespace msv {
             }
         }
 
-
+        //horizontal green_line2
         for (int j = p3.x; j < img.cols; j++) {
             int i = p3.y / 1.4;
-            // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
+           
+            // start drawing the horizental_green_Line until it detect a white color(long lane),by then stop drawing
             if (cdst.at<Vec3b>(i, j)[0] == 255 && cdst.at<Vec3b>(i, j)[1] == 255 && cdst.at<Vec3b>(i, j)[2] == 255) {
 
                 p5.x = j;
@@ -309,10 +316,11 @@ namespace msv {
             }
         }
 
-
+        //horizontal green_line3
         for (int j = p3.x; j < img.cols; j++) {
             int i = p3.y / 1.2;
-            // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
+            
+            // start drawing the horizental_green_Line until it detect a white color(long lane),by then stop drawing
             if (cdst.at<Vec3b>(i, j)[0] == 255 && cdst.at<Vec3b>(i, j)[1] == 255 && cdst.at<Vec3b>(i, j)[2] == 255) {
 
                 p5.x = j;
@@ -328,9 +336,11 @@ namespace msv {
             }
         }
 
+        //horizontal green_line4
         for (int j = p3.x; j < img.cols; j++) {
             int i = p3.y / 1.1;
-            // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
+            
+            // start drawing the horizental_green_Line until it detect a white color(long lane),by then stop drawing
             if (cdst.at<Vec3b>(i, j)[0] == 255 && cdst.at<Vec3b>(i, j)[1] == 255 && cdst.at<Vec3b>(i, j)[2] == 255) {
 
                 p5.x = j;
@@ -345,9 +355,11 @@ namespace msv {
             }
         }
 
+        //horizontal green_line
         for (int j = p3.x; j < img.cols; j++) {
             int i = p3.y / 0.85;
-            // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
+            
+            //start drawing the horizental_green_Line until it detect a white color(long lane),by then stop drawing
             if (cdst.at<Vec3b>(i, j)[0] == 255 && cdst.at<Vec3b>(i, j)[1] == 255 && cdst.at<Vec3b>(i, j)[2] == 255) {
 
                 p5.x = j;
@@ -362,9 +374,11 @@ namespace msv {
             }
         }
 
+        //horizontal green_medel
         for (int j = p3.x; j < img.cols; j++) {
             int i = p3.y / 0.8;
-            // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
+           
+            // start drawing the horizental_green_medel until it detect a white color(long lane),by then stop drawing
             if (cdst.at<Vec3b>(i, j)[0] == 255 && cdst.at<Vec3b>(i, j)[1] == 255 && cdst.at<Vec3b>(i, j)[2] == 255) {
                 p6.x = j;
                 p6.y = i;
@@ -382,7 +396,8 @@ namespace msv {
         //horizental_yellow_Line
         for (int j = p3.x; j < img.cols; j++) {
             int i = p3.y / 0.75;
-            // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
+           
+            // start drawing the horizental_yellow_Line until it detect a white color(long lane),by then stop drawing
             if (cdst.at<Vec3b>(i, j)[0] == 255 && cdst.at<Vec3b>(i, j)[1] == 255 && cdst.at<Vec3b>(i, j)[2] == 255) {
                 p7.x = j;
                 p7.y = i;
