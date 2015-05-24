@@ -1,12 +1,11 @@
-
-/** intersection
+/**
 * lanedetector - Sample application for detecting lane markings.
 * Copyright (C) 2012 - 2015 Christian Berger
 *
 * This program is free software; you can redistribute it and/or
 * modify it under the terms of the GNU General Public License
 * as published by the Free Software Foundation; either version 2
-* of the License, or (at your option) any later version.a
+* of the License, or (at your option) any later version.
 *
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -176,8 +175,9 @@ namespace msv {
         double count_green_medel = 0.0;
         double count_green7 = 0.0;
         double count_green8 = 0.0;
-        double count_intersection  =0.0;
-       
+        double count_intersection =0.0;
+
+
         // Example: Show the image.
         if (m_debug) {
             if (m_image != NULL) {
@@ -204,11 +204,6 @@ namespace msv {
         p3.y = rows / 1.4;
         p4.x = cols;
         p4.y = rows / 1.4;
-
-
-        p9.x = cols/1.5;    
-        p9.y = rows -22 ;
-
 
         //Edge Detection
         Canny(img, dst, 50, 200, 3);
@@ -416,9 +411,6 @@ for (int i=p9.y; i<img.rows ; i++)
         
         count_intersection++; } }
 
-
-
-
         // counter_inter
 
         p5_7(cdst, p5, p7);
@@ -445,48 +437,27 @@ for (int i=p9.y; i<img.rows ; i++)
         double critical_dist = sd_old.getDistanceData();
         ///////////////////////////////////////////////////////////////////////
 
-  int w = img.cols/2;
-// intersection
-if( count_intersection < 22 ){
-
-for (int x=0 ;x<100000;x++){
-speed= 0;
-cout<< "speed = 0"<<endl;
-
-    sd.setDistanceData(critical_dist);
-    sd.setSpeedData(0);
-    sd.setExampleData(angle);
-
-    Container c444(Container::USER_DATA_1, sd);
-    getConference().send(c444);
-
-
-}
-
-
-
-
-        			
+        int w = img.cols/2;
+        if( count_intersection < 50 ){
          
-           //    speed=8;
-        cout << "stop &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&" <<  endl;
-    
- }
-
+          for (int x=0 ;x<1000000;x++){
+             speed= 0;
+             cout<< "speed = 0"<<endl;
+         }}
 
         if((int)count_green_medel == w && (int)count_green != w && (int)count_yellow != w ){
 
-            speed = 70.0;
+            speed = 2.0;
             angle = 0;
 
             cout<<"Right side is middle lane"<<endl;
 
         } else if ((count_green / count_yellow) > 0.81 && (count_green / count_yellow) < 0.911)   {
 
-            speed = 70;
+            speed = 2;
 
             if (critical_dist < 0.1) {
-                angle = 8;
+                angle = 0;
                 critical_dist = count_green;
             } else {
                 angle = (count_green - critical_dist)/20;
@@ -495,19 +466,19 @@ cout<< "speed = 0"<<endl;
             cout << "STRAIGHT" << endl;
         } else if ((count_green / count_yellow) < 0.811 && (count_green / count_yellow) > 0.64) {
 
-            speed = 70.0;
+            speed = 2;
             angle = (count_green - critical_dist)/7;
             cout << "LEFT" << endl;
         } else if (((count_green / count_yellow) > 0.999 || (count_green3 / count_green4) > 0.999) &&
                  (count_green1 / count_green2 < 1)) {
 
 
-            speed = 80.0;
+            speed = 0.7;
             angle = 0;
             cout << "INTERSECTION" << endl;
         } else if ((count_green / count_yellow) > 0.91 && (count_green / count_yellow) < 0.999) {
 
-            speed = 85.5;
+            speed = 1;
             angle = (count_green - critical_dist)/5;
             cout << "RIGHT" << endl;
 
@@ -601,5 +572,3 @@ cout<< "speed = 0"<<endl;
 
     }
     // msv
-
-
