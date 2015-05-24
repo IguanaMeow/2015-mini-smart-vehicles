@@ -214,7 +214,8 @@ void serialEvent() {
   }
   inData[i] = '\0';
   // 12308115
-  if (isdigit(inData[0]) && isdigit(inData[1]) && i == 8) {
+  if (isdigit(inData[0]) && isdigit(inData[1]) && isdigit(inData[2])
+    && isdigit(inData[3]) && isdigit(inData[4])) {
     setData();
   }
   i = 0;
@@ -352,3 +353,4 @@ void sensor1()
   count++;
 }
    
+  
