@@ -1,4 +1,4 @@
-@arthur Fredric Eidsvik
+//arthur Fredric Eidsvik
 #include <stdio.h>
 #include <stdlib.h>
 
