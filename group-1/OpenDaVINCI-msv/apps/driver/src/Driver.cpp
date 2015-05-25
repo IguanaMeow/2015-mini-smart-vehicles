@@ -43,7 +43,7 @@ int state=0;
 int count;
 int parkingState=0;
 double desiredSteeringWheelAngle ; 
-
+int sim=1;
 bool obstacleFront=false;
 //checking turn to left 
 bool startTurningToLeft=false;
@@ -350,11 +350,21 @@ dState=1;
                     count2=0;
                 }
             }
+            
+            if(sim)
             vc.setSteeringWheelAngle(desiredSteeringWheelAngle* Constants::DEG2RAD);
+            else
+            vc.setSteeringWheelAngle(desiredSteeringWheelAngle);
+            
             if(dState==1){
                 cout<<"in intersection" << endl;
                     vc.setSpeed(0.0);
+                
+                if(sim)
                 vc.setSteeringWheelAngle(desiredSteeringWheelAngle* Constants::DEG2RAD);
+                else
+                vc.setSteeringWheelAngle(desiredSteeringWheelAngle);
+                
                 count++;
                 if(count > 200){
                         sd.setIntersectionFound(0.0);
