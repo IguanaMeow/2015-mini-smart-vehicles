@@ -93,8 +93,6 @@ namespace msv {
 			/* Measures the angle between delta X and delta Y */
 			double measureAngle(IplImage *image);
 
-			void calculateCritical(Lines& line, int dir, IplImage* image);
-
 			void setLines(IplImage* image);
 
 			 /*---Translate a given point around (nearly) the middle of the image using a slightly offset 
@@ -107,14 +105,12 @@ namespace msv {
 
             void processImage();
             bool isEmpty(std::vector<Lines>& lines);
-            bool isObject();
 
         	Lines upline1;
         	Lines upline2;
 
         	int state;
         	int counter;
-        	int critCounter;
         	int critAngleCounter;
         	int yCount;
 

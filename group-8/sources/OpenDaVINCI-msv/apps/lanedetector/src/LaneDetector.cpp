@@ -60,7 +60,6 @@
     upline2(0.0, 0.0, 0.0),
     state(1),
     counter(0),
-    critCounter(0),
     critAngleCounter(0),
     yCount(0),
 
@@ -353,21 +352,6 @@
         cout<< " distance upline2 is:" << upline2.getYPos() <<endl;
        
 
-        //calculate critical distance for each line once
-        if (critCounter < 20) {
-            for(int i = 0; i < SIZE; ++i) {
-                if (leftList[i].getCritical() < 1){
-                    calculateCritical(leftList[i], 0, m_image);
-                }
-            }
-            for(int i = 0; i < SIZE; ++i) {
-                if (rightList[i].getCritical() < 1){
-                    calculateCritical(rightList[i], 1, m_image);
-
-                }
-            }
-        }
-
         for (int i = 0; i < SIZE; ++i){
             leftList[i].setXPos(measureDistance(leftList[i].getYPos(), 0, m_image));
             rightList[i].setXPos(measureDistance(rightList[i].getYPos(), 1, m_image));
@@ -421,23 +405,6 @@
         }
     }
 
-    void LaneDetector::calculateCritical(Lines& line, int dir, IplImage* image) {
-        double result;
-        result = measureDistance(line.getYPos(), dir, image);
-
-        if(dir == 0){
-            if (result > 1) {
-                line.setCritical(result);
-                ++critCounter;
-            }
-        }
-        else{
-            if (result < (imgWidth-1)) {
-                line.setCritical(result);
-                ++critCounter;
-            }
-        }
-    }
 
     double LaneDetector::measureAngle(IplImage *image) {
         double angle = 0.00;
