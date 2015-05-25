@@ -153,7 +153,7 @@ namespace msv {
                     if(duration < 1 || (irFrontRight > -1 && irBackRight < 0) || (irFrontRight > -1 && irFrontRight < 25) || (sonarRight > 1 && sonarRight < 25)) break;
 
                     state = 6;
-                    angle = 23.5;
+                    angle = 24.0;
                     timer = time(0);
                     break;
 
