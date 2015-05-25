@@ -117,7 +117,8 @@ namespace msv {
         getConference().send(c);
     }
 
-    double front_us, fr_ir, rr_ir, fr_us, rear_ir, temp = 0; // values to pass to HLB
+    double front_us, fr_ir, rr_ir, fr_us, rear_ir;  // values to pass to HLB
+    double temp = 0;
     int wheel_encoder = 0;
     SensorBoardData sbd;
     VehicleControl vc;
@@ -152,7 +153,7 @@ namespace msv {
 
             cerr << (decodeFail ? "Decode status: failed, car stopped" : "Decode status: success") << endl;
             cerr << "fail count " << failCount << endl;
-
+    /* if data received from Arduino respond with steering angle and speed in a netstring */
         if(dataReceived && !decodeFail){
             ss << (vc.getSteeringWheelAngle() * -1);
             vcDataString = "WA=" + ss.str();
@@ -165,13 +166,15 @@ namespace msv {
             cerr << vcDataString << endl;
             dataReceived = false;
         }
+    /* if the decode has failed 10 times then stop the car */
         if(dataReceived && decodeFail){
             vcDataString = "WA=0SP=0";
             my_serial.write(encodeNetstring(vcDataString));
             dataReceived = false;
         }
 
-
+    /* if data exists in the buffer then decode it and map it to the sensorBoardData 
+       if the data tag is incorrect map 0. All distance measurements are scaled when mapped */
         if(my_serial.available()){
             string result =  my_serial.readline(50, ",");
             sensorData = decodeNetstring(result);
@@ -192,6 +195,7 @@ namespace msv {
                 wheel_encoder = extractData("WE", sensorData);
                 decodeFail = false;
             }else{
+                /* if the netstring is bad then map the previous value */
                  cerr << "bad string" << endl;
                 sbd.putTo_MapOfDistances(0, fr_ir); // IR front right
                 sbd.putTo_MapOfDistances(1, rear_ir); // IR rear
