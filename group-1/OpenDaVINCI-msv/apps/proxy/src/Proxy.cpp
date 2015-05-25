@@ -46,7 +46,7 @@
 #include "core/data/TimeStamp.h"
 #include "core/data/control/VehicleControl.h"
 #include "OpenCVCamera.h"
-
+#include "core/data/environment/VehicleData.h"
 #include "GeneratedHeaders_Data.h"
 
 #include "Proxy.h"
@@ -59,9 +59,9 @@ int valIr3;
 int valUs1;
 int valUs2;
 int valUs3;
+int valWheelE;
 
-
-
+string convertedAngle;
 
 
 int wd;
@@ -71,7 +71,7 @@ struct termios oldW;
 const char *MODEMDEVICE ;
 string readings;
 double distance;
-string userInput="6:512060,";
+string userInput="512060,";
 
 void close(int x);
 
@@ -100,8 +100,8 @@ using namespace core::data::control;
     }
 
     void Proxy::setUp() {
-    //  msv::connect("/dev/ttyACM7",1); // connect to arduino reading from
-     msv::connect("/dev/ttyACM0",2); // connect to arduino sending to
+      msv::connect("/dev/ttyACM0",1); // connect to arduino reading from
+      msv::connect("/dev/ttyACM0",2); // connect to arduino sending to
 
 
 	    // This method will be call automatically _before_ running body().
@@ -169,7 +169,8 @@ using namespace core::data::control;
     ModuleState::MODULE_EXITCODE Proxy::body() {
      
         uint32_t captureCounter = 0;
-        msv::SensorBoardData sensorBoardData;
+        SensorBoardData sensorBoardData;
+        core::data::environment::VehicleData vd;
         while (getModuleState() == ModuleState::RUNNING) {
 
             // Capture frame.
@@ -189,7 +190,9 @@ using namespace core::data::control;
             // to read data from IR/US.
 
              int angle=60;
-             int angleFromDriver= (int)vc.getSteeringWheelAngle();
+             int angleFromDriver= (int)vc.getSteeringWheelAngle(); // receive steeringaAngle from VehicleControl
+
+             //convert the angle for arduino
              if(angleFromDriver <0)
               angleFromDriver*=-1;
             else
@@ -197,85 +200,101 @@ using namespace core::data::control;
              angle+=angleFromDriver;
              stringstream ss;
               ss << angle;
-             string convertedAngle="0"+ss.str();
+              if(angle<100 && angle >10)
+             convertedAngle="0"+ss.str();
+           else if(angle <10 && angle>-1)
+            convertedAngle="00"+ss.str();
+           else
+            convertedAngle=ss.str();
           
+
+          // send different values depending on drivers speed
             if(vc.getSpeed()>0)
-              userInput="6:600"+convertedAngle+",";
+              userInput="600"+convertedAngle+",";
             else if(vc.getSpeed()<1 && vc.getSpeed()>-1)
-              userInput="6:512"+convertedAngle+",";
+              userInput="512"+convertedAngle+",";
             else if(vc.getSpeed()<-1)
-              userInput="6:200"+convertedAngle+"0,";
+              userInput="200"+convertedAngle+",";
               
               
               cout<<userInput<<endl;
-                    
 
-              msv::write(userInput);
+              if(wd!=-1 && wd!=0)
+             msv::write(userInput); // write to arduino
 
 
-      if(fd!=0){
-readings=msv::read();
+      if(fd!=-1 && fd!=0){
+
+  readings=msv::read(); // read from arduino
 	
-	
-  
   cout<< "readings are "<< readings << endl;
-
-//strcpy(test,buff);
-//  
   
-  if(readings.length()==23){
+  int length=atoi(readings.substr(0,2).c_str());
+  unsigned int finalLength=length+5; // check length
+  
+
+  //decode netstring received from arduino
+  if(readings.length()==finalLength){
     string ir1=readings.substr(3,3);
 
     valIr1=atoi(ir1.c_str());
   	
-
-
     string ir2=readings.substr(6,3);
 
     valIr2=atoi(ir2.c_str());
     
-
     string ir3=readings.substr(9,3);
 
     valIr3=atoi(ir3.c_str());
     
-
     string us1=readings.substr(12,3);
 
     valUs1=atoi(us1.c_str());
     
-
-  string us2=readings.substr(15,3);
+    string us2=readings.substr(15,3);
 
     valUs2=atoi(us2.c_str());
     
-
-
-  string us3=readings.substr(18,3);
+    string us3=readings.substr(18,3);
 
     valUs3=atoi(us3.c_str());
+
+    string wheelE=readings.substr(21,length-18);
+
+    valWheelE=atoi(wheelE.c_str());
     
 }
 
-sensorBoardData.putTo_MapOfDistances(4,valUs2);
-sensorBoardData.putTo_MapOfDistances(3,valUs1);
-sensorBoardData.putTo_MapOfDistances(1,valIr3);
-sensorBoardData.putTo_MapOfDistances(2,valIr2);
-sensorBoardData.putTo_MapOfDistances(0,valIr1);
-sensorBoardData.putTo_MapOfDistances(5,valUs3);
+  cout<<"Wheel Encoder value " << valWheelE <<endl;
 
-Container c = Container(Container::USER_DATA_0, sensorBoardData);
+//Map decoded sensor values
+  sensorBoardData.putTo_MapOfDistances(4,valUs2);
+  sensorBoardData.putTo_MapOfDistances(3,valUs3);
+  sensorBoardData.putTo_MapOfDistances(1,valIr3);
+  sensorBoardData.putTo_MapOfDistances(2,valIr2);
+  sensorBoardData.putTo_MapOfDistances(0,valIr1);
+  sensorBoardData.putTo_MapOfDistances(5,valUs1);
+  vd.setAbsTraveledPath(valWheelE);
+
+  Container Pvd=Container(Container::VEHICLEDATA, vd);
+  Container c = Container(Container::USER_DATA_0, sensorBoardData);
+  
   distribute(c);
- tcflush(fd, TCIFLUSH);
+  distribute(Pvd);
+
+  tcflush(fd, TCIFLUSH);
 }
 
+if(wd!=-1 && wd!=0)
+  tcflush(wd, TCOFLUSH);
 //usleep(2000000);
 
- }
-        msv::write("6:512060,");
-        if(wd!=0)
+ }  
+        if(wd!=-1 && wd!=0){
+        msv::write("512060,");
         msv::close(wd);
-        if(fd!=0)
+        }
+        if(fd!=-1 && fd!=0)
         msv::close(fd);
         
         cout << "Proxy: Captured " << captureCounter << " frames." << endl;
@@ -388,7 +407,7 @@ if(x==2){
   tcsetattr(fd,TCSANOW,&newtio);
 }
 if(x==2){
-  tcflush(wd, TCIFLUSH);
+  tcflush(wd, TCOFLUSH);
   tcsetattr(wd,TCSANOW,&newtio);
 }
   /*

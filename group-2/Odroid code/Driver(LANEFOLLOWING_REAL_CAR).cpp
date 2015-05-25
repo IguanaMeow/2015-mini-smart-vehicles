@@ -42,6 +42,8 @@
 
 #include "Driver.h"
 
+//CODE WRITTEN BY JOHAN HERMANSSON, JONATHAN KLEMETZ, LUDWIG BJÖRK
+
 int count2 = 0;
 int parkmode = 1;
 int reverse2 = 0;
@@ -56,6 +58,8 @@ char * data;
 int mode;
 int loop = 10;
 
+//LUDWIG
+//making the data that will be sent to the odroid
 char * sendingData(int steering, int speed){
     
     if(speed > 0){
@@ -85,6 +89,8 @@ char * sendingData(int steering, int speed){
     return retVal;
 }
 
+//LUDWIG
+////Sends data to shared memory on the odroid
 void writeToMem(int steering, int speed){
     
     char * sendData = (char*)malloc(8);
@@ -169,7 +175,9 @@ namespace msv {
             SteeringData sd = containerSteeringData.getData<SteeringData> ();
            cerr << "Most recent steering data: '" << sd.toString() << "'" << endl;
             
-            
+        // This is where we check what state lane detector has deemed appropriate for the 
+        // car to act upon. And then send how we want the car to act, into the steering board.
+        // Jonathan Klemetz, Johan Hermannson.
             loop++;
             if(loop > 98){
                 loop = 10;

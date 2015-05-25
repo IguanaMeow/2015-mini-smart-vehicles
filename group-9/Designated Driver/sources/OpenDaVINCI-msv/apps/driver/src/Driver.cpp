@@ -45,7 +45,7 @@ namespace msv {
         ModuleState::MODULE_EXITCODE Driver::body() {
             
            
-            int yourangle; // in degrees 
+            int wheel_angle; // in degrees 
             double frontRightSonic;
             double frontCenter;
             double infraRear;
@@ -62,15 +62,15 @@ namespace msv {
             int rightTurn = 0; 
             bool inRHLane = false;
             bool waiting = false;
-            double getGapsize;
-            double gapsize;
             int stage;
-            // double speed;
-            double getTraveledPath;
-            int sec = 0;
+            int counter = 0;
+            int delay = 0;
+            string laneType = "";
+            bool counting = false;
+            int timer = 0;
             int selection;
             string mode = " ";
-          // Menu here, fo
+          
           cout << "Choose your driving mode:" << endl;
           cout << "=========================" << endl;
           cout << "Key 1 for Parking" << endl;
@@ -89,9 +89,9 @@ namespace msv {
                 SensorBoardData sbd = containerSensorBoardData.getData<SensorBoardData> ();
                 cerr << "Most recent sensor board data: '" << sbd.toString() << "'" << endl;
                 // 3. Get most recent user button data:
-                Container containerUserButtonData = getKeyValueDataStore().get(Container::USER_BUTTON);
+               /* Container containerUserButtonData = getKeyValueDataStore().get(Container::USER_BUTTON);
                 UserButtonData ubd = containerUserButtonData.getData<UserButtonData> ();
-                cerr << "Most recent user button data: '" << ubd.toString() << "'" << endl;
+                cerr << "Most recent user button data: '" << ubd.toString() << "'" << endl;*/
                 // 4. Get most recent steering data as fill from lanedetector for example:
                 Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_1);
                 SteeringData sd = containerSteeringData.getData<SteeringData> ();
@@ -101,296 +101,257 @@ namespace msv {
                 // Design your control algorithm here depending on the input data from above.
                 // Create vehicle control data.
                 VehicleControl vc;
-                TimeStamp ts;
+              
         
                 // With setSpeed you can set a desired speed for the vehicle in the range of -2.0 (backwards) .. 0 (stop) .. +2.0 (forwards)
-                vc.setSpeed(0.8);
+               vc.setSpeed(0.7);
                
-                yourangle = sd.getExampleData(); // in degrees 
+                wheel_angle = sd.getExampleData(); // in degrees 
+                cerr << "wheel_angle " << wheel_angle << endl;
+                cerr << "counter " << counter << endl;
+                cerr << "delay " << delay << endl;
+                cerr << "lane type " << laneType << endl;
                 frontRightSonic = sbd.getValueForKey_MapOfDistances(4);
                 infraRear = sbd.getValueForKey_MapOfDistances(1);
                 frontCenter = sbd.getValueForKey_MapOfDistances(3);
                 infraRightRear = sbd.getValueForKey_MapOfDistances(2);
                 infraRightFront = sbd.getValueForKey_MapOfDistances(0);
-                
+                cerr << "speed " << vd.getSpeed() << endl;
                 if(normalDriving){
-                    
-                    if(yourangle <100 ){
-                        cerr <<" lane following" <<endl;
-                        steerAngle = yourangle;
-                        sec = 0;
+                    // follows lane unless angle is greater than 102, sees an intersection at 204
+                    if(wheel_angle <100 ){
+                        cerr <<" lane following" << endl;
+                        vc.setSpeed(0.8);
+                        steerAngle = wheel_angle;
+                        timer = 0;
                     }
 
-                    if(yourangle >=102 ){
+                   if(wheel_angle >=102){
                         vc.setSpeed(0.5);
                         steerAngle = 0;
                     }
 
-                    if(yourangle >= 204){
-                       
+                    if(wheel_angle >= 204 && !obstacle){
                         intersectionFound = true;
                         normalDriving = false;
-                        vc.setSpeed(0.0);
                         steerAngle = 0;
+                    }      
+                }  
+        /***** intersection code ********/     
+                if(intersectionFound && !obstacle){ 
+                    
+                    if(timer < 100){ // delays car on stopping at intersection
+                        cerr <<"intersection found, timer = " << timer <<endl;
+                        vc.setSpeed(0.0);
+                        waiting = true;
+                        timer ++;
                     }
-                }
-                if(intersectionFound){
-                    
-                
-                        cerr <<"intersection found, sec = " << sec <<endl;
-                        if( sec < 100){
-                            vc.setSpeed(0.0);
-                            waiting = true;
-                            sec ++;
-                        }
-                        else {
-                            waiting = false;
-                        }
-                        
-                    
+                    else{
+                        waiting = false;
+                    }
+                     // if intersection clear and delay completed cross   
                     if(!waiting && intersectionFound && (frontRightSonic < 0 || frontRightSonic > 10)
                      && (frontCenter < 0 || frontCenter > 10) ){
                         vc.setSpeed(1);
                         intersectionFound = false;
-                        normalDriving = true;
-                        
+                        normalDriving = true;    
+                    }  
                 }
-                    
-                   
-               } 
-                if(selection != 1){
-                if((yourangle < -2 || yourangle > 2) && !obstacle){
-                    rightTurn = 15; 
-                    distToObstacle = 6;
-                    cerr <<"poopcurve" <<endl;
-                }
-                if((yourangle >-1 && yourangle <1) && !obstacle){
-                    rightTurn = 23;
-                    distToObstacle = 7;
-                    cerr <<"straight road" <<endl;
-                }
-                //overtaking. Using states
+                // set options for straight or curve
+                if(selection != 1 && !intersectionFound){
+                    if((wheel_angle < -8 || wheel_angle > 8) && !obstacle){
+                        vc.setSpeed(0.6);
+                        rightTurn = 21; 
+                        distToObstacle = 6;
+                        laneType = "curve";
+                    }
+                    if((wheel_angle > -8 && wheel_angle < 8) && !obstacle){
+                        vc.setSpeed(0.6);
+                        rightTurn = 25;
+                        distToObstacle = 6;
+                        laneType = "straight";
+                    }
+               
+                /****** overtaking mode *********/
                 // Detects an obstacle and takes a left. Overtaking starts and becomes true. 
-                // No longer using lane detection. 
-                if(frontCenter < distToObstacle && frontCenter > 0 && !obstacle){
-                    cerr <<"obstacle found" <<endl;
-                    vc.setSpeed(0.5);
-                    steerAngle = -25; 
-                    obstacle = true;
-                    overtake = true;
-                    normalDriving = false;
-                    mode = "obstacle found";
+                // stops lane detection. 
+                    if(frontCenter < distToObstacle && frontCenter > 0 && !obstacle){
+                        vc.setSpeed(0.7);
+                        steerAngle = -25; 
+                        obstacle = true;
+                        overtake = true;
+                        normalDriving = false;
+                        mode = "obstacle found";
+                    } 
                  
-                } 
-                // In the state where the car is in overtaking behavior, 
-                // when infraRightFront detects the corner of the obstacle and turns right.
-                //In leftlane state, leaving overtaking state
-                if(overtake && infraRightFront < 3 && infraRightFront > 0){
-                    steerAngle = rightTurn; 
-                    inLHLane = true;
-                    overtake = false;
-                    mode = "going to LHLane";
-                }
+             
+                // when infraRightRear detects the obstacle and turns right.
+                    if(overtake && infraRightRear <= 3 && infraRightRear > 0){
+                        counting = true;
+                        steerAngle = rightTurn; 
+                        inLHLane = true;
+                        mode = "going to LHLane";      
+                    }
+                    // starts a counter to measure length of turn, delay to give car time to get in
+                    // left lane
+                    if(counting && overtake){
+                        counter ++;
+                        delay ++;   
+                    }
                 // In leftlane state and infraRightRear detects obstacle,
-                // and set wheelangle to zero. 
-                // Back to rightlane 
-                if(inLHLane && infraRightRear >= 1 ){
-                    //normalDriving =true;
-                    steerAngle = 0;
-                    vc.setSpeed(1);
-                    backToRHLane = true;
-                    inLHLane = false;
-                    mode = "inLHLane";
-                   
+                
+                    if(delay >= 110 && inLHLane && infraRightRear > 0){
+                        counting = false;
+                 // if infrared sensors have almost equal values enable lane following
+                        if( infraRightRear >= (infraRightFront - 0.1) && infraRightRear <= (infraRightFront + 0.1) ){
+                            steerAngle = 0;
+                            normalDriving = true;
+                            overtake = false;
+                            backToRHLane = true;
+                            inLHLane = false;  
+                            mode = "inLHLane"; 
+                            delay = 0;
+                            }   
+                    }
+                // front right US is free from obstacles and makes a right turn.            
+                    if(backToRHLane && (frontRightSonic < 0 || frontRightSonic > 10)){
+                        normalDriving = false;
+                        steerAngle = rightTurn;
+                        mode ="going to RHLane";
+                        backToRHLane = false;
+                        inRHLane = true;
+                        counting = true;
+                    } 
+               
+                // decreases counter to 0
+                    if(counting && inRHLane){
+                        counter --; 
+                    } 
+                // if counter is 0 can turn left and follow RH lane                
+                    if(counter <= 0 && inRHLane){ 
+                        counter = 0;                  
+                        steerAngle = -25; 
+                        if(wheel_angle < 50){ // lane detection has enough data to work correctly
+                            normalDriving = true;
+                            inRHLane = false;
+                            overtake = false;
+                            obstacle = false;
+                            counting = false;
+                            counter = false;
+                            mode = "follow lanedetection";
+                        }
+                    }
                 }
-                // infraRightFront is free from obstacles and makes a right turn.            
-                if(backToRHLane && infraRightFront < 0){
-                   // normalDriving = false;
-                    steerAngle = rightTurn;
-                    mode ="going to RHLane";
-                    backToRHLane = false;
-                    inRHLane = true;
-                }
-                // Both infraRightFront and infraRightRear is clear and then the car turns back,
-                /*----should follow lane detection, it slows down so might seem to try----*/
-                //----but it does not...
-                if(inRHLane && infraRightFront < 0 && infraRightRear < 0){                   
-                    steerAngle = -25; 
-                    normalDriving = true;
-                    inRHLane = false;
-                    obstacle = false;
-                    mode = "follow lanedetection";
-                }
-                }
+
+    /************* parking mode ****** Mengjiaos part*******************/            
                 if(selection == 1){ 
                     
-                switch(stage){
-                    //stage 1 is for big gap
-                    case 1:
-                        cerr<<"case1"<<endl;
-                        normalDriving =false;
-                        cerr << vd.getAbsTraveledPath() << "travel path" << endl;
-                        cerr << gapsize << "gapsize" << endl;
-                        vc.setSpeed(1);
-                        getGapsize = vd.getAbsTraveledPath();
-                        if(frontRightSonic > 0){
-                           
-                            if(getGapsize-gapsize > 7.5){
-                                stage = 2;
-                            }
-                            cerr << "stop" << endl;
-                            cerr << gapsize << "gapsize" << endl;
-                            cerr << getGapsize << "the gap end" << endl;
-                        }
-                    break;
-                    case 2:
-                        normalDriving = false;
-                        
-                        cerr << "case2" <<endl;
-                        vc.setSpeed(1);
-                        if(frontRightSonic < 7){
-                            stage = 5;
-                        }
-                    break;
-                    //stage 3 is for small gap
-                    case 3:
+                switch(stage){ 
+                    case 1:{
                         normalDriving = false;
                         vc.setSpeed(1);
-                        cerr << "case3" << endl;
-                        if(frontRightSonic < 0){
-                            stage = 1;
+                        steerAngle = 0;
+                        cerr<<"stage 1"<<endl;
+                        if(infraRightRear<0){
+                            stage =2;
                         }
-                        if(infraRightRear < 0 &&
-                            infraRightFront < 0 &&
-                            frontRightSonic > 0){
-                            cerr << "this is a gap" << endl;
+                    }break;
+                    case 2:{
+                        normalDriving = false;
+                        vc.setSpeed(1);
+                        steerAngle = 0;
+                        cerr<<"stage 2"<<endl;
+                        if(infraRightRear>0){
+                            stage = 4;
+
+                        }
+                        //for Parking-hard situation
+                        if (infraRightRear>0&&infraRightFront<0&&frontRightSonic<0)
+                        {
+                            stage = 3;
+                        }
+                    }break;
+                    //drive a little bit more and start parking for parking-hard
+                    case 3:{
+                        normalDriving = false;
+                        vc.setSpeed(1);
+                        steerAngle = 0;
+                        cerr<<"case 3"<<endl;
+                        if (infraRightRear<0)
+                        {
                             stage = 4;
                         }
-                    break;
-                    case 4:
+                    }break;
+                    //start parking
+                    case 4:{
                         normalDriving = false;
-                        vc.setSpeed(1);
-                        cerr << "case4" << endl;
-                        if(infraRightRear > 0 &&
-                            infraRightFront > 0){
+                        vc.setSpeed(-1);
+                        steerAngle =90;
+                        cerr<<"case 4"<<endl;
+                        if(frontRightSonic<0 && infraRightFront>1.4){
                             stage = 5;
-                            cerr << "stop parking the car" << endl;
                         }
-                    break;
-                    // stage 5 is start parking
-                   
-                    case 5:
-                        normalDriving = false; 
-                        cerr << "go back" << endl;
+                    }break;
+                    case 5:{
+                        normalDriving = false;
                         vc.setSpeed(-0.5);
-                        steerAngle = 60;
-                        cerr << "case5" << endl;
-                        
-                        if(infraRear > 0){
-                   
-                            steerAngle = 50;
-                            vc.setSpeed(0.5);
-                            cerr <<"heeeeeeeeeeej" <<endl;
-                        }
-                        if(vd.getHeading() * Constants::RAD2DEG > 156){
+                        steerAngle = -120;
+                        cerr<<"case 5"<<endl;                 
+                        if(frontRightSonic>2.4&&frontCenter<0){
                             stage = 6;
                         }
-                    break;
-                    case 6:
-                        normalDriving =false;
-                     
-                        steerAngle = -60;
+                    }break;
+                    case 6:{
+                        normalDriving = false;
                         vc.setSpeed(-0.5);
-                        cerr<<"case6"<<endl;
-                        if (vd.getHeading() * Constants::RAD2DEG < 136)
-                        {
-                            stage=7;
+                        steerAngle = -130;
+                        cerr<<"case 6"<<endl;                      
+                        if(frontCenter>5||(infraRear<2&&infraRear>0)){
+                            stage = 7;
+                            // vc.setSpeed(0);
                         }
-                    break;
-                    case 7:
-                        normalDriving =false;
-                     //   yourangle = sd.getExampleData(); 
-                        steerAngle =80;
+                    }break;
+                    case 7:{
+                        normalDriving = false;
                         vc.setSpeed(0.5);
-                        cerr<<"case7"<<endl;
-                        if(vd.getHeading()*Constants::RAD2DEG < 110){
-                            stage = 8;
-                        }
-                    break;
-                    case 8:
-                        normalDriving =false;
-                        
-                     //   yourangle = sd.getExampleData(); 
-                        steerAngle = -80;
-                        vc.setSpeed(-0.5);
-                        cerr<<"case8"<<endl;
-                        
-                        if(vd.getHeading()*Constants::RAD2DEG <= 95){
+                        steerAngle = 150;
+                        cerr<<"stage 7"<<endl;
+                        if((frontCenter<2&&frontCenter>0)||
+                            (frontCenter<4&&frontCenter>0&&infraRear<0)||
+                            (frontCenter<3.5&&frontCenter>0&&infraRear>0)){
                             vc.setSpeed(0);
                         }
-                    break;
-                    case 9:
-                        normalDriving =false;
-                        
-                    //    yourangle = sd.getExampleData(); 
-                        steerAngle = 10;
-                        vc.setSpeed(0.5);
-                        cerr<<"case9"<<endl;
-                        if(vd.getHeading()*Constants::RAD2DEG <= 90){
-                            vc.setSpeed(0);
-                        }
-                    break;
-                  
-                      //  yourangle = sd.getExampleData(); 
-                   
-                  
-                    default:
-                      //  yourangle = sd.getExampleData(); 
-                        // steerAngle = 0;
-                        // vc.setSpeed()=2;
+                    }break;
+
+                    default:{
+                           
                         cerr <<"default"<<endl;
-                        getTraveledPath = vd.getAbsTraveledPath();
-                       // yourangle = sd.getExampleData(); 
                         if(normalDriving){
-                        yourangle = sd.getExampleData(); 
+                        wheel_angle = sd.getExampleData(); 
                             steerAngle = 0;
-                            vc.setSpeed(1.5);
-                            if(yourangle <100){
+                            vc.setSpeed(2);
+                            if(wheel_angle < 100){
                                 cerr <<" lane following" <<endl;
-                                steerAngle = yourangle;
-                                sec=0;
+                                steerAngle = wheel_angle;
+                                timer=0;
                             }
-                            if(yourangle >=102){
+                            if(wheel_angle >= 102){
                                 vc.setSpeed(0.5);
                             }
-                            if(yourangle >= 204){
-                                if( sec <= 100){
-                                    vc.setSpeed(0.0);
-                                    sec= sec + 1;
+                            if(wheel_angle >= 204){
+                                if( timer <= 50){
+                                    timer= timer + 1;
                                 }
                             }   
                         }
-                        if(frontRightSonic<0){
-                            normalDriving = false;
-                            gapsize = getTraveledPath;
+                        if(frontRightSonic < 0 && infraRightFront < 0){
                             stage = 1;
+                            cerr<<"found the big gap"<<endl;
                         }
-                        if(infraRightRear>0&&
-                            infraRightFront>0&&
-                            frontRightSonic <3){
-                            normalDriving=false;
-                            gapsize = getTraveledPath;
-                            stage = 3;
-                        }
-                    break; 
+                    }break; 
                 }
                  }
-                // You can also turn on or off various lights:
-                vc.setBrakeLights(false);
-                vc.setLeftFlashingLights(false);
-                vc.setRightFlashingLights(false);
-               
-
+            
                 vc.setSteeringWheelAngle(steerAngle* Constants::DEG2RAD);
                 // Create container for finally sending the data.
                 Container c(Container::VEHICLECONTROL, vc);

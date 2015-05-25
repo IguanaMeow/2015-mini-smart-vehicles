@@ -243,15 +243,15 @@ namespace msv {
         /****************************** parking control *****************************/
                 if(menuChoice == 1){
                      switch(parkingState){ // using switch-case to change state
-                            case 0: // find space for parking and right place to park (found the obstacle)
-                               //get speed data and wheelangle from the lane detector through container
-                                //speed = spd.getSpeedData();
+                            case 0: 
+                                // finding parking gap
+                               
                             speed = 1;
                                 //make sure that it is not curve, before going to the next state.
                                 state = "parking: Finding a parking gap";
                                 if((fr_us < 0 || fr_us > (car_length * 1.6)) && laneFollowAngle <= 0.02 && laneFollowAngle >= 0) parkingState = 1;
                                 break;
-                            case 1:
+                            case 1: // check the gap enough to park
                                 state = "check if parking gap is enough";
                                 doLaneFollowing = false;
                                 if((fr_us <0 || fr_us > (car_length * 0.8)) && fr_ir < 0 && rr_ir < 0){
@@ -267,7 +267,7 @@ namespace msv {
                                 } 
                                 break;
 
-                            case 2: //gap enough sate, then drive more around 2 times of the car length to find appropriate distance to park to start parking state
+                            case 2: //driving in certain distance before drive backward
 
                                 if(vd.getAbsTraveledPath() < distance_1 + (car_length * 1.9)){
                                     speed = 1;
@@ -291,10 +291,10 @@ namespace msv {
                                 }
                                 break;
 
-                            case 4: // parking state 3 (The car detect behind object or drive more 1.5 times of the car length)
+                            case 4: // parking state 3 (The car detect behind object or drive drive in certain distance without detecting obstacle behind)
                                 speed = -0.5;
                                 desiredSteeringWheelAngle = -26;
-                                //if it doesn't detect any car behind after drive 10 meters more.
+                                
                                 if(vd.getAbsTraveledPath() >= distance_3 + (car_length * 0.82) && rear_ir < 0)
                                 {
                                     state = "parking: change from state 4 to state 7";
@@ -312,7 +312,7 @@ namespace msv {
                                 speed = 0.5;
                                 desiredSteeringWheelAngle = 25;
                                 state = "parking state 5";
-                                //if IF_Rear doesn't detect any object Or fr_us not detect any object
+                                
                              if(rear_ir < 0 ||(front_us < (car_length * 0.35) && front_us > 0)){
                                     
                                     state = "parking state 5 to 6";
@@ -327,7 +327,7 @@ namespace msv {
                                 if(rear_ir <= (car_length * 0.39) && rear_ir > 0) parkingState = 7;
                                 break;
 
-                            case 7:
+                            case 7: // parking succeed
                                  state = "parking state 7";
                                 speed = 0;
                                 desiredSteeringWheelAngle = 0;

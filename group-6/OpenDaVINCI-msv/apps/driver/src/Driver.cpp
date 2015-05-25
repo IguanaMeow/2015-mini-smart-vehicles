@@ -39,10 +39,14 @@ namespace msv {
         using namespace core::data::control;
         using namespace core::data::environment;
 
-        double overtaking = 0;  // time when we started overtaking
-        bool prevFound;  // was there an object found last loop?
-        double speed = 2,
-            angle = 0;
+        bool prevNoLane = true; // was a lane found last loop?
+
+        int state = 0; // 0 = follow lane, 1-7 = overtaking phases
+
+        double timer = 0, // set to time(0) to calculate a duration
+               prevFrontRight = 0, // value for front right IR last loop
+               speed = 2, // -2 to 2
+               angle = 0; // -25 to 25
 
         Driver::Driver(const int32_t &argc, char **argv) :
           ConferenceClientModule(argc, argv, "Driver") {
@@ -64,16 +68,14 @@ namespace msv {
 
             Container containerSBD = getKeyValueDataStore().get(Container::USER_DATA_0);
             SteeringData sd = getKeyValueDataStore().get(Container::USER_DATA_1).getData<SteeringData>();
-
             SensorBoardData sbd = containerSBD.getData<SensorBoardData>();
-            double distanceFront = sbd.getValueForKey_MapOfDistances(3);
             VehicleControl vc;
 
-            // not overtaking? just follow the lane
-            if((int)overtaking == 0 && (distanceFront < 0 || distanceFront > 10)) {
-                
+            double sonarFront = sbd.getValueForKey_MapOfDistances(3);
+
+            // nothing in front sonar? just follow the lane
+            if(state == 0 && (sonarFront < 0.9 || sonarFront > 9)) {
                 angle = sd.getExampleData();
-                cout << "angle" << angle<< endl;
                 speed = sd.getSpeedData();
 
                 vc.setSpeed(speed);
@@ -81,43 +83,83 @@ namespace msv {
 
                 Container c(Container::VEHICLECONTROL, vc);
                 getConference().send(c);
+
                 continue;
             }
 
-            bool objectFound = (sbd.getValueForKey_MapOfDistances(4) > 0 &&
-                                sbd.getValueForKey_MapOfDistances(4) < 30) ||
-                               (sbd.getValueForKey_MapOfDistances(0) > 0 &&
-                                sbd.getValueForKey_MapOfDistances(0) < 30);
+            double sonarRight = sbd.getValueForKey_MapOfDistances(4),
+                   irFrontRight = sbd.getValueForKey_MapOfDistances(0),
+                   irBackRight = sbd.getValueForKey_MapOfDistances(2);
 
-            cout << time(0) - overtaking << endl;
-
-            // BEGINNING
-            if((int)overtaking == 0) {
-                cout <<"Enter overtaking: " << endl;
-                angle = -15;
-                speed = 0.5;
-                overtaking = time(0);
-            }
-            // RESTART LANE DETECTION 
-            else if(time(0) - overtaking > 10) {
-                cout << "turn back HEEERE! " << overtaking << " " << time(0) << endl;
-                angle = 0;
-                speed = 2;
-                if((prevFound && !objectFound) && time(0) - overtaking > 13) overtaking = 0; // this is when!!
-                angle = 12;
-                angle = sd.getExampleData();
-            }
-            // AFTER BEGINNING  
-            else if(time(0) - overtaking > 3) {
-                angle = 15;
-            }  
-
+            double duration = time(0) - timer; // seconds till last timer update
             
+            switch(state){
 
+                case 0: // object found in front of car, initiate overtaking
+                    state = 1;
+                    angle = -20 + sd.getExampleData() * 0.5;
+                    speed = 1;
+                    timer = time(0);
+                    break;
 
-            prevFound = objectFound;
+                case 1: // drive onto the overtaking lane
+                    if(sonarRight < 0 || sonarRight > 20) break;
+                    angle = 0;
+                    speed = 2;
+                    state = 2;
+                    break;
 
-            vc.setSteeringWheelAngle(angle);
+                case 2: // counter-steer to position straight on lane
+                    if(irBackRight < 0 || irBackRight > 15) break;
+                    angle = 10;
+                    timer = time(0);
+                    state = 3;
+                    break;
+
+                case 3: // drive straight up the lane
+                    if(duration < 2 && irFrontRight > 5) break;
+                    angle = 0;
+                    state = 4;
+                    break;
+
+                case 4: // straighten out the car using the IRs
+                    speed = 2;
+                    angle = 0;
+                    timer = time(0);
+                    if(prevFrontRight < irFrontRight) angle = 25;
+                    else if(irFrontRight > irBackRight) angle = 12;
+                    else state = 5;
+
+                    if(irFrontRight < 0 || irFrontRight > 3) state = 5;
+
+                    break;
+
+                case 5: // make a right turn to overtake the object
+                    angle = -1;
+                    if(duration < 1 || (irFrontRight > -1 && irBackRight < 0) || (irFrontRight > -1 && irFrontRight < 25) || (sonarRight > 1 && sonarRight < 25)) break;
+
+                    state = 6;
+                    angle = 25;
+                    timer = time(0);
+                    break;
+
+                case 6: // counter-steer to position straight onto right lane
+                    if(duration < 4 && (duration < 1 || sd.getExampleData() < 13 || prevNoLane)) break;
+                    angle = -25;
+                    state = 7;
+                    timer = time(0);
+                    break;
+    
+                case 7: // switch back to the "lane following" state
+                    if(duration < 3 && (duration < 1.2 || sd.getExampleData() < 1 || prevNoLane)) break;
+                    state = 0;
+                    break;
+            }
+
+            prevFrontRight = irFrontRight;
+            prevNoLane = sd.getExampleData() < 1 && sd.getExampleData() > -1;
+
+            vc.setSteeringWheelAngle(angle * Constants::DEG2RAD);
             vc.setSpeed(speed);
 
             Container d(Container::VEHICLECONTROL, vc);

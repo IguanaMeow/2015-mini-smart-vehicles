@@ -33,6 +33,7 @@
 #include "Proxy.h"
 #include <fstream>
 #include <iostream> 
+#include <ctime>
 #include <unistd.h>
 #include <fcntl.h> 
 #include <termios.h> 
@@ -40,18 +41,20 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <time.h>
+#include <sys/time.h> 
 
+// Markus Erlach
 #define USB "/dev/ttyACM0"
 
-namespace msv {
-    int port;
-
-    int open_port(std::string adr);
-    void port_config(int x);
-    void write_int(int y);
-    std::string readString(int z);
-    void readSerial(int q); 
+namespace msv { 
+    int port, len, toCheck, IR1, IR2, IR3, US1, US2, WE, CSUM;
+    void open_port(std::string adr);
+    void port_config();
+    //void write_int();
+    string decode(string x);
+    //void readSerial(int q);
+    string readSerial(); 
+    msv::SensorBoardData sensorBoardData;
 
     const char *USB_PORT;
 
@@ -62,7 +65,7 @@ namespace msv {
     using namespace core::data::control;
 
     Proxy::Proxy(const int32_t &argc, char **argv) :
-	    ConferenceClientModule(argc, argv, "proxy"),
+        ConferenceClientModule(argc, argv, "proxy"),
         m_recorder(NULL),
         m_camera(NULL)
     {}
@@ -71,8 +74,9 @@ namespace msv {
     }
 
     void Proxy::setUp() {
-        port = msv::open_port(USB); // Connect to arduino
-        msv::port_config(port);
+
+        msv::open_port(USB); // Connect to arduino
+        msv::port_config();
         // This method will be called automatically _before_ running body().
         if (getFrequency() < 20) {
             cerr << endl << endl << "Proxy: WARNING! Running proxy with a LOW frequency (consequence: data updates are too seldom and will influence your algorithms in a negative manner!) --> suggestions: --freq=20 or higher! Current frequency: " << getFrequency() << " Hz." << endl << endl << endl;
@@ -82,6 +86,7 @@ namespace msv {
         KeyValueConfiguration kv = getKeyValueConfiguration();
 
         // Create built-in recorder.
+        /*
         const bool useRecorder = kv.getValue<uint32_t>("proxy.useRecorder") == 1;
         if (useRecorder) {
             // URL for storing containers.
@@ -96,7 +101,7 @@ namespace msv {
 
             m_recorder = new Recorder(recordingURL.str(), MEMORY_SEGMENT_SIZE, NUMBER_OF_SEGMENTS, THREADING);
         }
-
+*/
         // Create the camera grabber.
         const string NAME = getKeyValueConfiguration().getValue<string>("proxy.camera.name");
         string TYPE = getKeyValueConfiguration().getValue<string>("proxy.camera.type");
@@ -116,7 +121,7 @@ namespace msv {
     }
 
     void Proxy::tearDown() {
-	    // This method will be call automatically _after_ return from body().
+        // This method will be call automatically _after_ return from body().
         OPENDAVINCI_CORE_DELETE_POINTER(m_recorder);
         OPENDAVINCI_CORE_DELETE_POINTER(m_camera);
     }
@@ -135,6 +140,7 @@ namespace msv {
 
     // This method will do the main data processing job.
     ModuleState::MODULE_EXITCODE Proxy::body() {
+
         uint32_t captureCounter = 0;
         while (getModuleState() == ModuleState::RUNNING) {
             // Capture frame.
@@ -150,68 +156,100 @@ namespace msv {
                 cerr << "Speed: '" << vc.getSpeed() << "'" << endl;
                 cerr << "Angle: '" << vc.getSteeringWheelAngle() << "'" << endl;
 
-
-
             // TODO: Here, you need to implement the data links to the embedded system
             // to read data from IR/US.
-		    //int port = open_port();
-    		//int portOptions = port_config(port);
-    		//printf("Port: %d\n", portOptions);
-    		//write_int(port);
-    		//std::string read = readString(port);
-   		    //cout << "received string: " << read << endl;
-		//so far i dont know the string format, so I cant move on for decoding the string
 
             // Test ***************************
-            char fromInt[2];
-            char fromInt2[2];
-            char fromDouble[4];
-            char sentence[11];               
-            double speed = 0.8;
+            // Markus Erlach
+            string toDecode;
+            char checkSum[3];
+            char fromIntAngle[3];
+            char fromIntSpeed[3];
+            char padSum[4];
+            char padAngle[4];
+            char padSpeed[4];
+            char sentence[15];               
+            double speed = vc.getSpeed()*10;
             double steeringAngle = vc.getSteeringWheelAngle();
-            steeringAngle = steeringAngle * 57.2957795;
-            std::cout << steeringAngle << std::endl;
-            if (steeringAngle < 0) {
-               steeringAngle = (steeringAngle * (-1));
-            } else if (steeringAngle >= 0) {
-                steeringAngle = steeringAngle + 25;
-            }
-            int newAngle = (double)steeringAngle + 1;
-            std::cout << "Angle: " << newAngle << std::endl;
+            steeringAngle = steeringAngle * 57.3;
+            cout << "After calc: " << steeringAngle << endl;
             
-            if (newAngle < 10) {
-                sprintf(fromInt2, "%d", newAngle);
-                strcpy(fromInt, "0");
-                strcat(fromInt, fromInt2);    
-                snprintf(fromDouble, sizeof(fromDouble), "%g", speed);    
+            if (steeringAngle < -1) {
+                steeringAngle = 90 - (steeringAngle * -1);
+            } else if (steeringAngle > 1) {
+                steeringAngle = 90 + steeringAngle;
             } else {
-                sprintf(fromInt, "%d", newAngle);
-                snprintf(fromDouble, sizeof(fromDouble), "%g", speed);
+                steeringAngle = 90;
             }
-            // "{4:0.8,15}"
-            strcpy(sentence, "{4:");
-            strcat(sentence, fromDouble);
-            strcat(sentence, ",");
-            strcat(sentence, fromInt);
-            strcat(sentence, "}");
+            cout << "Int angle: " << steeringAngle << endl;
+            if (steeringAngle > 115) {
+                steeringAngle = 115;
+            }
+            if (steeringAngle < 65) {
+                steeringAngle = 65;
+            }
+            // Create angle
+            int intAngle = (int)steeringAngle;
+            if (intAngle < 100) {
+                sprintf(fromIntAngle, "%d", intAngle);
+                strcpy(padAngle, "0");
+                strcat(padAngle, fromIntAngle);    
+            } else {
+                sprintf(fromIntAngle, "%d", intAngle);
+                strcpy(padAngle, fromIntAngle);
+            }
+            // Create speed
+            // Simon Lobo Roca
+            if (speed < 0) {
+                speed = speed * -30;
+            }
+            int intSpeed = (int)speed;
+            if (intSpeed < 10) {
+                sprintf(fromIntSpeed, "%d", intSpeed);
+                strcpy(padSpeed, "0");
+                strcat(padSpeed, fromIntSpeed);    
+            } else {
+                sprintf(fromIntSpeed, "%d", intSpeed);
+                strcpy(padSpeed, fromIntSpeed);
+            }
+            // Create checksum
+            //  Markus Erlach
+            int check = intAngle + intSpeed; 
+            if (check < 100) {
+                sprintf(checkSum, "%d", check);
+                strcpy(padSum, "0");
+                strcat(padSum, checkSum);      
+            } else {
+                sprintf(checkSum, "%d", check);
+                strcpy(padSum, checkSum);
+            }
+            //12308115
+            strcpy(sentence, padSum);
+            strcat(sentence, padSpeed);     
+            strcat(sentence, padAngle);   
             
-            write(port, sentence, 13);
-            std::cout << "Wrote: "<< sentence << std::endl;
-         //  msv::readString(port);
-            /*************************
-            Test this read
-                        Instead of readString
-            *************************/
-          // msv::readSerial(port);
+            write(port, sentence, 10);
+            cout << "Wrote: "<< sentence << endl;
+            toDecode = msv::readSerial();
+            cout << "Read: " << toDecode << endl;
+            decode(toDecode);
+         
+            Container c = Container(Container::USER_DATA_0, sensorBoardData);
+            distribute(c);
 
+            /*int IR1Data = sensorBoardData.getValueForKey_MapOfDistances(0);
+            cout << "SBD IR1: " << IR1Data << endl;
+            */
+            //flushes the input queue, which contains data that have been received but not yet read.
+            tcflush(port, TCIFLUSH);   
         }
-
         cout << "Proxy: Captured " << captureCounter << " frames." << endl;
 
         return ModuleState::OKAY;
     }
 
-int open_port(std::string adr) {
+// Markus Erlach
+void open_port(std::string adr) {
     USB_PORT = adr.c_str();
     /*
     O_RDWR = Posix read write
@@ -219,24 +257,15 @@ int open_port(std::string adr) {
     O_NDELAY = Ignore dcd signal state
     */
     port = open(USB_PORT, O_RDWR | O_NOCTTY);
-    // Check open
-    
-    if (port < 0) {
-        std::cerr << "Unable to open port: " << port << std::endl;
-        return (port);
-    } else {
-        fcntl (port, F_SETFL, 0);       
-    }
-    return (port);
-    
-    /*
+
     if (port != 0) {
-        port_config(port);
-    }
-    */
+        port_config();
+    } 
+    
 }
 
-void port_config(int x) {
+// Markus Erlach
+void port_config() {
     // Setup control structure
     struct termios options;
     struct termios oldOptions;
@@ -244,14 +273,14 @@ void port_config(int x) {
     
     // Get currently set options
     // Error handling
-    if (tcgetattr(x, &options) != 0) {
+    if (tcgetattr(port, &options) != 0) {
         std::cout << "Error: " << errno << "from tcgetattr" << strerror(errno) << std::endl;
     }
     // Save old options
     oldOptions = options;
-    // Set read and write speed to 9600 baud
-    cfsetispeed(&options, B9600);
-    cfsetospeed(&options, B9600);
+    // Set read and write speed to 9600, 19200 or 384000 baud
+    cfsetispeed(&options, B38400);
+    cfsetospeed(&options, B38400);
     // 8bits, no parity, no stop bits
     options.c_cflag &= ~PARENB;
     options.c_cflag &= ~CSTOPB;
@@ -266,123 +295,59 @@ void port_config(int x) {
     options.c_iflag &= ~(IXON | IXOFF | IXANY); 
     options.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG); 
     options.c_oflag &= ~OPOST; 
-    // wait for min 0 chars and wait time min
-    options.c_cc[VMIN]  = 0;
+    // wait for min 1 chars and wait time min
+    options.c_cc[VMIN]  = 20;
     options.c_cc[VTIME] = 0;
     // Commit
-    tcflush(x, TCIFLUSH);
-    tcsetattr(x, TCSANOW, &options);
+    tcflush(port, TCIFLUSH);
+    tcsetattr(port, TCSANOW, &options);
 }
 
-// Need to fix vc import
-void write_int(int y) {
-    double speed = 0.8;
-    double steeringAngle = -20.1; // vc.getExampleData(); 
-    if (steeringAngle < 0) {
-        steeringAngle = (steeringAngle * (-1));
-    } else {
-        steeringAngle = (steeringAngle + 25);
+// <19:101:2020202020001>
+// XXX:IR1IR2IR3US1US2 Example: 100:2020202020000
+// All sensors should equal XXX (checksum) Like above.
+// Fredric Ola Eidsvik & PeiLi Ge
+string decode(string x) {
+    
+    len = atoi(x.substr(1, 2).c_str());
+    string toCheck_Str = x.substr(4, 3);
+    toCheck = atoi(toCheck_Str.c_str());
+    string IR1_Str = x.substr(8, 2);
+    IR1 = atoi(IR1_Str.c_str());
+    string IR2_Str = x.substr(10, 2);
+    IR2 = atoi(IR2_Str.c_str());
+    //string IR3_Str = x.substr(12, 2);
+    //IR3 = atoi(IR3_Str.c_str());
+    string US1_Str = x.substr(12, 2);
+    US1 = atoi(US1_Str.c_str());
+    string US2_Str = x.substr(14, 2);
+    US2 = atoi(US2_Str.c_str());
+    string WE_Str = x.substr(16, 3); 
+    WE = atoi(WE_Str.c_str());
+    CSUM = IR1 + IR2 + US1 + US2 + WE;  // Add IR3 when assembled.
+    if (toCheck == CSUM) {
+        cout << "Checksum matches" << endl;
+        //store into container 
+        sensorBoardData.putTo_MapOfDistances(0,IR1);
+        sensorBoardData.putTo_MapOfDistances(1,IR2);
+        //sensorBoardData.putTo_MapOfDistances(2,IR3);
+        sensorBoardData.putTo_MapOfDistances(3,US1);
+        sensorBoardData.putTo_MapOfDistances(4,US2);
     }
-
-    std::cout << "Angle: " << steeringAngle << std::endl;
-    char toSend[10];
-    snprintf(toSend, sizeof(toSend), "%g,%g", speed, steeringAngle);
-    
-    char sentence[13];
-    strcpy(sentence, "{4:");
-    strcat(sentence, toSend);
-    strcat(sentence, "}");
-    //puts(sentence);
-    
-    // "{4:0.8,15.2}"
-    write(y, sentence, 13);
-   
-    std::cout << "Wrote: "<< sentence << std::endl;
-}
- 
-std::string readString(int z) {
-    char start[1] = "";
-    char next[1] = "";
-    char svar[10] = ""; 
-    
-    std::string result = ""; 
-    std::cout << "Serial available: " << port << std::endl;
-    
-        //for (int x = 0; x < 6; x++) {
-        read(z, start, 1);
-        std::cout << "Start: " << start << std::endl;
-        if (start[0] != '{') {
-            std::cout << "No start" << std::endl;
-            //readString(z);
-            return svar;
-        } else {
-            result += start;
-            //delete[] start;
-            std::cout << "Result start: " << result << std::endl;
-            for (int x = 0; x < 8; x++) {
-                read(z, next, 1);
-                result += next;
-                //std::cout << "Result: " << result <<std::endl;
-        }
-        std::cout << "Efter loopen: " << result << std::endl;
-
-        //svar = new char[result.size() + 1];
-        memcpy(svar, result.c_str(), result.size() + 1);
-       
-        //svar = (char *)malloc(result.size() + 1);
-        //memcpy(svar, result.c_str(), result.size() + 1);
-        
-        // strncpy(svar1, result.c_str(), sizeof(svar1));
-        // sizeof(svar1) - 1 för att null terminatea
-        
-        svar[9] = '\0';
-        //svar[sizeof(svar) - 1] = '\0';
-        std::cout << "Svar kopia: " << svar << std::endl;        
-
-        if (svar[0] == '{' && isdigit(svar[1])) {
-            //size = svar[1];
-            //speed = svar[2] + svar[3]; 
-            std::cout << "Svar: " << svar[0] << std::endl;
-            std::cout << "Svar: " << svar[1] << std::endl;
-            std::cout << "Svar: " << svar[2] << std::endl;
-            std::cout << "Svar: " << svar[3] << std::endl;
-            std::cout << "Svar: " << svar[4] << std::endl;
-            std::cout << "Svar: " << svar[5] << std::endl;
-            std::cout << "Svar: " << svar[6] << std::endl;
-            std::cout << "Svar: " << svar[7] << std::endl;
-            std::cout << "Svar: " << svar[8] << std::endl;
-            if (svar[8] == '}') {
-                std::cout << "Done: " << svar << std::endl;
-                return svar;
-            } else {
-                
-                std::cout << "Rerunning, no closing bracket" << std::endl;
-                //readString(z);
-                return svar;
-            }
-            //return svar;
-        } else {
-                std::cout << "Rerunning!" << svar << std::endl;
-                //readString(z);
-                return svar;
-            }
-        } 
-    return svar;
+    return x;
 }
 
-void readSerial(int q) {
-    char buf[15];
-    // Read
-    int n = read(q, buf, 15);
-    // Null terminatea, alternativt, kommentera ut buf[n] = 0;
-    buf[n] = 0;
-    // Check read
-    if (n > 0) {
-        std::cout << "Bytes read: " << n << std::endl;
-        std::cout << "In buf: " << buf << std::endl;
-    } else {
-        std::cout << "Got nothing!" << std::endl;
-    }
+// Markus Erlach
+string readSerial() {
+    char start[255] = "";
+    
+    cout << "Serial available: " << port << endl;
+    
+    int n = read(port, start, 255);
+    start[n] = 0;
+    cout << "N: " << n << endl;
+    string received(start);
+    return received;
 }
 
 } // msv

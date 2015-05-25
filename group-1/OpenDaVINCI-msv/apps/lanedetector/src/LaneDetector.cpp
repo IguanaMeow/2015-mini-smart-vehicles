@@ -29,10 +29,13 @@
 
 #include "core/macros.h"
 #include "core/base/KeyValueConfiguration.h"
+ #include "core/data/TimeStamp.h"
 #include "core/data/Container.h"
 #include "core/data/image/SharedImage.h"
 #include "core/io/ContainerConference.h"
 #include "core/wrapper/SharedMemoryFactory.h"
+ #include "core/wrapper/Time.h"
+#include "core/wrapper/TimeFactory.h"
 
 
 #include "tools/player/Player.h"
@@ -49,18 +52,21 @@ namespace msv {
     using namespace core::data::image;
     using namespace tools::player;
     using namespace cv;
-//int threshold_value = 170;
+double vp2leftLength;
+double vp2rightLength;
 int threshold_ratio = 170;
-int threshold_type = 0;
-int const max_value = 255;
-int const max_type = 4;
-int const max_BINARY_value = 255;
 int state=0;
 SteeringData sd;
 double difference;
 double value;
-double intersectionFound=0;
-int numOfInt=0;
+int intersectionFound=0;
+int sim=1; // if real track change to 0
+int simLength=351;
+int simFactor=175;
+int trackLength=380;
+int trackFactor=190;
+int vanishingpoint=300;
+
     //int dynamicYaxis = 1; // to move lines on the y axis
 
     LaneDetector::LaneDetector(const int32_t &argc, char **argv) : ConferenceClientModule(argc, argv, "lanedetector"),
@@ -129,7 +135,8 @@ int numOfInt=0;
                 m_sharedImageMemory->unlock();
 
                 // Mirror the image.
-            //    cvFlip(m_image, 0, -1);
+                if(sim)
+         cvFlip(m_image, 0, -1);
 
                 retVal = true;
             }
@@ -150,21 +157,6 @@ void MyLine( Mat img, Point start, Point end, Scalar color)
 }
 
 
-bool intersection(Point2f o1, Point2f p1, Point2f o2, Point2f p2,
-                      Point2f &r)
-{
-    Point2f x = o2 - o1;
-    Point2f d1 = p1 - o1;
-    Point2f d2 = p2 - o2;
-
-    float cross = d1.x*d2.y - d1.y*d2.x;
-    if (abs(cross) < /*EPS*/1e-8)
-        return false;
-
-    double t1 = (x.x * d2.y - x.y * d2.x)/cross;
-    r = o1 + d1 * t1;
-    return true;
-}
 
 //Fuction returns type Vec3b of pixel intensity (blue,green,red).
 Vec3b getintensity(Mat img, int y, int x){
@@ -224,11 +216,11 @@ int getLeftLine(Mat img, int yAxis, int count, int &leftLineLength){
 void drawLine(Mat atom_image, int line1line, int count, int &line1leftLineLength, int &line1rightLineLength){
     
     getRightLine(atom_image, line1line, count, line1rightLineLength);
-    MyLine( atom_image, Point( count, line1line ), Point( line1rightLineLength, line1line),Scalar( 255, 0, 0)); //Blue line 
+    //MyLine( atom_image, Point( count, line1line ), Point( line1rightLineLength, line1line),Scalar( 255, 0, 0)); //Blue line 
     //std::cout << "line1 right Length "<< line1rightLineLength - count << std::endl;
     
     getLeftLine(atom_image, line1line, count, line1leftLineLength);
-    MyLine( atom_image, Point( count, line1line ), Point( line1leftLineLength, line1line),Scalar( 255, 0, 0)); //other clour line 
+    //MyLine( atom_image, Point( count, line1line ), Point( line1leftLineLength, line1line),Scalar( 255, 0, 0)); //other clour line 
     //std::cout << "line1 left Length "<<  count - line1leftLineLength << std::endl;
 
     
@@ -241,6 +233,7 @@ void drawLine(Mat atom_image, int line1line, int count, int &line1leftLineLength
    
     // You should start your work in this method.
     void LaneDetector::processImage() {
+       
         // Example: Show the image.
         if (m_debug) {
             if (m_image != NULL) {
@@ -252,41 +245,39 @@ void drawLine(Mat atom_image, int line1line, int count, int &line1leftLineLength
        Mat src,dst,color_dst,atom_image,edge,blured;
        src=m_image;
        //atom_image=src;
-       
        blur(src , blured, Size(3,3) );
        cvtColor( blured, color_dst, COLOR_RGB2GRAY );
-    //   roi = color_dst( Rect(0,479,639,220) );   
-    Canny(color_dst, dst, 50, threshold_ratio, 3); //was 170 , 
+
+    if(sim)
+     Canny( color_dst, dst, 50, 170, 3);
+    else
+     Canny(color_dst, dst, 50, threshold_ratio, 3);
+
     dst.convertTo(edge, CV_8U);
     // threshold( color_dst, dst, threshold_value, max_BINARY_value,threshold_type );
-    
-   
     cvtColor( edge, atom_image, COLOR_GRAY2RGB );
-    cvNamedWindow("exposure");
+
+   if(!sim){
     Mat roi = edge( Rect(0,220,639,259) );
-    imshow("exposure",roi);
+    //imshow("exposure",roi);
     cv::Mat mask;    //image is CV_8UC1
     cv::inRange(roi, 255, 255, mask);
     int whiteCount = cv::countNonZero(mask);
     cout << "No: white pixels " << whiteCount << endl;
+    cout<< "Threshold: " << threshold_ratio<<endl;
     if(whiteCount < 1600) // 2138
-        threshold_ratio = 160;
+        threshold_ratio--;
     else if(whiteCount > 3000)
-        threshold_ratio = 200;
+        threshold_ratio++;
         else
-            threshold_ratio = 170;
-
-
-
-   
+           threshold_ratio = 170;
+   }
    
         //TODO: Start here.
 
 
         // 1. Do something with the image m_image here, for example: find lane marking features, optimize quality, ...
-   // std::clock_t start;
-    //double duration;
-   // start = std::clock();
+
     
     //Greyscale
     
@@ -326,9 +317,6 @@ void drawLine(Mat atom_image, int line1line, int count, int &line1leftLineLength
     int line4rightLineLength = 0;
     drawLine(atom_image, line4line, count, line4leftLineLength, line4rightLineLength);
     
-
-
-
     int line2line= 310;
     int line2leftLineLength = 0;
     int line2rightLineLength = 0;
@@ -338,15 +326,12 @@ void drawLine(Mat atom_image, int line1line, int count, int &line1leftLineLength
     int interLineleft = 0;
     int interLineright = 0;
     drawLine(atom_image, interLine, count, interLineleft, interLineright);
-     int inter1Line= 338;
+
+     int inter1Line= 330;
     int inter1Lineleft = 0;
     int inter1Lineright = 0;
     drawLine(atom_image, inter1Line, count, inter1Lineleft, inter1Lineright);
-    
-    /*if(interLineright==321 && interLineleft==319)
-        state=1; 
-    else if(inter1Lineright==321 && inter1Lineleft==319)
-        state=1;*/
+
     
     int line5line= 349;
     int line5leftLineLength = 0;
@@ -363,30 +348,10 @@ void drawLine(Mat atom_image, int line1line, int count, int &line1leftLineLength
     int line1rightLineLength = 0;
     drawLine(atom_image, line1line, count, line1leftLineLength, line1rightLineLength);
 
-    if(numOfInt==2){
-        numOfInt=0;
-        intersectionFound=0;
-    }
+    
 
 //--------------------------------------------------------------------------------------------------------
-   
-    //Length of line1 lines 
-    //double leftLength = count - line1leftLineLength;
-//  cout<<"line1 Left Length2 " << leftLength << endl;
 
-    //double rightLength = line1rightLineLength - count;
-    //cout<<"line1 Right Length2 " << rightLength << endl;
-
-    //Length of top lines 
-    //double t_leftLength = count - topleftLineLength;
-    //cout<<"Top Left Length2 " << t_leftLength << endl;
-
-    //double t_rightLength = toprightLineLength - count;
-    //cout<<"Top Right Length2 " << t_rightLength << endl;
-    //cout<<"line1leftLineLength " << line1leftLineLength << endl;
-   
-   //Draw connecting Line from line1 left to top left
-    //if(leftLength + rightLength < 279+279  && t_leftLength + t_rightLength < 106+106)
 
     //1-8   
     MyLine(atom_image, Point( line1leftLineLength, line1line ), Point( line8leftLineLength, line8line),Scalar( 255, 255, 255)); //other clour line 
@@ -415,10 +380,6 @@ void drawLine(Mat atom_image, int line1line, int count, int &line1leftLineLength
     MyLine(atom_image, Point( line3leftLineLength, line3line ), Point( line4leftLineLength, line4line),Scalar( 255, 255, 255));
     MyLine(atom_image, Point( line5leftLineLength, line5line ), Point( topleftLineLength, topline),Scalar( 255, 255, 255));
 
-
- 
-
-
     //VPointLines2
     int VPointLines2 = 350;
     int VP2leftLineLength =0;
@@ -433,32 +394,35 @@ void drawLine(Mat atom_image, int line1line, int count, int &line1leftLineLength
     MyLine( atom_image, Point( count, VPointLines2 ), Point( VP2leftLineLength, VPointLines2),Scalar( 0, 0, 255)); //other clour line 
     //std::cout << "mid left Length "<<  count - VP2leftLineLength << std::endl;
 
-    //VPointLines1
-    int VPointLines1 = 309;
-    int VP1leftLineLength =0;
-    int VP1rightLineLength =0;
-    
-   
-    getRightLine(atom_image, VPointLines1, count, VP1rightLineLength);
-    MyLine( atom_image, Point( count, VPointLines1 ), Point( VP1rightLineLength, VPointLines1),Scalar( 0, 0, 255)); //other clour line 
-    //std::cout << "mid right Length "<<  VP1rightLineLength - count<< std::endl;
-
-    getLeftLine(atom_image, VPointLines1, count, VP1leftLineLength);
-    MyLine( atom_image, Point( count, VPointLines1 ), Point( VP1leftLineLength, VPointLines1),Scalar( 0, 0, 255)); //other clour line 
-    //std::cout << "mid left Length "<<  count - VP1leftLineLength << std::endl;
 
     //Length of vp2 lines 
-    double vp2leftLength = count - VP2leftLineLength;
+    vp2leftLength = count - VP2leftLineLength;
     cout<<"vanishingpoint Left Length2 " << vp2leftLength << endl;
 
-    double vp2rightLength = VP2rightLineLength - count;
+    vp2rightLength = VP2rightLineLength - count;
     cout<<"vanishingpoint Right Length2 " << vp2rightLength << endl;
+    cout<< "Total "<< vp2leftLength+vp2rightLength << endl;
+    
+
+
+if(sim){
+    if(interLineright==321 && interLineleft==319 && vp2rightLength>100 )
+        state=1; 
+    else if(inter1Lineright==321 && inter1Lineleft==319 && vp2rightLength>100 )
+        state=1;
+}else{
+    if(vp2leftLength>210 && vp2rightLength>250 && intersectionFound<1)
+      state=1;
+    }   
+
+
+
    /*if(vp2rightLength>250)
        vp2rightLength=175;*/
     //Angles of line1 lines
-    double vp2LAngle = atan(vp2leftLength/300) * 180.0 / CV_PI; //was 250 but adjust for turn 
+    double vp2LAngle = atan(vp2leftLength/vanishingpoint) * 180.0 / CV_PI; //was 250 but adjust for turn 
     //cout<<"L Angle is " << vp2LAngle << endl;
-    double vp2RAngle = atan(vp2rightLength/300) * 180.0 / CV_PI;
+    double vp2RAngle = atan(vp2rightLength/vanishingpoint) * 180.0 / CV_PI;
     //cout<<"R Angle is " << vp2RAngle << endl;
     //cout << "difference is " << vp2RAngle-vp2LAngle << endl;
     imshow( "atom_window", atom_image );
@@ -466,44 +430,80 @@ void drawLine(Mat atom_image, int line1line, int count, int &line1leftLineLength
     double tangent=((350.0-309.0)/(480.0-423.0));
 
     
-
+    if(sim){
   if((vp2rightLength>300 || vp2rightLength <0) && intersectionFound<1){
                
-               
-             
-            
+
             value=(value-(tangent/13)); //was 7//
           
            difference=value;
+}else if(vp2leftLength<vp2rightLength && vp2leftLength + vp2rightLength > simLength )
+       difference = vp2RAngle-(vp2LAngle/(vp2leftLength/simFactor));
+else if(vp2rightLength<vp2leftLength && vp2leftLength + vp2rightLength > simLength)
+    difference = (vp2RAngle/(vp2rightLength/simFactor))-vp2LAngle;
+
+    else if( vp2leftLength + vp2rightLength < simLength )
+       difference = (vp2RAngle*(vp2leftLength/simFactor))- vp2LAngle;
+       
+    else
+        difference= vp2RAngle-vp2LAngle;
+
+if((vp2leftLength+vp2rightLength>500 && vp2leftLength+vp2rightLength<550 ) && intersectionFound==1){
+        intersectionFound=2;
+    }
+
+    if(intersectionFound>1 && (vp2leftLength+vp2rightLength<320))
+        intersectionFound=0;
+  
+    if(vp2rightLength>310 && intersectionFound > 0){
+        
+    difference=0;
+    }  
+    
 }
-    
-    
+else{
+    if((vp2rightLength>500 || vp2rightLength <0) && intersectionFound<1){
 
-    else if(vp2leftLength<vp2rightLength && vp2leftLength + vp2rightLength > 270 )
-       difference = vp2RAngle-(vp2LAngle/(vp2leftLength/135));
-else if(vp2rightLength<vp2leftLength && vp2leftLength + vp2rightLength > 270)
-    difference = (vp2RAngle/(vp2rightLength/135))-vp2LAngle;
+            value=(value-(tangent/13)); //was 7//
+           difference=value;
 
-    else if( vp2leftLength + vp2rightLength < 270 )
-       difference = (vp2RAngle*(vp2leftLength/135))- vp2LAngle;
+}else if(vp2leftLength<vp2rightLength && vp2leftLength + vp2rightLength > trackLength ) //354
+       difference = vp2RAngle-(vp2LAngle/(vp2leftLength/trackFactor));
+else if(vp2rightLength<vp2leftLength && vp2leftLength + vp2rightLength > trackLength)
+    difference = (vp2RAngle/(vp2rightLength/trackFactor))-vp2LAngle; 
+
+    else if( vp2leftLength + vp2rightLength < trackLength )
+       difference = (vp2RAngle*(vp2leftLength/trackFactor))- vp2LAngle;
        
     else
         difference= vp2RAngle-vp2LAngle;
   
-    if(vp2rightLength>300 && intersectionFound > 0){
-        difference=0;
-    }
+    if(vp2rightLength>310 && intersectionFound>0)
+      difference=0;
+      if(vp2rightLength<180 && vp2leftLength<180 && intersectionFound>0)
+      intersectionFound=0;
+ 
+}
+
     value=difference;
     std::cout<<"difference: "<< difference <<'\n';
-    sd.setExampleData(difference*(2.2));
-    
+    cout<<"intersection "<< intersectionFound<<endl;
+    cout<<"interline " << interLineleft<<endl;
+    cout<<"interline 1" << inter1Lineleft << endl;
+    if(sim){
+    if(difference>5)
+        difference+=0.5; // adjustment for right curves
+    sd.setExampleData(difference);
+    }else{
+        sd.setExampleData(difference*(2.4));
+    }
    
     }
     if (state==1){
         sd.setIntersectionFound(1.0);
         state=0;
         intersectionFound=1;
-        numOfInt++;
+        
     }
      
     

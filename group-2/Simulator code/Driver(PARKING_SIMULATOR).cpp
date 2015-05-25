@@ -87,17 +87,17 @@ namespace msv {
             
             
             
+            // Design your control algorithm here depending on the input data from above.
+            
+            
             
             // Create vehicle control data.
             VehicleControl vc;
             
-
             
-            // MY Code
-            ///////////////////////////////////////////////////////////////////////////
+            //CODE WRITTEN BY JOHAN HERMANSSON, EMIL SUNDKLEV
             
-            
-            
+            //get all data from the sensors
             double abt = vd.getAbsTraveledPath();
             double sen6 = sbd.getValueForKey_MapOfDistances(0);
             double sen = sbd.getValueForKey_MapOfDistances(1);
@@ -115,84 +115,97 @@ namespace msv {
             cerr <<abt<< "Traveled path"<<endl;
             cerr <<freeSpaceStart<< "FreeStart path"<<endl;
             
+            
             switch(mode){
-                case 1:
-                    vc.setSpeed(0.5);
+                case 1://start-case, searching for empty parking-spot
+                    vc.setSpeed(1.5);
                     desiredSteeringWheelAngle = 0;
                     vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
-                    if (sen2 > 0){
+                    if (sen2 > 0){ // if the sensor detect anything, reset the freeSpaceStart,
                         freeSpaceStart = 0;
                     }
-                    else if(sen2 < 0){
-                        if(freeSpaceStart <= 0){
+                    else if(sen2 < 0){ //if the sensor don't detect anything,
+                        if(freeSpaceStart <= 0){ //if freeSpaceStart been reset, set it to the AbsTraveledPath
                             freeSpaceStart = abt;
                             cerr <<freeSpaceStart<< "FreeStart path set"<<endl;
                         }
                         freepath = abt - freeSpaceStart;
                         cerr <<freepath<< "Free = "<<endl;
-                        if(freepath >= 6){
+                        if(freepath >= 6.5){ //checks if the spot is big enough for the car to park.
                             vc.setSpeed(0.0);
-                            mode = 5;
+                            mode = 5; //goes to mode 5 if the car can park.
                         }
                     }
                     else{
                     }
                     break;
-                case 2:
+                case 2://(case 3) car reverse full right 5.8 into the gap.
                     if (back0 <= 0){
                         back0 = abt;
                     }
-                    if ((abt - back0) >= 4.3){
+                    if ((abt - back0) >= 5.8){
                         back0 = 0;
-                        mode = 7;
+                        mode = 7;//goes to mode 7 when its complete
                     }
                     desiredSteeringWheelAngle = 25;
                     vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
                     vc.setSpeed(-0.3);
                     break;
-                case 3:
+                case 3://(case 5) car reverse full left until the back-sensor detect an object less than 1.9 from the car.
                     if (back1 <= 0){
                         back1 = abt;
                     }
                     if (sen > 0 && sen < 1.9){
                         forward = 0;
-                        mode = 6;
+                        mode = 6;//goes to mode 6 when comlete
                     }
-                    desiredSteeringWheelAngle = -25;
+                    desiredSteeringWheelAngle = -30;
                     vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
                     vc.setSpeed(-0.2);
                     break;
-                case 4:
-                    vc.setSpeed(0.0);
+                case 4://(case 8) parking done(car stand straight in the spot) Final case
+                    vc.setSpeed(0.0);//stand still.
                     break;
-                case 5:
+                case 5://(case 2) move the car forward 2.25
                     if(forward <= 0) forward = abt;
                     vc.setSpeed(0.3);
-                    if ((abt - forward) >= 1.25) mode = 2;
+                    if ((abt - forward) >= 2.25) mode = 2;//if completed go to mode 2
                     break;
-                case 6:
+                case 6://(case 6) moves forward 1.5
                     if(forward <= 0) forward = abt;
-                    if((abt - forward) > 1) mode = 4;
-                    desiredSteeringWheelAngle = 20;
+                    if((abt - forward) > 1.5) mode = 8;//goes to mode 8 when comlete
+                    back0 = 0;
+                    desiredSteeringWheelAngle = 25;
                     vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
                     vc.setSpeed(0.3);
                     break;
-                case 7:
+                case 7://(case 4) car reverse straight 1.4
                     if (back0 <= 0){
                         back0 = abt;
                     }
-                    if ((abt - back0) >= 1.3){
+                    if ((abt - back0) >= 1.4){
                         back0 = 0;
-                        mode = 3;
+                        mode = 3;//goes to mode 3 when comlete
                     }
                     desiredSteeringWheelAngle = 0;
                     vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
                     vc.setSpeed(-0.3);
                     break;
+                case 8://(case 7) reverse 1.0
+                    if (back0 <= 0){
+                        back0 = abt;
+                    }
+                    if ((abt - back0) >= 1.0){
+                        back0 = 0;
+                        mode = 4;//goes to mode 4 when comlete
+                    }
+                    desiredSteeringWheelAngle = -20;
+                    vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
+                    vc.setSpeed(-0.2);
+                    break;
                     
             }
-            
-          
+
             
             // You can also turn on or off various lights:
             vc.setBrakeLights(false);
@@ -208,4 +221,3 @@ namespace msv {
         return ModuleState::OKAY;
     }
 } // msv
-

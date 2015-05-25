@@ -78,6 +78,7 @@ bool hasTimePassed(time_t sec, time_t msec, time_t sec2, time_t msec2){
 	}
 }
 
+//code by Magnus Johansson; function just draws a line between two Points
 void DrawLine( cv::Mat img, cv::Point start, cv::Point end, cv::Scalar color)
 {
   int thickness = 2;
@@ -195,6 +196,9 @@ namespace msv {
                 Container containerSensorBoardData = getKeyValueDataStore().get(Container::USER_DATA_0);
                 SensorBoardData sbd = containerSensorBoardData.getData<SensorBoardData> ();
                 cerr << "Most recent sensor board data: '" << sbd.toString() << "'" << endl;
+        
+        
+        //CODE WRITTEN BY WILLIAM BERGENDAHL, CARL-OSCAR PERSSON, JONATHAN KLEMETZ, JOHAN HERMANSSON, MAGNUS JOHANSSON
 
 
     	double distance = 0;
@@ -283,7 +287,7 @@ namespace msv {
 
         // 1. Do something with the image m_image here, for example: find lane marking features, optimize quality, ...
 
-	//CODE WRITTEN BY WILLIAM BERGENDAHL, CARL-OSCAR PERSSON, JONATHAN KLEMETZ, JOHAN HERMANSSON, MAGNUS JOHANSSON
+	
         sd.setDistanceToStop(distanceToStop);
 	sd.setDistanceToRight(distance);
 	sd.setDistanceToLeft(leftDistance); 
@@ -304,7 +308,9 @@ namespace msv {
 
 if(Overtake == false){
 
-//JONATHAN, JOHAN & MAGNUS CODE
+//JONATHAN, JOHAN
+    
+    //check the distance to the right and goes in the right if-statement and set the SteeringData for the driver
         if(distance > -231 && distance < -219){
         	sd.setDriveStraight(1);
         	s1 = true;
@@ -349,7 +355,7 @@ if(Overtake == false){
 			hr1 = true;
 			hl1 = false;
 
-        }else if (distance < -319){
+        }else if (distance < -319){// if not find and stop on the line to the right, if the previous was driveStraigh, TurnLeft or TurnRight drive straight, else continue with the previous steering.
         	if (hr1 == true){
         		sd.setTurnHarderRight(1);
         	}
@@ -359,7 +365,7 @@ if(Overtake == false){
         	else {
         		sd.setDriveStraight(1);
         	}
-        }
+        }//if stopline is found
         if (distanceToStop > -50 && sd.getTurnHarderLeft() != true && sd.getTurnHarderRight() != true && sd.getTurnSuperHardRight() != true &&  sd.getTurnSuperHardLeft() != true &&  sd.getTurnLeft() != true &&  sd.getTurnRight() != true   ){
         	sd.setStopAtIntersect(1);
         	sd.setDriveStraight(0);  
