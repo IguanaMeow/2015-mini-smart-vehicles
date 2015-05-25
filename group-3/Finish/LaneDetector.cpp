@@ -113,18 +113,19 @@ namespace msv {
     }
 //Nicolas Part
 // finds the white line
+//I should really come up with better color names! 
 bool FindWhiteLine(Vec3b white)
 { 
-    bool color =  false;
-    uchar blue,green,red;
-    blue = white.val[0];
-    green = white.val[1];
-    red = white.val[2];
-    if(blue == 255 && green == 255 && red == 255)
-            {
-                color = true;
-            }
-            return color;
+	bool color =  false;
+	uchar blue,green,red;
+	blue = white.val[0];
+	green = white.val[1];
+	red = white.val[2];
+	if(blue == 255 && green == 255 && red == 255)
+	{
+           color = true;
+        }
+        return color;
 }
 // extends the line until whiteline is found
 Point DrawingLines(Mat img , Point point,bool right)
@@ -209,7 +210,8 @@ Point DrawingVertical(Mat img, Point point, bool top)
 
         centerEnd = DrawingVertical(matImg, centerEnd, false);
         //End of Emilys Part
-
+//Nicolas Part
+//I love this part of the code! So much cleaner than before! 
         Point myPointStart[4]; // array of startpoints
         Point myPointRightEnd[4]; // array of rightEnd Point
         Point myPointLeftEnd[4]; // array of LeftEnd Point

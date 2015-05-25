@@ -46,7 +46,7 @@
 #include "core/data/TimeStamp.h"
 #include "core/data/control/VehicleControl.h"
 #include "OpenCVCamera.h"
-
+#include "core/data/environment/VehicleData.h"
 #include "GeneratedHeaders_Data.h"
 
 #include "Proxy.h"
@@ -169,7 +169,8 @@ using namespace core::data::control;
     ModuleState::MODULE_EXITCODE Proxy::body() {
      
         uint32_t captureCounter = 0;
-        msv::SensorBoardData sensorBoardData;
+        SensorBoardData sensorBoardData;
+        core::data::environment::VehicleData vd;
         while (getModuleState() == ModuleState::RUNNING) {
 
             // Capture frame.
@@ -189,7 +190,9 @@ using namespace core::data::control;
             // to read data from IR/US.
 
              int angle=60;
-             int angleFromDriver= (int)vc.getSteeringWheelAngle();
+             int angleFromDriver= (int)vc.getSteeringWheelAngle(); // receive steeringaAngle from VehicleControl
+
+             //convert the angle for arduino
              if(angleFromDriver <0)
               angleFromDriver*=-1;
             else
@@ -197,36 +200,40 @@ using namespace core::data::control;
              angle+=angleFromDriver;
              stringstream ss;
               ss << angle;
-              if(angle<100)
+              if(angle<100 && angle >10)
              convertedAngle="0"+ss.str();
+           else if(angle <10 && angle>-1)
+            convertedAngle="00"+ss.str();
            else
             convertedAngle=ss.str();
           
+
+          // send different values depending on drivers speed
             if(vc.getSpeed()>0)
               userInput="600"+convertedAngle+",";
             else if(vc.getSpeed()<1 && vc.getSpeed()>-1)
-              userInput="512060,";
+              userInput="512"+convertedAngle+",";
             else if(vc.getSpeed()<-1)
               userInput="200"+convertedAngle+",";
               
               
               cout<<userInput<<endl;
-                    
-                    cout<<" fd is " << fd << endl;
 
               if(wd!=-1 && wd!=0)
-             msv::write(userInput);
+             msv::write(userInput); // write to arduino
 
 
       if(fd!=-1 && fd!=0){
 
-  readings=msv::read();
+  readings=msv::read(); // read from arduino
 	
   cout<< "readings are "<< readings << endl;
   
   int length=atoi(readings.substr(0,2).c_str());
-  unsigned int finalLength=length+5;
+  unsigned int finalLength=length+5; // check length
   
+
+  //decode netstring received from arduino
   if(readings.length()==finalLength){
     string ir1=readings.substr(3,3);
 
@@ -257,18 +264,27 @@ using namespace core::data::control;
     valWheelE=atoi(wheelE.c_str());
     
 }
+
   cout<<"Wheel Encoder value " << valWheelE <<endl;
+
+//Map decoded sensor values
   sensorBoardData.putTo_MapOfDistances(4,valUs2);
-  sensorBoardData.putTo_MapOfDistances(3,valUs1);
+  sensorBoardData.putTo_MapOfDistances(3,valUs3);
   sensorBoardData.putTo_MapOfDistances(1,valIr3);
   sensorBoardData.putTo_MapOfDistances(2,valIr2);
   sensorBoardData.putTo_MapOfDistances(0,valIr1);
-  sensorBoardData.putTo_MapOfDistances(5,valUs3);
+  sensorBoardData.putTo_MapOfDistances(5,valUs1);
+  vd.setAbsTraveledPath(valWheelE);
 
+  Container Pvd=Container(Container::VEHICLEDATA, vd);
   Container c = Container(Container::USER_DATA_0, sensorBoardData);
+  
   distribute(c);
+  distribute(Pvd);
+
   tcflush(fd, TCIFLUSH);
 }
+
 if(wd!=-1 && wd!=0)
   tcflush(wd, TCOFLUSH);
 //usleep(2000000);
@@ -391,7 +407,7 @@ if(x==2){
   tcsetattr(fd,TCSANOW,&newtio);
 }
 if(x==2){
-  tcflush(wd, TCIFLUSH);
+  tcflush(wd, TCOFLUSH);
   tcsetattr(wd,TCSANOW,&newtio);
 }
   /*

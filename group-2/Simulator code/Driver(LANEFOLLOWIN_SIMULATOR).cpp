@@ -87,11 +87,15 @@ namespace msv {
             // Design your control algorithm here depending on the input data from above.
             
             
+            
             double desiredSteeringWheelAngle = 0;
             // Create vehicle control data.
             VehicleControl vc;
             
-
+            
+            //CODE WRITTEN BY JOHAN HERMANSSON, JONATHAN KLEMETZ
+            
+            //check the SteeringData and go into the correct steering and speed from the LaneDetector
             if (sd.getDriveStraight()==true && intersect == 0){
                 vc.setSpeed(1.2);
                 desiredSteeringWheelAngle = 0;
@@ -126,7 +130,7 @@ namespace msv {
                 count1 = 0;
                 cerr << "Stop" << endl;
                 
-            }if (intersect == 1){
+            }if (intersect == 1){ //if we reach an intesection wait 40 frames(2 seconds)
                 if (count1 <=40){
                     count1++;
                     vc.setSpeed(0.0);
@@ -135,7 +139,7 @@ namespace msv {
                     cerr << "Wait" << endl;
                     
                 }
-                if (count1 >= 41){
+                if (count1 >= 41){ //when the car been waiting for 41 frames, continue lanefollowing
                     vc.setSpeed(1.2);
                     desiredSteeringWheelAngle = 0;
                     vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
