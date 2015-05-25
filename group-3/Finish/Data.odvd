@@ -20,9 +20,6 @@
 message msv.SteeringData {
     double exampleData;
 }
-message msv.IntersectionFound {
-    bool intersectionFound;
-}
 
 message msv.UserButtonData {
     enum ButtonStatus {
