@@ -100,8 +100,8 @@ using namespace core::data::control;
     }
 
     void Proxy::setUp() {
-   //   msv::connect("/dev/ttyACM0",1); // connect to arduino reading from
-     // msv::connect("/dev/ttyACM0",2); // connect to arduino sending to
+      msv::connect("/dev/ttyACM0",1); // connect to arduino reading from
+      msv::connect("/dev/ttyACM0",2); // connect to arduino sending to
 
 
 	    // This method will be call automatically _before_ running body().
