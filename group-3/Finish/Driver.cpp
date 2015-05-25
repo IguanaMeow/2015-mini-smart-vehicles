@@ -229,6 +229,9 @@ if(choice==1) //Lanedetection
                 steering = sd.getExampleData();
                 vc.setSteeringWheelAngle(steering * Constants::DEG2RAD);
 }
+else{
+                        cout << "Input the correct value!!!  " << endl;
+}
                 // You can also turn on or off various lights:
                 vc.setBrakeLights(false);
                 vc.setLeftFlashingLights(false);
