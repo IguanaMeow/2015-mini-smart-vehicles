@@ -176,6 +176,7 @@ double pi = 3.14159265;
                 */
 
                 // speed to 1 and lanefollowing when parking1(state) is equal 0
+                if(sim){
                 if (parking1 ==0){    
                     vc.setSpeed(1.0);
                   //  desiredSteeringWheelAngle = sd.getExampleData();
@@ -234,6 +235,110 @@ double pi = 3.14159265;
                     trigger=4;                       
                 } else if(state == 5 && trigger==4 && (IR_R > 1.5 && IR_R <=1.9)){
                     vc.setSpeed(0);
+                }
+                        
+                }else{
+                        if (parking1 ==0){  
+                   vc.setSpeed(1);
+                    desiredSteeringWheelAngle = 7;
+               vc.setSteeringWheelAngle(desiredSteeringWheelAngle); // lane following
+                } 
+                
+                if(state==0 && trigger==0){
+					//vc.setSteeringWheelAngle(-160);
+					trigger=1;
+					state=1;
+				 }
+				  if((IR_FR >3 && IR_FR <15)  && state==1 && trigger==1){
+
+					state=2;
+				    trigger=2;
+				 }
+                
+                if(IR_RR>30 && state==2 && trigger==2){                //state is 1 when is_rr is bigger than 0
+                    gapStart = vd.getAbsTraveledPath();    //start calculating the traveled path
+                    counter++;                    
+                } if(IR_RR < 16 && state==2 && trigger ==2){
+                    gapEnd = vd.getAbsTraveledPath();
+                          //stop calculating the traveled path
+                }
+                 if((IR_FR <35 || IR_RR<35) && trigger ==2 && counter > 30){       
+                    parking1=1;
+                    vc.setSpeed(-2);
+                    counter++;
+                } 
+
+                  if(counter > 34 && trigger ==2){       
+                    counter++;
+                    parking1=1;
+                    vc.setSpeed(0.0);
+                    
+          
+   
+                 // """TIMER"""" 
+                }  if(counter > 80 && trigger ==2 ){      
+                    vc.setSpeed(0.0);
+                    trigger=3;
+                    state =3;
+                
+             
+        
+                
+                } if(state ==3 && trajCounter < 35 && trigger ==3){                                     
+                   trajCounter++;
+                    vc.setSteeringWheelAngle(45);              
+                    vc.setSpeed(-2);
+                    
+                }   
+
+                // """TIMER""""
+                 if(state==3 && trajCounter > 34 && trigger <5 ){      
+                    trajCounter++;
+                    vc.setSpeed(0.0);
+                    trigger=4;
+                
+             
+        
+                
+                } 
+
+                 
+                if(state ==3 && (IR_R >34) &&  trajCounter >=34   && trigger <6){
+                    trajCounter++;
+                    trigger=5;
+                    vc.setSteeringWheelAngle(-55);
+                    vc.setSpeed(-2);
+                
+                   
+                }    // """TIMER""""
+                 if(state==3  && trajCounter > 59 && trigger <7 ){      
+                    vc.setSpeed(1);
+                    trigger=6;
+                    trajCounter++;
+                    vc.setSpeed(0);
+                    
+                
+
+                }  
+                 if(state > 2 && (IR_R <40 || IR_R >100) && trajCounter >83 && trigger <8){
+                         vc.setSpeed(0);
+                       state=4;
+                       trigger=7;
+                   
+                   vc.setSteeringWheelAngle(0);
+                   // trigger =5; // increase trigger to not go back to state less then 5
+                 }
+
+                 if(state == 4 && IR_R >33 && trajCounter >80 && trigger <8){
+                       vc.setSpeed(-2);
+                   vc.setSteeringWheelAngle(0);
+                   state=5;
+                   // trigger =5; // increase trigger to not go back to state less then 5
+                 } if(state==5 && trigger==7){
+                    vc.setSpeed(1);
+                    vc.setSpeed(0);
+
+                 }
                 }
              
                 //Printouts
