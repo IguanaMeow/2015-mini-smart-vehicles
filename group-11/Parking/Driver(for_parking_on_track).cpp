@@ -102,7 +102,7 @@ namespace msv {
                                 count = vd.getAbsTraveledPath();        
                         }
 
-
+                        /*
                         //Escape to lane if object is detected
                         if (rearObjectDetected == true){
                             cout << "RearObject now true!" << endl;
@@ -125,14 +125,14 @@ namespace msv {
 
                             }
                         }
-                                             
+                               */              
 
                          if (park == true && rearObjectDetected == false){
                             cout << "Park now true!" << endl;
                             cout << "AbsPath in park-mode = " << vd.getAbsTraveledPath() << endl;
                             sd.setSpeedData(1.0);
                             sd.setExampleData(0.0);
-
+/*
                             if (vd.getAbsTraveledPath() <= count + 160 && sbd.getValueForKey_MapOfDistances(1) > 0 && sbd.getValueForKey_MapOfDistances(1) < 2.5){
                                 cout << "RearObject has been detected, reversing to road.." << endl;
                                 cout << "AbsPath when rearobject was detected: " << vd.getAbsTraveledPath() << endl;
@@ -140,7 +140,7 @@ namespace msv {
                                 count = vd.getAbsTraveledPath();                        
                                 rearObjectDetected = true;
                                 park = false;                               
-                            }
+                            }*/
                             
                             if (vd.getAbsTraveledPath() >= count && vd.getAbsTraveledPath() <=count + 100){
                                 cout << "Moving forward in parking" << endl;
@@ -162,12 +162,28 @@ namespace msv {
                             }
                             if (vd.getAbsTraveledPath() >= count + 170 && vd.getAbsTraveledPath() <= count + 215){
                                 cout << "Setting angle to left in parking" << endl;
+                                sd.setExampleData(-23.0);
+                            }
+                            if (vd.getAbsTraveledPath() >= count + 215 && vd.getAbsTraveledPath() <= count + 220){
+                                cout << "Aligning to road" << endl;
                                 sd.setExampleData(23.0);
+                                sd.setExampleData(1.0);
+
+                            }
+                            if (vd.getAbsTraveledPath() >= count + 220){
+                                cout << "STOP" << endl;
+                                sd.setExampleData(0.0);
+                                sd.setSpeedData(0.0);                                
                             }
 
 
 
 
+
+
+
+
+/*
                             if (vd.getAbsTraveledPath() >= count + 180 && (sbd.getValueForKey_MapOfDistances(1) > 0 && sbd.getValueForKey_MapOfDistances(1) <= 2.2) && park == true){
                                 cout << "Rear IR has detected object, this is a small space" << endl;
                                 smallspace = true; 
@@ -189,16 +205,16 @@ namespace msv {
                           
 
                             }
-                            
+                            */
 
-/*
+
                             //Emergancy break
-                            if (vd.getAbsTraveledPath() >= count + 250 && (sbd.getValueForKey_MapOfDistances(1) < 2.8 || sbd.getValueForKey_MapOfDistances(1) <= 0)){
+                            if (vd.getAbsTraveledPath() >= count + 110 && sbd.getValueForKey_MapOfDistances(1) > 0){
                             cout << "Rear IR has detected object, stopping" << endl;
                                 sd.setExampleData(0.0);
                                 sd.setSpeedData(0.0);                            
                             }
-
+/*
 
                             //Emergancy break
                             if (vd.getAbsTraveledPath() >= count + 250 && (sbd.getValueForKey_MapOfDistances(3) < 2 || sbd.getValueForKey_MapOfDistances(3) < 0)){
@@ -206,9 +222,10 @@ namespace msv {
                                 sd.setSpeedData(0.0);
                                 sd.setExampleData(0.0);
                             }
-                         }        
+                            */
+                                 
                                 
-*/
+
                          }  
                      
                         
