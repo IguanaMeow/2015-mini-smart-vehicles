@@ -55,6 +55,7 @@ int count2=0;
 // the distance for calculating travel path
 double distance;
 
+
         //------------------------- parking -------------------------------//
 double pi = 3.14159265;
         double Rs1; //first steer angle radius of curvature
@@ -77,23 +78,23 @@ double pi = 3.14159265;
         int parking1=0;
 
         Driver::Driver(const int32_t &argc, char **argv) :
-	        ConferenceClientModule(argc, argv, "Driver") {
+            ConferenceClientModule(argc, argv, "Driver") {
         }
 
         Driver::~Driver() {}
 
         void Driver::setUp() {
-	        // This method will be call automatically _before_ running body().
+            // This method will be call automatically _before_ running body().
         }
 
         void Driver::tearDown() {
-	        // This method will be call automatically _after_ return from body().
+            // This method will be call automatically _after_ return from body().
         }
 
         // This method will do the main data processing job.
         ModuleState::MODULE_EXITCODE Driver::body() {
 
-	        while (getModuleState() == ModuleState::RUNNING) {
+            while (getModuleState() == ModuleState::RUNNING) {
                 // In the following, you find example for the various data sources that are available:
 
                 // 1. Get most recent vehicle data:
@@ -115,7 +116,12 @@ double pi = 3.14159265;
                 Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_1);
                 SteeringData sd = containerSteeringData.getData<SteeringData> ();
                 cerr << "Most recent steering data: '" << sd.toString() << "'" << endl;
-
+        double IR_FR = sbd.getValueForKey_MapOfDistances(0);    //ir front right
+        double IR_R = sbd.getValueForKey_MapOfDistances(1);   //ir rear rear
+                double IR_RR = sbd.getValueForKey_MapOfDistances(2);    //ir rear right
+                double US_FC = sbd.getValueForKey_MapOfDistances(3);  //ultra sonic front cener
+                //double US_FR = sbd.getValueForKey_MapOfDistances(4);    //ultra sonic front right
+                double US_RR = sbd.getValueForKey_MapOfDistances(5);    //ultra sonic rear right
 
 
                 // Design your control algorithm here depending on the input data from above.
@@ -129,12 +135,7 @@ double pi = 3.14159265;
                 // With setSpeed you can set a desired speed for the vehicle in the range of -2.0 (backwards) .. 0 (stop) .. +2.0 (forwards)
           //      vc.setSpeed(0.4);
                 if(parkingState==1){
-	               double IR_FR = sbd.getValueForKey_MapOfDistances(0);    //ir front right
-                double IR_R = sbd.getValueForKey_MapOfDistances(1);   //ir rear rear
-                double IR_RR = sbd.getValueForKey_MapOfDistances(2);    //ir rear right
-                double US_FC = sbd.getValueForKey_MapOfDistances(3);  //ultra sonic front cener
-                //double US_FR = sbd.getValueForKey_MapOfDistances(4);    //ultra sonic front right
-                double US_RR = sbd.getValueForKey_MapOfDistances(5);    //ultra sonic rear right
+                   
 
 
                 //Algorithm below used for parellel parking, - source of algorithm used stated in documentation
@@ -243,8 +244,10 @@ double pi = 3.14159265;
    
    
 }else{
+    
 if(sd.getIntersectionFound()>0)
 dState=1;
+        if(sim){
                 //  When car is moving in a distance less than 90 or bigger than 150 we are in straight
                 if((distance<90 || distance>150) && dState==0){
                 // lane following when US_FC is not detecting or has distance that is less then 10 and when IR_FR is not detecting
@@ -350,7 +353,54 @@ dState=1;
                     count2=0;
                 }
             }
-            
+        }else{
+             if(US_FC>70 && state==0){
+    cout << "                               1"<<endl;
+    vc.setSpeed(1.0);
+    //desiredSteeringWheelAngle=sd.getExampleData();
+        state=1;
+    }
+    else if(state==1 && US_FC>70){
+         cout << "                               2"<<endl;
+        vc.setSpeed(1.0);
+        //desiredSteeringWheelAngle=sd.getExampleData();
+        
+    }
+
+    else if (US_FC<70 && state==1){
+         cout << "                               3"<<endl;
+    vc.setSpeed(1.0);
+    desiredSteeringWheelAngle=-17;
+      count2++;
+state=2;
+    }else if((US_RR >20 || (IR_RR<25 && IR_RR>18)) && state==2 && count2<5){
+         cout << "                               4"<<endl;
+        vc.setSpeed(1.0);
+    desiredSteeringWheelAngle=-17;
+    count2++;
+     cout << "                       count is "<< count2<< endl;
+  
+    }
+
+    else if (US_RR <40 && state==2){
+    cout << "                                 changing degree to 20"<<endl;
+    vc.setSpeed(1.0);
+    desiredSteeringWheelAngle=40;
+    state=3;
+    }else if(state==3){
+        vc.setSpeed(1.0);
+    desiredSteeringWheelAngle=40;
+  
+
+    }else if (state==1 && IR_RR >23 && count1 <5){
+        count1++;
+        vc.setSpeed(1.0);
+    desiredSteeringWheelAngle = -20;
+}else{
+    vc.setSpeed(1.0);
+    desiredSteeringWheelAngle = 0;
+}
+        }
             if(sim)
             vc.setSteeringWheelAngle(desiredSteeringWheelAngle* Constants::DEG2RAD);
             else
@@ -373,7 +423,7 @@ dState=1;
                 }
 
             }
-	cout<<"distance " << distance << endl; 
+    cout<<"distance " << distance << endl; 
 }
            
                 // You can also turn on or off various lights:
@@ -385,9 +435,9 @@ dState=1;
                 Container c(Container::VEHICLECONTROL, vc);
                 // Send container.
                 getConference().send(c);
-	        }
+            }
 
-	        return ModuleState::OKAY;
+            return ModuleState::OKAY;
         }
 } // msv
 
