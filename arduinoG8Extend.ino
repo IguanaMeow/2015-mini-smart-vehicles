@@ -33,6 +33,7 @@ unsigned int irBackOut = 0;             //IR sensor back outgoing
 unsigned int usFrontOut = 0;                //US sensor 1 outgoing
 unsigned int usRightOut = 0;                //US sensor 2 outgoing
 
+
 /*---- Servo and ESC ----*/
 
 Servo esc;
@@ -238,6 +239,7 @@ void sendData(){
     sendSignal[16] ^= sendSignal[i];
   } 
   Serial.write(sendSignal, 17);
+
 }
 
 //---Adjust the throttle based on current speed - Experimental (not called)
@@ -281,7 +283,7 @@ void getAbsDirection(){
           mpu.dmpGetQuaternion(&q, fifoBuffer);
           mpu.dmpGetGravity(&gravity, &q);
           mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
-          absDirection = ((int)round(ypr[0] * 180/M_PI))+180;        
+          absDirection = ((int)round(ypr[0] * -180/M_PI))+180;        
       }
   }
 }
@@ -303,11 +305,24 @@ void setTheSpeed(){
   driving = 1; 
   throttle = speedIn;
   if(throttle > 1520){  
+    if(speedNow <= 1500){ esc.writeMicroseconds(throttle +30), delay(5);}
     esc.writeMicroseconds(throttle);
   }else if (throttle < 1500){
+    if(speedNow >= 1500){ esc.writeMicroseconds(throttle -30), delay(5);}
+    esc.writeMicroseconds(throttle);
+    delay(5);
     esc.writeMicroseconds(throttle);
   }else{
     driving = 0;
+    if (speedNow > 1520){
+      esc.writeMicroseconds(1220);
+      delay(5);
+      esc.writeMicroseconds(1220);
+    }else{
+      esc.writeMicroseconds(1570);
+      delay(5);
+      esc.writeMicroseconds(1570);
+    }
     esc.writeMicroseconds(throttle);
   }
   speedNow = throttle;
@@ -355,7 +370,7 @@ void getUSFront(){
 //---get second Ultra Sonic Sensor
 void getUSRight(){
   int usRightOutTemp = usRight.getRange(unit);
-  if(usRightOutTemp != 255 && usRightOutTemp != 0){
+  if(usRightOutTemp != 255 && usRightOutTemp != 0 ){
     usRightOut = usRightOutTemp;
   }
 }
@@ -393,12 +408,14 @@ void calculateSpeed(){
 //---Serial incoming, when serial is avaliable runs after loop
 void serialEvent(){
   byte i;
-  byte badread;
+  byte badread = 78;
   byte check = 0;
   while(Serial.available() > 14){
     Serial.read();
   }
   if(Serial.peek() == startByte){
+    
+    
     Serial.readBytes((char*)recSignal, 7);
     for(i=0;i<7;i++){
       check ^= recSignal[i];
@@ -407,12 +424,15 @@ void serialEvent(){
       recComplete=true;
     }
   }else{ 
-    while (Serial.available() && badread != endByte){
+    if(Serial.available() > 8){
       badread = Serial.read();
+      while (Serial.available() && badread != endByte){
+        badread = Serial.read();
+      }
     }
   Serial.read();
   }
-  if(recComplete == false && Serial.peek() == startByte){
+  if(recComplete == false && Serial.peek() == startByte && Serial.available()){
     Serial.readBytes((char*)recSignal, 7);
     for(i=0;i<7;i++){
         check ^= recSignal[i];
