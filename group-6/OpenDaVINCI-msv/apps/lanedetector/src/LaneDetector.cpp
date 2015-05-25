@@ -187,7 +187,7 @@ namespace msv {
         }
 
         Mat img, dst, cdst;
-        img = cvarrToMat(m_image, true);
+        img = cvarrToMat(m_image, true); //Convert Iplimage to Mat
 
        // int w = img.cols/2;
         int rows = img.rows;
@@ -214,7 +214,7 @@ namespace msv {
         vector<Vec4i> lines;
         HoughLinesP(dst, lines, 1, CV_PI / 180, 8, 10, 10);
 
-        //Remove lines
+        //Remove lines on upper half of screen
         for (size_t i = lines.size(); i > 0; i--) {
 
             Vec4i l = lines[i - 1];
@@ -232,10 +232,12 @@ namespace msv {
         }
 
         vertical_Line(cdst, p1, p2);
-
+        
+        //horizontal_green_Line7
         for (int j = p3.x; j >= 0; j--) {
             int i = p3.y / 0.87;
-            // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
+            
+            // start drawing the horizental_green_Line until it detect a white color(long lane),by then stop drawing
             if (cdst.at<Vec3b>(i, j)[0] == 255 && cdst.at<Vec3b>(i, j)[1] == 255 && cdst.at<Vec3b>(i, j)[2] == 255) {
 
                 p5.x = j;
@@ -252,10 +254,11 @@ namespace msv {
 
         }
 
-
+        //horizontal_green_Line8
         for (int j = p3.x; j >= 0; j--) {
             int i = p3.y / 0.77;
-            // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
+            
+            // start drawing the horizental_green_Line until it detect a white color(long lane),by then stop drawing
             if (cdst.at<Vec3b>(i, j)[0] == 255 && cdst.at<Vec3b>(i, j)[1] == 255 && cdst.at<Vec3b>(i, j)[2] == 255) {
 
                 p5.x = j;
@@ -272,10 +275,11 @@ namespace msv {
 
         }
 
-        //horizental_green_Line
+        //horizental_green_Line1
         for (int j = p3.x; j < img.cols; j++) {
             int i = p3.y / 1.5;
-            // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
+            
+            // start drawing the horizental_green_Line until it detect a white color(long lane),by then stop drawing
             if (cdst.at<Vec3b>(i, j)[0] == 255 && cdst.at<Vec3b>(i, j)[1] == 255 && cdst.at<Vec3b>(i, j)[2] == 255) {
 
                 p5.x = j;
@@ -291,10 +295,11 @@ namespace msv {
             }
         }
 
-
+        //horizontal_green_Line2
         for (int j = p3.x; j < img.cols; j++) {
             int i = p3.y / 1.4;
-            // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
+            
+            // start drawing the horizental_green_Line until it detect a white color(long lane),by then stop drawing
             if (cdst.at<Vec3b>(i, j)[0] == 255 && cdst.at<Vec3b>(i, j)[1] == 255 && cdst.at<Vec3b>(i, j)[2] == 255) {
 
                 p5.x = j;
@@ -310,10 +315,11 @@ namespace msv {
             }
         }
 
-
+        //horizontal_green_Line3
         for (int j = p3.x; j < img.cols; j++) {
             int i = p3.y / 1.2;
-            // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
+            
+            // start drawing the horizental_green_Line until it detect a white color(long lane),by then stop drawing
             if (cdst.at<Vec3b>(i, j)[0] == 255 && cdst.at<Vec3b>(i, j)[1] == 255 && cdst.at<Vec3b>(i, j)[2] == 255) {
 
                 p5.x = j;
@@ -329,9 +335,11 @@ namespace msv {
             }
         }
 
-        for (int j = p3.x; j < img.cols; j++) {
+       //horizontal_green_Line4
+       for (int j = p3.x; j < img.cols; j++) {
             int i = p3.y / 1.1;
-            // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
+            
+            // start drawing the horizental_green_Line until it detect a white color(long lane),by then stop drawing
             if (cdst.at<Vec3b>(i, j)[0] == 255 && cdst.at<Vec3b>(i, j)[1] == 255 && cdst.at<Vec3b>(i, j)[2] == 255) {
 
                 p5.x = j;
@@ -346,9 +354,11 @@ namespace msv {
             }
         }
 
+       //horizontal_green_Line
         for (int j = p3.x; j < img.cols; j++) {
             int i = p3.y / 0.85;
-            // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
+            
+            // start drawing the horizental_green_Line until it detect a white color(long lane),by then stop drawing
             if (cdst.at<Vec3b>(i, j)[0] == 255 && cdst.at<Vec3b>(i, j)[1] == 255 && cdst.at<Vec3b>(i, j)[2] == 255) {
 
                 p5.x = j;
@@ -363,9 +373,11 @@ namespace msv {
             }
         }
 
+        //horizontal_green_medel
         for (int j = p3.x; j < img.cols; j++) {
             int i = p3.y / 0.8;
-            // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
+            
+            // start drawing the horizental_green_Line until it detect a white color(long lane),by then stop drawing
             if (cdst.at<Vec3b>(i, j)[0] == 255 && cdst.at<Vec3b>(i, j)[1] == 255 && cdst.at<Vec3b>(i, j)[2] == 255) {
                 p6.x = j;
                 p6.y = i;
@@ -383,7 +395,8 @@ namespace msv {
         //horizental_yellow_Line
         for (int j = p3.x; j < img.cols; j++) {
             int i = p3.y / 0.75;
-            // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
+            
+            // start drawing the horizental_green_Line until it detect a white color(long lane),by then stop drawing
             if (cdst.at<Vec3b>(i, j)[0] == 255 && cdst.at<Vec3b>(i, j)[1] == 255 && cdst.at<Vec3b>(i, j)[2] == 255) {
                 p7.x = j;
                 p7.y = i;
@@ -397,9 +410,10 @@ namespace msv {
             }
         }
         // intersection line
-for (int i=p9.y; i<img.rows ; i++)
+        for (int i=p9.y; i<img.rows ; i++)
         {  int j=p9.x;
-  // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
+        
+        // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
         if(cdst.at<Vec3b>(i,j)[0] == 255 && cdst.at<Vec3b>(i,j)[1] == 255 && cdst.at<Vec3b>(i,j)[2]  ==255)
        
                
