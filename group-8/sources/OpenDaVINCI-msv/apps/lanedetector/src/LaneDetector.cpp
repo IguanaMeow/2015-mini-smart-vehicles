@@ -167,7 +167,7 @@
 
                 if(numberOfChannels == 1){
                     cvSmooth( merge_image, merge_image, CV_GAUSSIAN, 11, 11 );
-                    cvCanny( merge_image, merge_image, 110, 55, 3 );
+                    cvCanny( merge_image, merge_image, 120, 60, 3 );
                     cvDilate(merge_image, merge_image,NULL,1);
                     cvMerge(merge_image, merge_image, merge_image, NULL, m_image);
                 }
@@ -330,8 +330,8 @@
                 for(int i = 0; i < SIZE; ++i){
                     rightList[i].setYPos(round(imgHeight * distance *(i+6)));
                     leftList[i].setYPos(round(imgHeight * distance *(i+6)));
-                    upline1.setCritical(imgHeight * 0.36);
-                    upline2.setCritical(imgHeight * 0.36);
+                    upline1.setCritical(imgHeight * 0.55);
+                    upline2.setCritical(imgHeight * 0.55);
                 }
             }else{
                 for(int i = 0; i < SIZE; ++i){
@@ -456,7 +456,7 @@
         if(rightList[1].getXPos() < (imgWidth * 0.62)){
             angle = -26* Constants::DEG2RAD;
             tempAngle = angle;
-        }else if (rightList[1].getXPos() > (imgWidth * 0.88)){
+        }else if (rightList[1].getXPos() > (imgWidth * 0.83)){
             angle = 25* Constants::DEG2RAD;
             tempAngle = angle;
         }

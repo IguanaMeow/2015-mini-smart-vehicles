@@ -122,7 +122,7 @@ namespace msv {
     void Proxy::tearDown() {
         
         /*---send neutral signals to arduino---*/
-        speedOut = 1520;
+        speedOut = 1500;
         steeringOut = 90;
         outSer[6] = 0;
         outSer[0] = startByte;
@@ -173,12 +173,12 @@ namespace msv {
         /*---Calculate speed and steering settings---*/
         
         if(speedSetting < 0){
-            speedOutTemp = 1220;
+            speedOutTemp = 1180;
         }else if ((int)speedSetting == 0){
             speedOutTemp = 1500; 
         }else{
             if(steeringSetting > 21 || steeringSetting < -21){
-                speedOutTemp = 1560;
+                speedOutTemp = 1565;
             }else{
                 speedOutTemp = 1570 + speedSetting;
             }

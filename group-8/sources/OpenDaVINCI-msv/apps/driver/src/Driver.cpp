@@ -88,8 +88,11 @@ namespace msv {
                         vc.setSpeed(SPEED);
                         vc.setSteeringWheelAngle(sd.getHeadingData());
 
-                        if (sd.getIntersectionLine() > 0) {
+                        if (sd.getIntersectionLine() > 0 && counter > 10) {
+                                counter = 0;
                                 state = 2;
+                        }else if(sd.getIntersectionLine() > 0){
+                                counter++;
                         }
                         break;
                 case 2:
@@ -113,7 +116,7 @@ namespace msv {
                         //sd.setSpeedData(SPEED);
                         
 
-                        if ((vd.getAbsTraveledPath()-initialTraveledPath) >= carLength * 2 ) {
+                        if ((vd.getAbsTraveledPath()-initialTraveledPath) >= carLength * 1.6 ) {
                                 sd.setIntersectionLine(0);
                                 state = 1;
                         }

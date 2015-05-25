@@ -62,16 +62,19 @@ namespace msv {
             virtual ~Overtaker();
 
             core::base::ModuleState::MODULE_EXITCODE body();
+            double angleDifference(double initialHeading, double heading);
 
         private:
             virtual void setUp();
 
             virtual void tearDown();
             
-            const int m_followLane;
-            const int m_turnOut;
-            const int m_straighten;
-            const int m_turnBack;
+            static const int m_followLane = 1;
+            static const int m_turnOut = 2;
+            static const int m_straighten = 3;
+            static const int m_turnBack = 4;
+            static const int m_returnNormal = 5;
+
             int m_counter;
             double m_steering;
             int m_sensor;
