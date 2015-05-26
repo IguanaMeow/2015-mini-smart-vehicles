@@ -60,12 +60,7 @@ namespace msv {
         line(img, start_point, end_Point, Scalar(255, 0, 0), 2, 8);
     }
 
-    void p5_7(Mat img, Point start_point, Point end_Point) {
-        line(img, start_point, end_Point, Scalar(128, 0, 128), 2, 8);
-    }
-
-    
-
+  
     LaneDetector::LaneDetector(const int32_t &argc, char **argv) : ConferenceClientModule(argc, argv, "lanedetector"),
                                                                    m_hasAttachedToSharedImageMemory(false),
                                                                    m_sharedImageMemory(),
@@ -410,7 +405,7 @@ namespace msv {
 
         // counter_inter
 
-        p5_7(cdst, p5, p7);
+ 
         imshow("Lane Detection", cdst);
 
 
