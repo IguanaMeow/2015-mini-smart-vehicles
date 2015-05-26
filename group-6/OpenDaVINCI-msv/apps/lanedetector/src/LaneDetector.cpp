@@ -64,10 +64,7 @@ namespace msv {
         line(img, start_point, end_Point, Scalar(128, 0, 128), 2, 8);
     }
 
-    // distance between p5  and p7
-    double Distance(double dX0, double dY0, double dX1, double dY1) {
-        return sqrt((dX1 - dX0) * (dX1 - dX0) + (dY1 - dY0) * (dY1 - dY0));
-    }
+    
 
     LaneDetector::LaneDetector(const int32_t &argc, char **argv) : ConferenceClientModule(argc, argv, "lanedetector"),
                                                                    m_hasAttachedToSharedImageMemory(false),
@@ -186,13 +183,13 @@ namespace msv {
         }
 
         Mat img, dst, cdst;
-        img = cvarrToMat(m_image, true);
+        img = cvarrToMat(m_image, true);  //The IPLImage is converted to Mat image
 
-       // int w = img.cols/2;
+      //int w = img.cols/2;
         int rows = img.rows;
         int cols = img.cols;
 
-        Point p1, p2, p3, p4, p5, p6, p7;  // for angle
+        Point p1, p2, p3, p4, p5, p6, p7;  //for angle
 
         p1.x = cols / 2;
         p1.y = 0;
@@ -213,7 +210,7 @@ namespace msv {
         vector<Vec4i> lines;
         HoughLinesP(dst, lines, 1, CV_PI / 180, 8, 10, 10);
 
-        //Remove lines
+        //Remove lines on the upper half of the image
         for (size_t i = lines.size(); i > 0; i--) {
 
             Vec4i l = lines[i - 1];
@@ -230,11 +227,14 @@ namespace msv {
             line(cdst, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(255, 255, 255), 2, 8);
         }
 
-        vertical_Line(cdst, p1, p2);
+        vertical_Line(cdst, p1, p2); //vertical blue line
 
+        
+        //horizontal_green7
         for (int j = p3.x; j >= 0; j--) {
             int i = p3.y / 0.87;
-            // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
+            
+            //start drawing the horizental green line until it detect a white color(long lane),by then stop drawing
             if (cdst.at<Vec3b>(i, j)[0] == 255 && cdst.at<Vec3b>(i, j)[1] == 255 && cdst.at<Vec3b>(i, j)[2] == 255) {
 
                 p5.x = j;
@@ -251,10 +251,11 @@ namespace msv {
 
         }
 
-
+        //horizontal_green8
         for (int j = p3.x; j >= 0; j--) {
             int i = p3.y / 0.77;
-            // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
+            
+            //start drawing the horizental green line until it detect a white color(long lane),by then stop drawing
             if (cdst.at<Vec3b>(i, j)[0] == 255 && cdst.at<Vec3b>(i, j)[1] == 255 && cdst.at<Vec3b>(i, j)[2] == 255) {
 
                 p5.x = j;
@@ -271,10 +272,11 @@ namespace msv {
 
         }
 
-        //horizental_green_Line
+        //horizental_green1
         for (int j = p3.x; j < img.cols; j++) {
             int i = p3.y / 1.5;
-            // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
+            
+            //start drawing the horizental green line until it detect a white color(long lane),by then stop drawing
             if (cdst.at<Vec3b>(i, j)[0] == 255 && cdst.at<Vec3b>(i, j)[1] == 255 && cdst.at<Vec3b>(i, j)[2] == 255) {
 
                 p5.x = j;
@@ -290,10 +292,11 @@ namespace msv {
             }
         }
 
-
+        //horizontal_green2
         for (int j = p3.x; j < img.cols; j++) {
             int i = p3.y / 1.4;
-            // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
+            
+            //start drawing the horizental green line until it detect a white color(long lane),by then stop drawing
             if (cdst.at<Vec3b>(i, j)[0] == 255 && cdst.at<Vec3b>(i, j)[1] == 255 && cdst.at<Vec3b>(i, j)[2] == 255) {
 
                 p5.x = j;
@@ -309,10 +312,11 @@ namespace msv {
             }
         }
 
-
+        //horizontal_green3
         for (int j = p3.x; j < img.cols; j++) {
             int i = p3.y / 1.2;
-            // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
+            
+            //start drawing the horizental green line until it detect a white color(long lane),by then stop drawing
             if (cdst.at<Vec3b>(i, j)[0] == 255 && cdst.at<Vec3b>(i, j)[1] == 255 && cdst.at<Vec3b>(i, j)[2] == 255) {
 
                 p5.x = j;
@@ -328,9 +332,10 @@ namespace msv {
             }
         }
 
+       //horizontal_green4
         for (int j = p3.x; j < img.cols; j++) {
             int i = p3.y / 1.1;
-            // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
+            //start drawing the horizental green line until it detect a red color(long lane),by then stop drawing
             if (cdst.at<Vec3b>(i, j)[0] == 255 && cdst.at<Vec3b>(i, j)[1] == 255 && cdst.at<Vec3b>(i, j)[2] == 255) {
 
                 p5.x = j;
@@ -345,9 +350,11 @@ namespace msv {
             }
         }
 
+        //horizontal_green
         for (int j = p3.x; j < img.cols; j++) {
             int i = p3.y / 0.85;
-            // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
+            
+            //start drawing the horizental green line until it detect a red color(long lane),by then stop drawing
             if (cdst.at<Vec3b>(i, j)[0] == 255 && cdst.at<Vec3b>(i, j)[1] == 255 && cdst.at<Vec3b>(i, j)[2] == 255) {
 
                 p5.x = j;
@@ -362,9 +369,12 @@ namespace msv {
             }
         }
 
+
+        //horizontal_green_medel
         for (int j = p3.x; j < img.cols; j++) {
             int i = p3.y / 0.8;
-            // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
+            
+            //start drawing the horizental green line until it detect a white color (long lane),by then stop drawing
             if (cdst.at<Vec3b>(i, j)[0] == 255 && cdst.at<Vec3b>(i, j)[1] == 255 && cdst.at<Vec3b>(i, j)[2] == 255) {
                 p6.x = j;
                 p6.y = i;
@@ -379,10 +389,11 @@ namespace msv {
             }
         }
 
-        //horizental_yellow_Line
+        //horizental_yellow
         for (int j = p3.x; j < img.cols; j++) {
             int i = p3.y / 0.75;
-            // start drawing the horizental_green_Line until it detect a red color(long lane),by then stop drawing
+            
+            //start drawing the horizental yellow line until it detect a white color (long lane),by then stop drawing
             if (cdst.at<Vec3b>(i, j)[0] == 255 && cdst.at<Vec3b>(i, j)[1] == 255 && cdst.at<Vec3b>(i, j)[2] == 255) {
                 p7.x = j;
                 p7.y = i;
@@ -404,7 +415,7 @@ namespace msv {
 
 
         SteeringData sd;
-        double Pink_line = Distance(p5.x, p5.y, p7.x, p7.y);
+       
 
         cout << "################################ " << endl;
         cout << "count_green/count_yellow " << count_green / count_yellow << endl;
@@ -414,15 +425,14 @@ namespace msv {
         cout << count_green << endl;
         cout << count_yellow << endl;
         cout << angle << endl;
-
-        cout << "Pink_line " << Pink_line << endl;
-
+        
 
         Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_1);
         SteeringData sd_old = containerSteeringData.getData<SteeringData>();
         double critical_dist = sd_old.getDistanceData();
+        
         ///////////////////////////////////////////////////////////////////////
-
+        //To calculate the angles and speed we use the yellow and green lines are used
         int w = img.cols/2;
 
         if((int)count_green_medel == w && (int)count_green != w && (int)count_yellow != w ){
@@ -443,24 +453,29 @@ namespace msv {
                 angle = (count_green - critical_dist)/20;
             }
 
-            cout << "STRAIGHT" << endl;
+            cout << "STRAIGHT" << endl;                                                     //straight road
+        
         } else if ((count_green / count_yellow) < 0.811 && (count_green / count_yellow) > 0.64) {
 
             speed = 1;
             angle = (count_green - critical_dist)/7;
-            cout << "LEFT" << endl;
+            
+            cout << "LEFT" << endl;                                                         //left curve
+        
         } else if (((count_green / count_yellow) > 0.999 || (count_green3 / count_green4) > 0.999) &&
                  (count_green1 / count_green2 < 1)) {
 
-
-            speed = 0.7;
+			speed = 0.7;
             angle = 0;
-            cout << "INTERSECTION" << endl;
+            
+            cout << "INTERSECTION" << endl;                                               //intersection handling
+        
         } else if ((count_green / count_yellow) > 0.91 && (count_green / count_yellow) < 0.999) {
 
             speed = 1;
             angle = (count_green - critical_dist)/5;
-            cout << "RIGHT" << endl;
+            
+            cout << "RIGHT" << endl;                                                     //right curve
 
         } else {
             speed = sd_old.getSpeedData();
