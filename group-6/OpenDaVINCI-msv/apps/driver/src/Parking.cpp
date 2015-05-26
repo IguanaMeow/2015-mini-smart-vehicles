@@ -94,28 +94,26 @@ namespace msv {
                 // 1. Get most recent vehicle data:
                 Container containerVehicleData = getKeyValueDataStore().get(Container::VEHICLEDATA);
                 VehicleData vd = containerVehicleData.getData<VehicleData> ();
-                cerr << "Most recent vehicle data: '" << vd.getPosition() << "'" << endl;
+                //cerr << "Most recent vehicle data: '" << vd.getPosition() << "'" << endl;
 
                 
                 // 2. Get most recent sensor board data:
                 Container containerSensorBoardData = getKeyValueDataStore().get(Container::USER_DATA_0);
                 SensorBoardData sbd = containerSensorBoardData.getData<SensorBoardData> ();
-                cerr << "Most recent sensor board data: '" << sbd.toString() << "'" << endl;
+                //cerr << "Most recent sensor board data: '" << sbd.toString() << "'" << endl;
 
                 // 3. Get most recent user button data:
                 Container containerUserButtonData = getKeyValueDataStore().get(Container::USER_BUTTON);
                 UserButtonData ubd = containerUserButtonData.getData<UserButtonData> ();
-                cerr << "Most recent user button data: '" << ubd.toString() << "'" << endl;
+                //cerr << "Most recent user button data: '" << ubd.toString() << "'" << endl;
 
                 // 4. Get most recent steering data as fill from lanedetector for example:
                 Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_1);
                 SteeringData sd = containerSteeringData.getData<SteeringData> ();
-                cerr << "Most recent steering data: '" << sd.toString() << "'" << endl;
+                //cerr << "Most recent steering data: '" << sd.toString() << "'" << endl;
 
                 
                 //Sensors aoutput
-                // Infrared_FrontRight = sbd.getValueForKey_MapOfDistances(0);
-                // cout << "Infrared_FrontRight distance:" << Infrared_FrontRight <<endl;
                 Infrared_Rear = sbd.getValueForKey_MapOfDistances(1);
                 cout << "Infrared_Rear distance: " << Infrared_Rear << endl;
 
@@ -131,14 +129,12 @@ namespace msv {
                 distanceBetweenObjects += (curTime.tv_usec - timer.tv_usec)/1000.0;
                 distanceBetweenObjects /=1000.0;
 
-                // Design your control algorithm here depending on the input data from above.
                 // Create vehicle control data.
                 VehicleControl vc;
             
                 double desiredSteeringWheelAngle = 0;
                 vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
                 vc.setSpeed(0);
-                // PARKING = get distance between the spaces 
                 //Measure the distance between each space.
                 switch(parkingParallel){
 
@@ -164,7 +160,7 @@ namespace msv {
                             gettimeofday(&timer, NULL);
                         }
 
-                    case LETS_PARK: 
+                    case LETS_PARK: //First step reverse to park.
                         if((distanceBetweenObjects >= 8) && (distanceBetweenObjects < 15) && (lets_park == false)){
                             cerr << "Let's park...!";
                             vc.setSpeed(-1);
@@ -172,7 +168,7 @@ namespace msv {
                            parking = false;
                         }
 
-                    case PARKING:
+                    case PARKING: //Second step reverse to park
                         if((distanceBetweenObjects >= 15) && (distanceBetweenObjects < 24.5) && (parking == false) && 
                         (sbd.getValueForKey_MapOfDistances(1) >= -1 || sbd.getValueForKey_MapOfDistances(1) > 1.9)){//&&   (distanceBetweenObjects >= 16) && (distanceBetweenObjects < 23)
                             cerr << "Parking...!";
@@ -182,7 +178,7 @@ namespace msv {
                             almost = false;  
                         }
                     
-                    case ALMOST:
+                    case ALMOST: //Final move to park.
                         if((distanceBetweenObjects >= 24.5) && (distanceBetweenObjects < 33) && (almost == false) &&
                            (sbd.getValueForKey_MapOfDistances(3) >= -1 || sbd.getValueForKey_MapOfDistances(3) >= 3)){
                             cerr << "Almost...!";
