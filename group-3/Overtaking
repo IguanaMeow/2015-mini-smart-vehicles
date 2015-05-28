@@ -62,6 +62,7 @@ namespace msv {
                 int startovertaking=0;
                 int leftlane=0;
                 int stopovertaking=0;
+                int headingtorightlane=0;
                 int count=0;
                 
 	        while (getModuleState() == ModuleState::RUNNING) {
@@ -94,9 +95,9 @@ namespace msv {
                     double infraredRearRight = sbd.getValueForKey_MapOfDistances(2);
                     double ultraSonicFrontCenter = sbd.getValueForKey_MapOfDistances(3);
                     double infraredFrontRight= sbd.getValueForKey_MapOfDistances(0);
-                   // double ultraSonicRearRight = sbd.getValueForKey_MapOfDistances(5);
+                   double ultraSonicRearRight = sbd.getValueForKey_MapOfDistances(5);
                     // double infraredRear= sbd.getValueForKey_MapOfDistances(1);
-                  //  double ultraSonicFrontRight = sbd.getValueForKey_MapOfDistances(4);
+                    double ultraSonicFrontRight = sbd.getValueForKey_MapOfDistances(4);
                     double desiredSteeringWheelAngle;
                     int steeringAngle=sd.getExampleData();
                       // Create vehicle control data.
@@ -114,7 +115,10 @@ namespace msv {
                 desiredSteeringWheelAngle=steeringAngle;
                 vc.setSpeed(2);
                 }
-                if(ultraSonicFrontCenter<6 && ultraSonicFrontCenter>0){
+
+		// Detects obstacle
+
+                if(ultraSonicFrontCenter< 6 && ultraSonicFrontCenter>0){
 
                 lanedetection=0;
                 objectdetected=1;
@@ -122,25 +126,49 @@ namespace msv {
                 cout<<" AIAI"<<endl;
 
                 }
+
+                
+		
+		
+		// Initiate overtaking
                 if(infraredFrontRight>0 && objectdetected==1) {
+                lanedetection=0;
                 objectdetected=0;
                 startovertaking=1;
-                desiredSteeringWheelAngle=20;
+                desiredSteeringWheelAngle= 20;
                 }
-                if(infraredFrontRight>0 && infraredRearRight>0 && startovertaking==1) {
-                startovertaking=0;
-                leftlane=1;
+                if(ultraSonicFrontRight>0 && startovertaking==1){
                 desiredSteeringWheelAngle=10;
+                
+                startovertaking=0; 
+                leftlane=1;
                 }
-                if(infraredFrontRight<0 && infraredRearRight>0 && leftlane==1){
-                                leftlane=0;
-                                stopovertaking=1;
-                		desiredSteeringWheelAngle=10; 
-                }
-                if(infraredFrontRight<0 && infraredRearRight<0 && count<=20 && stopovertaking==1){
-                stopovertaking=0;
+		
+                if(infraredFrontRight>0 && ultraSonicFrontRight>1  && leftlane==1) {
+                desiredSteeringWheelAngle=10;
                 lanedetection=1;
-                count++;
+                
+                }
+                
+                if(infraredFrontRight<0 && infraredRearRight>0 && ultraSonicFrontRight<0 && lanedetection==1 && count<=5){
+                lanedetection=0;
+                stopovertaking=1;
+                desiredSteeringWheelAngle=15;
+                count ++;
+ 
+                }
+                if(infraredFrontRight<0 && infraredRearRight<0 && ultraSonicRearRight>0 && stopovertaking==1){
+                                
+                                stopovertaking=0;
+                		desiredSteeringWheelAngle=10;
+                                headingtorightlane=1;
+                             
+                }
+                if(infraredFrontRight<0 && infraredRearRight<0 && headingtorightlane==1 ){
+                desiredSteeringWheelAngle=15;
+                headingtorightlane=0;
+                lanedetection=1;
+               
                 }
               
                  
