@@ -108,12 +108,12 @@ void loop() {
   /* Reads the buffer continously with each loop-iteration */
   while(Serial.available() > 0)
   {
-  	  // Assigns the current value in the buffer to the variable 'inByte': 
+      // Assigns the current value in the buffer to the variable 'inByte': 
       char inByte = Serial.read();
       
    
    
-   		// Determine SPEED by use of Auxiliary function 'setSpeed':
+           // Determine SPEED by use of Auxiliary function 'setSpeed':
            if (inByte == 97)
           {
          	setSpeed(inByte);  
@@ -126,7 +126,7 @@ void loop() {
 
           if (inByte == 99)
           {
-			 setSpeed(inByte);       
+	  	setSpeed(inByte);       
           }
    
    
