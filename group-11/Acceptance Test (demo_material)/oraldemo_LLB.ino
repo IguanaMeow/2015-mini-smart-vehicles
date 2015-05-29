@@ -152,6 +152,4 @@ void loop() {
       
   }
 
-  // Flush the buffer: 
-  Serial.flush();
 }
