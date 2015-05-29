@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
   while((c = getchar()) != '0'){
     // Keyboard integer input: 
   	if (c == '1'){
-   	     // a = 97 in ASCII (dec), .ino file (LLB) executes a certain 
+   	// a = 97 in ASCII (dec), .ino file (LLB) executes a certain 
     	// command depending on which ASCII value it gets:
 		write(fd, "a", 1);	
 	}
