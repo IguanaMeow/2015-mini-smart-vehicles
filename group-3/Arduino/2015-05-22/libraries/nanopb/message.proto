@@ -1,0 +1,13 @@
+message ArduinoToOdroid {
+	required float usCentre = 1;
+	required float usRight = 2;
+	required float irRight_one = 3;
+	required float irRight_two = 4;
+	required float irRear = 5;
+	required sint32 wheelTicks = 6;
+}
+
+message OdroidToArduino {
+	required float spd = 1;
+	required float angle = 2;
+}
