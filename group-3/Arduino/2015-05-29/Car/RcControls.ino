@@ -1,10 +1,6 @@
-unsigned long overrideRelease = 0;
-const unsigned short OVERRIDE_TIMEOUT = 1000;
-
 //check if rc receiver is getting any signal from rc handset
 void rcControling() {
   if (rcPulseLength > rcPulseLengthMin) {
-    overrideRelease = millis() + OVERRIDE_TIMEOUT;
     rcControl = true;
   }
 }
@@ -13,12 +9,7 @@ void rcControling() {
 void rcInput() {
   rcGetPulseLengths();
   rcControling();
-  if (!rcControl || (millis() > overrideRelease)) {
-    if (rcControl) {
-      rcControl = false;
-      setSpd(0);
-      setAngle(0);
-    }
+  if (!rcControl) {    
     if (Serial.available()) {
       receiveMessage ();
       setSpd(spd);
@@ -32,10 +23,8 @@ void rcInput() {
           servo.write(rcPulseIdle);
           rcAngleReset = true;
         }
-        //servo.write(rcPulseIdle);
       } else {
         int tmp = map(rcServoPulseLength, rcServoMin, rcServoMax, angleLeft, angleRight);
-        //int tmp = constrain(rcServoPulseLength, rcAngleLeft, rcAngleRight);
         servo.write(tmp);
         rcAngleReset = false;
       }
@@ -50,12 +39,10 @@ void rcInput() {
         //esc.writeMicroseconds(rcPulseIdle);
       } else {
         int tmp = map(rcEscPulseLength, rcEscMin, rcEscMax, rcSpeedMin, rcSpeedMax);
-        //int tmp = constrain(rcEscPulseLength, rcSpeedMin, rcSpeedMax);
         esc.writeMicroseconds(tmp);
         rcSpeedReset = false;
       }
     }
-
   }  
 }
 
