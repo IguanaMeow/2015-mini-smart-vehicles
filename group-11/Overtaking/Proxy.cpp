@@ -184,6 +184,11 @@ namespace msv {
 
         /* insert terminating zero in the string */
         buf[n] = 0;
+        
+        /* if (buf[n] == -1) {
+        	
+        	break;
+        } */ 
 
         //printf("buffer: %s\n", buf);
         // Save to temporary char array
