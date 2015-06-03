@@ -14,7 +14,13 @@
 
 #
 # GLOBAL CONFIGURATION
-#
+
+#Overtaking-easy.scnx
+# NoObstacles_StopLines.scnx
+#Parking-sideways.scnx
+#ObstacleOnStraightRoad.scnx
+#SEM_Test_Track.scnx
+#NoObstacles_StopLines.scnx
 global.car = Scenarios/Models/FordEscape.objx
 #global.car = Scenarios/Models/RedRocketCar.objx
 global.scenario = file://Scenarios/NoObstacles_StopLines.scnx
@@ -160,10 +166,10 @@ recintegrity.input = file:///dev/stdin
 # CONFIGURATION FOR PROXY
 #
 proxy.debug = 0
-proxy.useRecorder = 1 # 1 = record all captured data directly, 0 otherwise. 
+proxy.useRecorder = 0 # 1 = record all captured data directly, 0 otherwise. 
 proxy.camera.name = WebCam
 proxy.camera.type = OpenCV # OpenCV or UEYE
-proxy.camera.id = 0 # Select here the proper ID for OpenCV
+proxy.camera.id = 1 # Select here the proper ID for OpenCV     /// oooooooooooooooooooooooooooooooooooooooooooooooooooooooo
 proxy.camera.width = 640
 proxy.camera.height = 480
 proxy.camera.bpp = 3
@@ -172,10 +178,12 @@ proxy.camera.bpp = 3
 
 #
 # CONFIGURATION FOR VEHICLE
-#
-Vehicle.posX = 0                     # Initial position X in cartesian coordinates.
+
+#// Vehicle.posX = 0 ..Vehicle.posY = 0   Vehicle.headingDEG = 90  OR   Vehicle.posX = -4 ..Vehicle.posY = 10   Vehicle.headingDEG = 270
+Vehicle.posX = 0                    # Initial position X in cartesian coordinates.
 Vehicle.posY = 0                     # Initial position Y in cartesian coordinates.
 Vehicle.headingDEG = 90
+
 Vehicle.model=LinearBicycleModelNew  # Which motion model to be used: LinearBicycleModelNew or LinearBicycleModel (for CaroloCup 2013!).
 Vehicle.LinearBicycleModelNew.withSpeedController=1          # iff 1: use the VehicleControl.m_speed field; otherwise, ignore m_speed and use VehicleControl.m_acceleration field
 Vehicle.LinearBicycleModelNew.minimumTurningRadiusLeft=4.85  # Minimum turning radius to the left (for calculating maximum steering angle to the left); Attention! we used data from the miniature vehicle Meili and thus, all values are scaled by factor 10 to be compatible with the simulation!

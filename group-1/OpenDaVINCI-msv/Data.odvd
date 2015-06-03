@@ -19,6 +19,7 @@
 
 message msv.SteeringData {
     double exampleData;
+    double intersectionFound;
 }
 
 message msv.UserButtonData {

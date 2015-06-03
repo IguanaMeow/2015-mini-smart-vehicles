@@ -17,6 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+
 #include <stdio.h>
 #include <math.h>
 
@@ -38,74 +39,142 @@ namespace msv {
         using namespace core::data::control;
         using namespace core::data::environment;
 
+        bool prevNoLane = true; // was a lane found last loop?
+
+        int state = 0; // 0 = follow lane, 1-7 = overtaking phases
+
+        double timer = 0, // set to time(0) to calculate a duration
+               prevFrontRight = 0, // value for front right IR last loop
+               speed = 2, // -2 to 2
+               angle = 0; // -25 to 25
+
         Driver::Driver(const int32_t &argc, char **argv) :
-	        ConferenceClientModule(argc, argv, "Driver") {
+          ConferenceClientModule(argc, argv, "Driver") {
         }
 
         Driver::~Driver() {}
 
         void Driver::setUp() {
-	        // This method will be call automatically _before_ running body().
+          
         }
 
-        void Driver::tearDown() {
-	        // This method will be call automatically _after_ return from body().
-        }
+        void Driver::tearDown() {}
 
         // This method will do the main data processing job.
         ModuleState::MODULE_EXITCODE Driver::body() {
 
-	        while (getModuleState() == ModuleState::RUNNING) {
+          while (getModuleState() == ModuleState::RUNNING) {
                 // In the following, you find example for the various data sources that are available:
 
-                // 1. Get most recent vehicle data:
-                Container containerVehicleData = getKeyValueDataStore().get(Container::VEHICLEDATA);
-                VehicleData vd = containerVehicleData.getData<VehicleData> ();
-                cerr << "Most recent vehicle data: '" << vd.toString() << "'" << endl;
+            Container containerSBD = getKeyValueDataStore().get(Container::USER_DATA_0);
+            SteeringData sd = getKeyValueDataStore().get(Container::USER_DATA_1).getData<SteeringData>();
+            SensorBoardData sbd = containerSBD.getData<SensorBoardData>();
+            VehicleControl vc;
 
-                // 2. Get most recent sensor board data:
-                Container containerSensorBoardData = getKeyValueDataStore().get(Container::USER_DATA_0);
-                SensorBoardData sbd = containerSensorBoardData.getData<SensorBoardData> ();
-                cerr << "Most recent sensor board data: '" << sbd.toString() << "'" << endl;
+            double sonarFront = sbd.getValueForKey_MapOfDistances(3);
 
-                // 3. Get most recent user button data:
-                Container containerUserButtonData = getKeyValueDataStore().get(Container::USER_BUTTON);
-                UserButtonData ubd = containerUserButtonData.getData<UserButtonData> ();
-                cerr << "Most recent user button data: '" << ubd.toString() << "'" << endl;
+            // nothing in front sonar? just follow the lane
+            if(state == 0 && (sonarFront < 0.9 || sonarFront > 9)) {
+                angle = sd.getExampleData();
+                speed = sd.getSpeedData();
 
-                // 4. Get most recent steering data as fill from lanedetector for example:
-                Container containerSteeringData = getKeyValueDataStore().get(Container::USER_DATA_1);
-                SteeringData sd = containerSteeringData.getData<SteeringData> ();
-                cerr << "Most recent steering data: '" << sd.toString() << "'" << endl;
+                vc.setSpeed(speed);
+                vc.setSteeringWheelAngle(angle * Constants::DEG2RAD);
 
-
-
-                // Design your control algorithm here depending on the input data from above.
-
-
-
-                // Create vehicle control data.
-                VehicleControl vc;
-
-                // With setSpeed you can set a desired speed for the vehicle in the range of -2.0 (backwards) .. 0 (stop) .. +2.0 (forwards)
-                vc.setSpeed(0.4);
-
-                // With setSteeringWheelAngle, you can steer in the range of -26 (left) .. 0 (straight) .. +25 (right)
-                double desiredSteeringWheelAngle = 4; // 4 degree but SteeringWheelAngle expects the angle in radians!
-                vc.setSteeringWheelAngle(desiredSteeringWheelAngle * Constants::DEG2RAD);
-
-                // You can also turn on or off various lights:
-                vc.setBrakeLights(false);
-                vc.setLeftFlashingLights(false);
-                vc.setRightFlashingLights(true);
-
-                // Create container for finally sending the data.
                 Container c(Container::VEHICLECONTROL, vc);
-                // Send container.
                 getConference().send(c);
-	        }
 
-	        return ModuleState::OKAY;
+                continue;
+            }
+
+            double sonarRight = sbd.getValueForKey_MapOfDistances(4),
+                   irFrontRight = sbd.getValueForKey_MapOfDistances(0),
+                   irBackRight = sbd.getValueForKey_MapOfDistances(2);
+
+            double duration = time(0) - timer; // seconds till last timer update
+            
+            switch(state){
+
+                case 0: // object found in front of car, initiate overtaking
+                    state = 1;
+                    angle = -20 + sd.getExampleData() * 0.5;
+                    speed = 1;
+                    timer = time(0);
+                    break;
+
+                case 1: // drive onto the overtaking lane
+                    if(sonarRight < 0 || sonarRight > 20) break;
+                    angle = 0;
+                    speed = 2;
+                    state = 2;
+                    break;
+
+                case 2: // counter-steer to position straight on lane
+                    if(irBackRight < 0 || irBackRight > 15) break;
+                    angle = 10;
+                    timer = time(0);
+                    state = 3;
+                    break;
+
+                case 3: // drive straight up the lane
+                    if(duration < 2 && irFrontRight > 5) break;
+                    angle = 0;
+                    state = 4;
+                    break;
+
+                case 4: // straighten out the car using the IRs
+                    speed = 2;
+                    angle = 0;
+                    timer = time(0);
+                    if(prevFrontRight < irFrontRight) angle = 25;
+                    else if(irFrontRight > irBackRight) angle = 12;
+                    else state = 5;
+
+                    if(irFrontRight < 0 || irFrontRight > 3) state = 5;
+
+                    break;
+
+                case 5: // make a right turn to overtake the object
+                    angle = -1;
+                    if(duration < 1 || (irFrontRight > -1 && irBackRight < 0) || (irFrontRight > -1 && irFrontRight < 25) || (sonarRight > 1 && sonarRight < 25)) break;
+
+                    state = 6;
+                    angle = 25;
+                    timer = time(0);
+                    break;
+
+                case 6: // counter-steer to position straight onto right lane
+                    if(duration < 4 && (duration < 1 || sd.getExampleData() < 13 || prevNoLane)) break;
+                    angle = -25;
+                    state = 7;
+                    timer = time(0);
+                    break;
+    
+                case 7: // switch back to the "lane following" state
+                    if(duration < 3 && (duration < 1.2 || sd.getExampleData() < 1 || prevNoLane)) break;
+                    state = 0;
+                    break;
+            }
+
+            prevFrontRight = irFrontRight;
+            prevNoLane = sd.getExampleData() < 1 && sd.getExampleData() > -1;
+
+            vc.setSteeringWheelAngle(angle * Constants::DEG2RAD);
+            vc.setSpeed(speed);
+
+            Container d(Container::VEHICLECONTROL, vc);
+            getConference().send(d);
+          }
+
+          return ModuleState::OKAY;
         }
 } // msv
+//                      ID Sensors
+// //                 0 = Infrared_FrontRight
+// //                 1 = Infrared_Rear
+// //                 2 = Infrared_RearRight
 
+// //                 3 = UltraSonic_FrontCenter
+// //                 4 = UltraSonic_FrontRight
+// //                 5 = UltraSonic_RearRight
+// //                  
