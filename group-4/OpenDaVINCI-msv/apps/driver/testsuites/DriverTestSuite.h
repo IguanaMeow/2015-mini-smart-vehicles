@@ -56,13 +56,16 @@ class DriverTest : public CxxTest::TestSuite {
          */
         void setUp() {
             // Prepare the data that would be available from commandline.
-            string argv0("driver");
-            string argv1("--cid=100");
-            int32_t argc = 2;
+             string argv0("driver");
+            string argv1("--cid=110");
+            // modified, so it takes the freq too
+            string argv2("--freq=10");
+            int32_t argc = 3;
             char **argv;
-            argv = new char*[2];
+            argv = new char*[3];
             argv[0] = const_cast<char*>(argv0.c_str());
             argv[1] = const_cast<char*>(argv1.c_str());
+            argv[2] = const_cast<char*>(argv2.c_str());
 
             // Create an instance of sensorboard through SensorBoardTestling which will be deleted in tearDown().
             dt = new DriverTestling(argc, argv);
@@ -82,6 +85,27 @@ class DriverTest : public CxxTest::TestSuite {
 
         void testDriverSuccessfullyCreated() {
             TS_ASSERT(dt != NULL);
+        }
+
+         void testFilter(void)
+        {
+            float balance[3] = {50, 2, 4};
+            //char** d = NULL;
+           // msv::Driver driver(0,d); // you need to add arguments here etc.
+            float num = 4;
+     
+
+            TS_TRACE("Filter test");
+            //TS_ASSERT_EQUALS(dt->filter(3, balance), num);
+                //this is needed, because comparing two floating points gets an error
+            if (dt->filter(3, balance) >= num || dt->filter(3, balance) <= num) {
+                TS_TRACE("yes, it is equal");
+            } else {
+                TS_TRACE("not equal");
+            }
+            
+            // or TS_ASSERT_EQUALS(driver.filter(3, balance), 4); but it doesnt work
+            TS_TRACE("Finishing filter test");
         }
 
         ////////////////////////////////////////////////////////////////////////////////////

@@ -1,0 +1,12 @@
+[Unit]
+Description=Start autocar
+After=network.target netctl-auto@wlan0.service
+ 
+[Service]
+User=root
+ExecStart=/folder/for/script/client.py car
+RestartSec=30
+Restart=always
+ 
+[Install]
+WantedBy=multi-user.target

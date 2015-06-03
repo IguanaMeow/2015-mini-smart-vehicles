@@ -71,7 +71,7 @@ namespace msv {
             virtual void setUp();
             virtual void tearDown();
 
-            float filter(float,float*);
+            
 
         public:
             /**
@@ -81,7 +81,8 @@ namespace msv {
              * @param argv Command line arguments.
              */
             Driver(const int32_t &argc, char **argv);
-
+            float filter(float,float*);
+            
             virtual ~Driver();
 
             core::base::ModuleState::MODULE_EXITCODE body();
