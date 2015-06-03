@@ -44,6 +44,8 @@ static float signRight = 1;
 
 static float sign = 1;
 
+extern int cut_speed;
+
 icucnt_t last_width_LeftWheelFirstSensor, last_period_LeftWheelFirstSensor;
 icucnt_t last_width_LeftWheelSecondSensor, last_period_LeftWheelSecondSensor;
 icucnt_t last_width_RightWheelFirstSensor, last_period_RightWheelFirstSensor;
@@ -232,6 +234,15 @@ static msg_t Thread_Speed(void *arg) {
         // Save old driven distance.
         dLeftOld = dLeft;
         dRightOld = dRight;
+
+        //Get current speed and see if it's to fast for out babby.
+        int current_speed = (int) ((vRight[0] + vRight[1] + vRight[2] + vRight[3])*100.0/4.0);
+
+        if (current_speed >= 8 || current_speed <= -8) {
+            cut_speed = 1;
+        } else {
+            cut_speed = 0;
+        }
 
         // Wait constant time.
         chThdSleepMilliseconds(FREQUENCY);
