@@ -5,11 +5,11 @@
 
 #define SERVO_HIGH 2000
 #define SERVO_LOW 700
-#define SERVO_PIN 11
+#define SERVO_PIN 8
 
 #define ESC_HIGH 1900
 #define ESC_LOW 900
-#define ESC_PIN 12
+#define ESC_PIN 2
 
 Servo servo, esc;
 
@@ -22,13 +22,13 @@ int index = 0, // index of incoming digit in memory
 void setup() {
   servo.attach(SERVO_PIN);
   esc.attach(ESC_PIN);
-  Serial.begin(9600);
+  Serial.begin(115200);
 }
 
 void loop() {
   // calculate and send steering values to servo and esc 
   servo.writeMicroseconds(direction * (SERVO_HIGH - SERVO_LOW) / MAX_DIRECTION + SERVO_LOW);
-  esc.writeMicroseconds(ESC_HIGH - speed * (ESC_HIGH - ESC_LOW) / MAX_SPEED);
+  esc.writeMicroseconds(speed * (ESC_HIGH - ESC_LOW) / MAX_SPEED + ESC_LOW);
 
   // loop until we have a value
   if(Serial.available() <= 0) return;
