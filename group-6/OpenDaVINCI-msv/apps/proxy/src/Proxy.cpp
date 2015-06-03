@@ -34,6 +34,7 @@
 
 #include "core/base/KeyValueConfiguration.h"
 #include "core/data/Container.h"
+#include "core/data/Constants.h"
 #include "core/data/TimeStamp.h"
 #include "core/data/control/VehicleControl.h"
 #include "OpenCVCamera.h"
@@ -60,18 +61,8 @@ namespace msv {
 
     int getFileDescriptor(char*);
 
-    int index = 0,
-        receiver = -1,
-        sender = -1,
-        irFront = 0,
-        irSide = 0,
-        irBack = 0,
-        sonarFront = 0,
-        sonarSide = 0,
-        measurements = 0;
-
-    char incoming,
-         message[18] = "00000000000000000";
+    int receiver = -1,
+        sender = -1;
 
     void Proxy::setUp() {
 	    // This method will be call automatically _before_ running body().
@@ -146,24 +137,7 @@ namespace msv {
         uint32_t captureCounter = 0;
         while (getModuleState() == ModuleState::RUNNING) {
 
-
-            // Sending steering data to receiver
-            Container containerVehicleControl = getKeyValueDataStore().get(Container::VEHICLECONTROL);
-
-            vc = containerVehicleControl.getData<VehicleControl>();
-
-            char buffer[7];
-
-            int direction = 25 + vc.getSteeringWheelAngle(),
-                speed = 20 + 10 * vc.getSpeed(),
-                checksum = direction % 10 + direction / 10 + speed % 10 + speed / 10,
-                n = sprintf(buffer, "s%02d%02d%d", direction, speed, checksum);
-
-            cout << buffer << endl;
-
-            write(receiver, buffer, n);
-
-            // Capture frame.
+            // Capture Frame
             if (m_camera != NULL) {
                 core::data::image::SharedImage si = m_camera->capture();
 
@@ -172,60 +146,78 @@ namespace msv {
                 captureCounter++;
             }
 
-            // Reading sensor data from sender
-            while(read(sender, &incoming, 1) == 1) {
+            // Send Data
+            Container containerVehicleControl = getKeyValueDataStore().get(Container::VEHICLECONTROL);
+            vc = containerVehicleControl.getData<VehicleControl>();
 
-                if(!isdigit(incoming)) {
-                    cout << incoming; index = 0;
-                    continue;
-                }
+            char buffer[7];
 
-                message[index] = incoming;
+            int direction = 25 + vc.getSteeringWheelAngle() / Constants::DEG2RAD,
+                speed = 20 + 10 * vc.getSpeed();
+                
+            if(direction > 50) direction = 50;
+            else if(direction < 0) direction = 0;
+            
+            if(speed > 40) speed = 40;
+            else if(speed < 0) speed = 0;
+                
+            int checksum = (direction % 10 + direction / 10 + speed % 10 + speed / 10) % 10,
+                n = sprintf(buffer, "s%02d%02d%d", direction, speed, checksum);
 
-                // when we have a message, process it
-                if(index == 17) {
-                    index = 0;
-                    string m = (string)message;
+            if(receiver > -1) write(receiver, buffer, n);
 
-                    measurements++;
-                    sonarFront += atoi(m.substr(0,4).c_str());
-                    sonarSide += atoi(m.substr(4,4).c_str());
-                    irFront += atoi(m.substr(8,3).c_str());
-                    irSide += atoi(m.substr(11,3).c_str());
-                    irBack += atoi(m.substr(14,3).c_str());
+            
+            // Receive Data
+            if(sender < 0) continue;
 
-                    // if we have 10 measurements, distribute
-                    if(measurements == 10) {
+            char incoming[255],
+                 message[18] = "00000000000000000";
 
-                        cout << sonarFront << " "
-                            << sonarSide << " "
-                            << irFront << " "
-                            << irSide << " "
-                            << irSide << endl;
+            read(sender, &incoming, 255);
 
-                        sbd.putTo_MapOfDistances(0, irFront);
-                        sbd.putTo_MapOfDistances(1, irBack);
-                        sbd.putTo_MapOfDistances(2, irSide);
-                        sbd.putTo_MapOfDistances(3, sonarFront);
-                        sbd.putTo_MapOfDistances(4, sonarSide);
+            for(int i = 0, index = 0; i < 255; index++, i++) {
 
-                        Container containerSensorBoardData = Container(Container::USER_DATA_0, sbd);
+                if(!isdigit(incoming[i])) { index = -1; continue; }
 
-                        distribute(containerSensorBoardData);
+                message[index] = incoming[i];
 
-                        // reset measurements
-                        measurements = 0;
-                        sonarFront = 0;
-                        sonarSide = 0;
-                        irFront = 0;
-                        irSide = 0;
-                        irBack = 0;
+                if(index < 17) continue;
 
-                    }
+                memset(incoming, 0, 255);
 
-                }
+                tcflush(sender, TCIFLUSH);
 
-                index++;
+                string m = (string)message;
+
+                int sonarFront = atoi(m.substr(0,4).c_str()),
+                    sonarSide = atoi(m.substr(4,4).c_str()),
+                    irFront = atoi(m.substr(8,3).c_str()),
+                    irMiddle = atoi(m.substr(11,3).c_str()),
+                    irBack = atoi(m.substr(14,3).c_str());
+
+                
+                cout << endl << endl
+                     << "Frame:     " << captureCounter << endl
+                     << "Speed:     " << speed << endl
+                     << "Direction: " << direction << endl
+                     << "US Front:  " << sonarFront << " cm" << endl
+                     << "US Side:   " << sonarSide << " cm" << endl
+                     << "IR Front:  " << irFront << " cm" << endl
+                     << "IR Middle: " << irMiddle << " cm" << endl
+                     << "IR Back:   " << irBack << " cm" << endl;
+
+                sbd.putTo_MapOfDistances(0, irFront);
+                sbd.putTo_MapOfDistances(1, irBack);
+                sbd.putTo_MapOfDistances(2, irMiddle);
+                sbd.putTo_MapOfDistances(3, sonarFront);
+                sbd.putTo_MapOfDistances(4, sonarSide);
+
+                Container containerSensorBoardData = Container(Container::USER_DATA_0, sbd);
+
+                distribute(containerSensorBoardData);
+                
+                break;
+
             }
 
         }
@@ -253,67 +245,34 @@ namespace msv {
 
     int getFileDescriptor(char* name) {
 
-        char s[PATH_MAX+1],
-             buf[1024];
+        char s[PATH_MAX+20],
+               buf[1024];
 
-        sprintf(s,"%s%s", "/dev/serial/by-id/", name);
-
+        sprintf(s, "%s%s", "/dev/serial/by-id/", name);
+        
         int len;
 
         if((len = readlink(s, buf, sizeof(buf)-1)) != -1) buf[len] = '\0';
 
-        char portname[PATH_MAX+1];
+        char portname[PATH_MAX+1],
+               settings[PATH_MAX + 160];
 
         realpath(s, portname);
 
         int fd = open(portname, O_RDWR | O_NOCTTY | O_NDELAY);
-
-        if(fd < 0) return fd;
-
-        fd = open(portname, O_RDWR | O_NOCTTY);
-         
+        
         /* Set up the control structure */
-         struct termios toptions;
-         
-         /* Get currently set options for the tty */
-         tcgetattr(fd, &toptions);
-         
-        /* Set custom options */
-         
-        /* 9600 baud */
-         cfsetispeed(&toptions, B9600);
-         cfsetospeed(&toptions, B9600);
-         /* 8 bits, no parity, no stop bits */
-         toptions.c_cflag &= ~PARENB;
-         toptions.c_cflag &= ~CSTOPB;
-         toptions.c_cflag &= ~CSIZE;
-         toptions.c_cflag |= CS8;
-         /* no hardware flow control */
-         toptions.c_cflag &= ~CRTSCTS;
-         /* enable receiver, ignore status lines */
-         toptions.c_cflag |= CREAD | CLOCAL;
-         /* disable input/output flow control, disable restart chars */
-         toptions.c_iflag &= ~(IXON | IXOFF | IXANY);
-         /* disable canonical input, disable echo,
-         disable visually erase chars,
-         disable terminal-generated signals */
-         toptions.c_iflag &= ~(ICANON | ECHO | ECHOE | ISIG);
-         /* disable output processing */
-         toptions.c_oflag &= ~OPOST;
-         
-        /* wait for 24 characters to come in before read returns */
-         toptions.c_cc[VMIN] = 0;
-         /* no minimum time to wait before read returns */
-         toptions.c_cc[VTIME] = 0;
-         
-        /* commit the options */
-         tcsetattr(fd, TCSANOW, &toptions);
-         
+        sprintf(settings, "stty -F %s cs8 115200 ignbrk -brkint -icrnl -imaxbel -opost -onlcr -isig -icanon -iexten -echo -echoe -echok -echoctl -echoke noflsh -ixon -crtscts", portname);
+        
+        system(settings);
+        
+        cout << settings << endl;
+
         /* Wait for the Arduino to reset */
          usleep(1000*1000);
 
          /* Flush anything already in the serial buffer */
-         tcflush(fd, TCIFLUSH);
+         tcflush(fd, TCIOFLUSH);
 
         return fd;
 
