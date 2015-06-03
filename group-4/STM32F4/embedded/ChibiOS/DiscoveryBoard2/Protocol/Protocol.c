@@ -195,11 +195,11 @@ void prepareDataFeed(void) {
 
         getWheelEncoderData(&WC);
 
-        if (WC.speedRightWheel > 8 || WC.speedRightWheel < -8) {
+        /*if (WC.speedRightWheel > 8 || WC.speedRightWheel < -8) {
             setCutSpeed(1);
         } else {
             setCutSpeed(0);
-        }
+        }*/
         
         chsprintf(buffer, "[WC(%d;%d;%d;%d)]$", WC.drivenDistanceLeftWheel,
                                                 WC.drivenDistanceRightWheel,
@@ -211,8 +211,8 @@ void prepareDataFeed(void) {
             else
                 break;
 
-            }
-        //}
+        }
+
         myData.length += i;
     }
 
