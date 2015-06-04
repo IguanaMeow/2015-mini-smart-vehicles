@@ -219,7 +219,7 @@ return rightLineLength;
 		int w = m_image->width;
 		int h = m_image->height;
 		int lenght = w/2;
-		//int weight = 2;
+		int weight = 2;
 		
 		CvPoint pt4 = cvPoint (w/2, h); //bottom center
 		//CvPoint pt5 = cvPoint(w/2,0); //top center
@@ -271,24 +271,24 @@ return rightLineLength;
 		MeasureVertical(out_image,verticalLineLength , lenght, 0);
 		cout << "Height:"<< verticalLineLength<<endl;
 		
-		if(Line3right<=-320 && Line3left<=320 && state==0){
-        	state=1;
-		sd.setState(1.0);
-		}
+	if(Line3right<=-320 && Line3left<=320 && state==0){
+        state=1;
+	sd.setState(1.0);
+	}
 		
 
 
 	//Draw lines
         if (m_debug) {
 		if (m_image != NULL){
-	DrawLine( out_image, Point( lenght, lineheight1 ), Point( leftLineLength1, lineheight1),Scalar(0,0,255)); 
-    	DrawLine( out_image, Point( lenght, lineheight1 ), Point( rightLineLength1, lineheight1),Scalar(255, 0, 0 )); 
-	//DrawLine( out_image, pt4, pt5,Scalar( 0, 255, 0 )); //draw vertical line
-	DrawLine( out_image, Point( lenght, lineheight2 ), Point( rightLineLength2, lineheight2),Scalar(255,0,0)); 
-	DrawLine( out_image, Point( lenght, lineheight2 ), Point( leftLineLength2, lineheight2),Scalar(0,0,255)); 
-    	DrawLine( out_image, pt4, Point( w/2, verticalLineLength),Scalar( 255, 0, 0 )); 
-	DrawLine( out_image, Point( lenght, lineheight3 ), Point( rightLineLength3, lineheight3),Scalar(255,0,0)); 
-	DrawLine( out_image, Point( lenght, lineheight3 ), Point( leftLineLength3, lineheight3),Scalar(0,0,255)); 
+			DrawLine( out_image, Point( lenght, lineheight1 ), Point( leftLineLength1, lineheight1),Scalar(0,0,255)); 
+    			DrawLine( out_image, Point( lenght, lineheight1 ), Point( rightLineLength1, lineheight1),Scalar(255, 0, 0 )); 
+			//DrawLine( out_image, pt4, pt5,Scalar( 0, 255, 0 )); //draw vertical line
+			DrawLine( out_image, Point( lenght, lineheight2 ), Point( rightLineLength2, lineheight2),Scalar(255,0,0)); 
+			DrawLine( out_image, Point( lenght, lineheight2 ), Point( leftLineLength2, lineheight2),Scalar(0,0,255)); 
+    			DrawLine( out_image, pt4, Point( w/2, verticalLineLength),Scalar( 255, 0, 0 )); 
+			DrawLine( out_image, Point( lenght, lineheight3 ), Point( rightLineLength3, lineheight3),Scalar(255,0,0)); 
+			DrawLine( out_image, Point( lenght, lineheight3 ), Point( leftLineLength3, lineheight3),Scalar(0,0,255)); 
 		//cvShowImage("WindowShowImage", out_image);
 		cvWaitKey(10);
             }
@@ -309,21 +309,28 @@ double RightAngle = atan(Line1right/300) * Constants::RAD2DEG;
 }
 
 
-    else if( Line1left + Line1right > (w/2)+30 ) //-50
-       angle = RightAngle-(LeftAngle/(Line1left/(h/3)));
-    else if( Line1left + Line1right < w/2+30 )
-       angle = (RightAngle*(Line1left/(h/3)))- LeftAngle; //-20 180
-    else
-        angle= RightAngle-LeftAngle;
+	else if( Line1left + Line1right > (w/2)-50 ) //+30
+		angle = RightAngle-(LeftAngle/(Line1left/(h/4))); //(h/3)-40
+                
+
+	else if( Line1left + Line1right < w/2-50 )
+		angle = (RightAngle*(Line1left/(h/4)))- LeftAngle; 
+	
+	else if( Line1left + Line1right< w/2-50 )
+		angle = (RightAngle*(Line1left/(h/4)))- LeftAngle;
+                
+       
+	else
+        	angle= RightAngle-LeftAngle;
   
     if(Line1right > w/2-20){
         angle=0;
 	//cout<<"4"<<endl;
     }
-turnangle=angle;
+    turnangle=angle;
 std::cout<<"Angledata: "<< angle <<'\n';
-sd.setExampleData(angle);
-//sd.setExampleData(angle*weight);
+//sd.setExampleData(angle);
+sd.setExampleData(angle*weight);
 
 
 	//Save angle to data.ovd
@@ -343,12 +350,16 @@ sd.setExampleData(angle);
 /*
         // Lane-detector can also directly read the data from file. This might be interesting to inspect the algorithm step-wisely.
         core::io::URL url("file://recorder.rec");
+
         // Size of the memory buffer.
         const uint32_t MEMORY_SEGMENT_SIZE = kv.getValue<uint32_t>("global.buffer.memorySegmentSize");
+
         // Number of memory segments.
         const uint32_t NUMBER_OF_SEGMENTS = kv.getValue<uint32_t>("global.buffer.numberOfMemorySegments");
+
         // If AUTO_REWIND is true, the file will be played endlessly.
         const bool AUTO_REWIND = true;
+
         player = new Player(url, AUTO_REWIND, MEMORY_SEGMENT_SIZE, NUMBER_OF_SEGMENTS);
 */
 
