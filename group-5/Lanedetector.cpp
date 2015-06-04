@@ -313,7 +313,7 @@ double RightAngle = atan(Line1right/300) * Constants::RAD2DEG;
 		angle = RightAngle-(LeftAngle/(Line1left/(h/4))); //(h/3)-40
                 
 
-	else if( Line1left + Line1right < w/2-50 )
+	else if( Line1right<Line1left && Line1left + Line1right > (w/2)-50)
 		angle = (RightAngle*(Line1left/(h/4)))- LeftAngle; 
 	
 	else if( Line1left + Line1right< w/2-50 )
