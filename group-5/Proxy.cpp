@@ -45,6 +45,7 @@
 #include "core/data/Container.h"
 #include "core/data/TimeStamp.h"
 #include "core/data/control/VehicleControl.h"
+#include "core/data/environment/VehicleData.h"
 #include "OpenCVCamera.h"
 
 #include "GeneratedHeaders_Data.h"
@@ -59,8 +60,6 @@ int valIr3;
 int valUs1;
 int valUs2;
 int valUs3;
-
-
 
 
 
@@ -79,12 +78,12 @@ void connect(string x,int y);
 
 void write(string text);
 string read();
-
+    
     using namespace std;
     using namespace core::base;
     using namespace core::data;
     using namespace tools::recorder;
-using namespace core::data::control;
+    using namespace core::data::control;
 
     Proxy::Proxy(const int32_t &argc, char **argv) :
 	 ConferenceClientModule(argc, argv, "proxy"),
@@ -97,8 +96,8 @@ using namespace core::data::control;
     }
 
     void Proxy::setUp() {
-   //   msv::connect("/dev/ttyACM3",1); // connect to arduino reading from
-      msv::connect("/dev/ttyACM1",2); // connect to arduino sending to
+      msv::connect("/dev/ttyACM0",1); // connect to arduino reading from
+     // msv::connect("/dev/ttyACM1",2); // connect to arduino sending to
 
 
 	    // This method will be call automatically _before_ running body().
@@ -108,8 +107,8 @@ using namespace core::data::control;
 
         // Get configuration data.
         KeyValueConfiguration kv = getKeyValueConfiguration();
-
-
+	
+	
         // Create built-in recorder.
         const bool useRecorder = kv.getValue<uint32_t>("proxy.useRecorder") == 1;
         if (useRecorder) {
@@ -126,7 +125,7 @@ using namespace core::data::control;
             m_recorder = new Recorder(recordingURL.str(), MEMORY_SEGMENT_SIZE, NUMBER_OF_SEGMENTS, THREADING);
         }
 
-        // Create the camera grabber.
+	// Create the camera grabber.
         const string NAME = getKeyValueConfiguration().getValue<string>("proxy.camera.name");
         string TYPE = getKeyValueConfiguration().getValue<string>("proxy.camera.type");
         std::transform(TYPE.begin(), TYPE.end(), TYPE.begin(), ::tolower);
@@ -142,8 +141,8 @@ using namespace core::data::control;
         if (m_camera == NULL) {
             cerr << "No valid camera type defined." << endl;
         }
-	//msv::write("9:1500 0090,");
-//Sleep(5);
+
+	
     }
 
     void Proxy::tearDown() {
@@ -171,10 +170,14 @@ using namespace core::data::control;
 
 
         uint32_t captureCounter = 0;
+
+	SensorBoardData sensorBoardData;
+        core::data::environment::VehicleData vd;
+
         while (getModuleState() == ModuleState::RUNNING) {
 
-
-
+  
+  
             // Capture frame.
             if (m_camera != NULL) {
                 core::data::image::SharedImage si = m_camera->capture();
@@ -183,103 +186,90 @@ using namespace core::data::control;
                 distribute(c);
                 captureCounter++;
             }
-	Container containerVehicleControl = getKeyValueDataStore().get(Container::VEHICLECONTROL);
+	     Container containerVehicleControl = getKeyValueDataStore().get(Container::VEHICLECONTROL);
              VehicleControl vc = containerVehicleControl.getData<VehicleControl> ();
-             cerr << "Speed data: " << vc.getSpeed() << endl;
-             cout << "Angle : " << vc.getSteeringWheelAngle()<<endl;
+             //cerr << "Speed data: " << vc.getSpeed() << endl;
+             //cout << "Angle : " << vc.getSteeringWheelAngle()<<endl;
              //cout << "Angle (int): " << (int)vc.getSteeringWheelAngle()<<endl;
-            // TODO: Here, you need to implement the data links to the embedded system
-            // to read data from IR/US.
-             int angle=100;
+             // TODO: Here, you need to implement the data links to the embedded system
+             // to read data from IR/US.
+             
+	     int angle=100;
              float angleFromDriver= (float)vc.getSteeringWheelAngle();
-
 
              angle+=angleFromDriver;
              stringstream ss;
-              ss << angle;
+             ss << angle;
              string convertedAngle=ss.str();
              string angleData;
 
              if(convertedAngle.length()==1){
                 angleData= "000"+convertedAngle;
              }
-             else if(convertedAngle.length()==2){
+             else if(convertedAngle.length()==2){ 
                 angleData= "00"+convertedAngle;
              }
 
-             else if(convertedAngle.length()==3){
+             else if(convertedAngle.length()==3){ 
                 angleData= "0"+convertedAngle;
              }
 	     else{
                 angleData= convertedAngle;
              }
 
-             //cout<<convertedAngle<<endl;
+	
+   	string userInput="9:1555 "+angleData+",";
+   	cout<<userInput<<endl;
+    
+
+    	msv::write(userInput);
+
+	
+     
+	readings=msv::read();
+	
+	
+  	cout<< "readings are "<< readings << endl;
 
 
-	msv::SensorBoardData sensorBoardData;
-   string userInput="9:1560 "+angleData+",";
-   cout<<userInput<<endl;
+	
+  	if(readings.length()==29){
+    		string ir1=readings.substr(3,7);
+   		valIr1=atoi(ir1.c_str());
+
+    		string ir2=readings.substr(8,12);
+    		valIr2=atoi(ir2.c_str());
+    
+    		string ir3=readings.substr(13,17);
+    		valIr3=atoi(ir3.c_str());
+    
+    		string us1=readings.substr(18,22);
+    		valUs1=atoi(us1.c_str());
+    
+  		string us2=readings.substr(23,27);
+    		valUs2=atoi(us2.c_str());
+    
+
+    
+	}
+	// sensor id 0= IR right front, 1 = IR back, 2= IR right rare, 3= Ultrasonic front centre, 4= Ultrasonic front right
 
 
-    msv::write(userInput);
+	sensorBoardData.putTo_MapOfDistances(0,valIr1/100);
+	sensorBoardData.putTo_MapOfDistances(1,valIr3/100);
+	sensorBoardData.putTo_MapOfDistances(2,valIr2/100);
+	sensorBoardData.putTo_MapOfDistances(3,valUs1/100);
+	sensorBoardData.putTo_MapOfDistances(4,valUs2/100);
 
 
-    //  readings=msv::read();
-	//distance=msv::decode(readings);
+	Container Pvd=Container(Container::VEHICLEDATA, vd);
+  	Container c = Container(Container::USER_DATA_0, sensorBoardData);
+  
+  	distribute(c);
+  	distribute(Pvd);
 
 
-
-  cout<< "readings are "<< readings << endl;
-
-//strcpy(test,buff);
-//
-
-  if(readings.length()==23){
-    string ir1=readings.substr(3,3);
-
-    valIr1=atoi(ir1.c_str());
-
-
-
-    string ir2=readings.substr(6,3);
-
-    valIr2=atoi(ir2.c_str());
-
-
-    string ir3=readings.substr(9,3);
-
-    valIr3=atoi(ir3.c_str());
-
-
-    string us1=readings.substr(12,3);
-
-    valUs1=atoi(us1.c_str());
-
-
-  string us2=readings.substr(15,3);
-
-    valUs2=atoi(us2.c_str());
-
-
-
-  string us3=readings.substr(18,3);
-
-    valUs3=atoi(us3.c_str());
-
-}
-
-sensorBoardData.putTo_MapOfDistances(4,valUs2);
-sensorBoardData.putTo_MapOfDistances(3,valUs1);
-sensorBoardData.putTo_MapOfDistances(1,valIr3/10);
-sensorBoardData.putTo_MapOfDistances(2,valIr2/10);
-sensorBoardData.putTo_MapOfDistances(0,valIr1/10);
-sensorBoardData.putTo_MapOfDistances(5,valUs3);
-
-Container c = Container(Container::USER_DATA_0, sensorBoardData);
-  distribute(c);
- tcflush(fd, TCIFLUSH);
-//usleep(2000000);
+ 	tcflush(fd, TCIFLUSH);
 
  }
 
@@ -291,8 +281,8 @@ Container c = Container(Container::USER_DATA_0, sensorBoardData);
 
 void connect(string address,int z)
 {
-
-
+  
+ 
 MODEMDEVICE=address.c_str ();
   if(MODEMDEVICE!=0)
   open1(MODEMDEVICE,z);
