@@ -1,11 +1,16 @@
 # 2015-mini-smart-vehicles
-Self-driving car in embedded C++ and OpenCV
+Self-driving car in embedded C, C++, and OpenCV
 
-### Scenarios
-- Lane following
-- Overtaking
-- Object avoidance
-- Parallel parking
+### Scenario Stages
+- Lane detectioon and following
+- Overtaking and object avoidance
+- Parallel and perpendicular parking
+
+- Robust lane detection
+- Reliable lane following
+- Safe right-of-way-handling at intersections
+- Parallel/Sideways parking
+- Overtaking stationary vehicles
 
 ### Software Setup
 - [ ] OpenCV - [opencv.org](https://opencv.org)
