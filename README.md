@@ -5,12 +5,7 @@ Self-driving car in embedded C, C++, and OpenCV
 - Lane detectioon and following
 - Overtaking and object avoidance
 - Parallel and perpendicular parking
-
-- Robust lane detection
-- Reliable lane following
 - Safe right-of-way-handling at intersections
-- Parallel/Sideways parking
-- Overtaking stationary vehicles
 
 ### Software Setup
 - [ ] OpenCV - [opencv.org](https://opencv.org)
