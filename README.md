@@ -2,7 +2,7 @@
 Self-driving car in embedded C, C++, and OpenCV
 
 ### Scenario Stages
-- Lane detectioon and following
+- Lane detection and following
 - Overtaking and object avoidance
 - Parallel and perpendicular parking
 - Safe right-of-way-handling at intersections
@@ -24,6 +24,7 @@ Self-driving car in embedded C, C++, and OpenCV
 - [ ] 1x Esc switch
 - [ ] 1x Servo
 - [ ] 1x Motor
+- [ ] 1x 9V battery
 - [ ] 1x 3000 mAh battery
 - [ ] 1x 2000 mAh battery
 - [ ] 1x 9DoF Razor IMU
@@ -35,4 +36,4 @@ Self-driving car in embedded C, C++, and OpenCV
 ![Self-driving car](https://i.imgur.com/6MP5rOh.png)
 ![Simulator view](https://i.imgur.com/GiatXfQ.png)
 ![Right side](https://i.imgur.com/0OWT2ti.png)
-![Left side](https://i.imgur.com/G87duvN.png)
+![Battery connection](https://i.imgur.com/jg3WfTx.png)
